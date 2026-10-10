@@ -2,6 +2,7 @@
 
 A multi-tenant, configurable business operating system for UAE/GCC traders, wholesalers and retailers:
 accounting, inventory, sales, purchasing, VAT and an AI assistant in one product.
+Delivered as a Windows desktop app (.exe) backed by one hosted API; see `docs/adr/0008-desktop-client.md`.
 Full product spec: `docs/product-concept-v2.md`. Original concept: `docs/product-concept-v1.pdf`.
 
 First customer (beachhead): UAE trading and wholesale SMBs (2–50 staff) moving off Tally, Excel and WhatsApp.
@@ -43,6 +44,7 @@ These protect money, tax and customer data. Never weaken them, and never edit a 
 | Jobs | Redis + Celery workers, transactional outbox table |
 | Files | S3-compatible storage (MinIO locally) |
 | Frontend | Next.js (App Router) + TypeScript, Tailwind, shadcn/ui, TanStack Query, next-intl |
+| Desktop | Electron shell + electron-builder (NSIS `.exe`), electron-updater via GitHub Releases; shows the web UI and talks only to the cloud API |
 | API client | Generated from the FastAPI OpenAPI schema — never hand-write API types |
 | Tests | pytest, pytest-asyncio, Hypothesis (property tests), factory_boy; Vitest + Playwright on web |
 | Tooling | uv, ruff, mypy (strict on `app/`), pnpm, ESLint, Prettier, pre-commit, GitHub Actions |
@@ -61,6 +63,7 @@ apps/
     migrations/        # Alembic
     seeds/             # industry packs, default chart of accounts, units (JSON/YAML)
   web/                 # Next.js app
+  desktop/             # Electron shell: main/preload, packaging, auto-update (no business logic)
 packages/
   api-client/          # generated TypeScript client
 docs/
