@@ -1,0 +1,23 @@
+{
+  "name": "@smartbiz/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SmartBiz OS desktop app (Electron). No business logic: it shows the SPA and, from M0.6, runs the local API and PostgreSQL.",
+  "main": "src/main.cjs",
+  "scripts": {
+    "dev": "node scripts/run-electron.cjs --dev",
+    "start": "node scripts/run-electron.cjs",
+    "dist": "electron-builder --win nsis --config electron-builder.config.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.cjs\""
+  },
+  "dependencies": {
+    "@smartbiz/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "~5.9.3"
+  }
+}
