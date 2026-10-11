@@ -15,6 +15,13 @@ accountant reviews remain open.
 Also for the accountant before e-invoicing go-live: an invoice already sent through the ASP can only be reversed
 with a credit note, never cancelled ([A7](decisions-round-1.md#rules-to-build)).
 
+## Still open — founder (from M0.6)
+
+| # | Question | Default in use meanwhile |
+| --- | --- | --- |
+| F1 | Should owners be able to copy backups to a folder they choose (USB drive, NAS) automatically? ADR 0008 suggested it. A copy outside the PC protects against disk failure and theft but leaves the protected folder. | Backups stay in `C:\ProgramData\SmartBizOS\backups`, readable by administrators only |
+| F2 | Should uninstalling offer "remove all data"? | Uninstall always keeps the database, backups and files, so reinstalling continues where the PC left off |
+
 ## Answered — round 1
 
 ### Founder — product and business

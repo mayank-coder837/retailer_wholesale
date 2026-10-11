@@ -46,12 +46,15 @@ Phase 1 (ADR 0010).
 **LAN access**
 - The API listens on the LAN only when "allow office PCs" is on; the installer adds a Windows Firewall rule for
   the Private profile only.
-- Office PCs pair with the main PC by IP/hostname plus a 6-digit pairing code shown on the main PC; pairing
-  pins the main PC's self-signed TLS certificate. Users still log in individually (ADR 0007).
+- Office PCs pair with the main PC by IP/hostname plus an 8-character pairing code (no look-alike characters,
+  10 minutes) shown on the main PC. The office PC checks `HMAC(code, nonce | certificate fingerprint)` against the
+  certificate it saw itself, then pins that certificate; the code never crosses the network. Users still log in
+  individually (ADR 0007). Pairing is saved per Windows user, so office PCs need no admin rights.
 
 **Backups and updates**
-- Automatic `pg_dump` nightly and before every update, kept for 14 days, to a folder the owner chooses (USB/NAS
-  allowed); restore from the app's settings.
+- Automatic `pg_dump` nightly and before every update, newest 14 kept, in `C:\ProgramData\SmartBizOS\backups`
+  (readable by administrators and the service only); "back up now" and restore from Settings → This PC. Copying
+  backups to a folder the owner chooses (USB/NAS) is an open follow-up (open questions, M0.6).
 - An update stops the API, takes a backup, runs migrations, starts the API and checks `/health`; on failure it
   restores the backup and the previous app version.
 
@@ -59,6 +62,17 @@ Phase 1 (ADR 0010).
 - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, a narrow preload API (token storage via
   `safeStorage`, printing, app version, service status). Navigation locked to the configured API origin.
 - Unsigned during development; a code-signing certificate before the first customer release (D3).
+
+**Database logins (M0.6)**
+- `smartbiz` — superuser, used only by setup, migrations and restores (password in the DPAPI secrets file).
+- `smartbiz_api` — the API: no superuser, no BYPASSRLS, member of `smartbiz_app`; row-level security always applies.
+- `smartbiz_backup` — `pg_dump` only: `pg_read_all_data` + BYPASSRLS, cannot write.
+- PostgreSQL listens on 127.0.0.1 only; office PCs reach the API, never the database.
+
+**Files and permissions (M0.6)**
+- `C:\ProgramData\SmartBizOS\pgdata`, `backups`, `files`, `tls`, `secrets`: inheritance removed, Administrators,
+  SYSTEM and NetworkService only (ProgramData otherwise lets every local user read).
+- Each runtime version is copied to `runtime\<version>`; the services point there, so an update can switch back.
 
 ## Consequences
 - Every branch can trade fully offline; only internet features queue or show "needs internet".
