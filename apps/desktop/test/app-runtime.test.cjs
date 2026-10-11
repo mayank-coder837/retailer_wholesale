@@ -18,10 +18,11 @@ const {
 } = require("../src/connection.cjs");
 const { messages } = require("../src/first-run/messages.cjs");
 const { backupPath, encodeRequest, EXIT, parseCli, runCli } = require("../src/runtime/cli.cjs");
-const { defaults, writeConfig } = require("../src/runtime/config.cjs");
+const { apiEnvironment } = require("../src/runtime/api-service.cjs");
+const { defaults, readConfig, writeConfig } = require("../src/runtime/config.cjs");
 const { runElevated, UAC_CANCELLED } = require("../src/runtime/elevate.cjs");
 const { layout } = require("../src/runtime/layout.cjs");
-const { aclPlan } = require("../src/runtime/manager.cjs");
+const { aclPlan, setBackupCopy } = require("../src/runtime/manager.cjs");
 
 const FP = "ab".repeat(32);
 const tempRoot = () => fs.mkdtempSync(path.join(os.tmpdir(), "smartbiz-app-"));
@@ -93,6 +94,39 @@ test("uninstall keeps the business data unless the person chose to delete it", a
   assert.equal(code, EXIT.ok);
   assert.deepEqual(removed.uninstalled, ["0.1.0"], "services removed before the data");
   assert.equal(fs.existsSync(removed.l.root), false, "nothing left, logs included");
+});
+
+test("the backup copy folder must be an absolute folder outside the server's own folder", async () => {
+  const pc = fakeMainPc();
+  const ctx = { ...pc, layout: pc.l };
+  await assert.rejects(setBackupCopy(ctx, "backups\\copy"), /not an absolute folder/);
+  await assert.rejects(
+    setBackupCopy(ctx, path.join(pc.l.root, "backups", "copy")),
+    /outside the server's own folder/,
+  );
+  await assert.rejects(setBackupCopy(ctx, pc.l.root), /outside the server's own folder/);
+  assert.equal(readConfig(pc.l.configFile).backupCopyDir, null);
+
+  // A sibling whose name merely starts the same way is outside.
+  const host = { ...pc.host, stopApi: async () => {}, installApi: async () => {}, startApi: async () => {} };
+  const sibling = `${pc.l.root} Backups`;
+  await assert.rejects(
+    setBackupCopy({ ...ctx, host, healthTimeoutMs: 1 }, sibling),
+    /did not become healthy/, // got past the folder check; no API runs in a unit test
+  );
+  assert.equal(readConfig(pc.l.configFile).backupCopyDir, sibling);
+});
+
+test("the API is told where to copy backups", () => {
+  const l = layout("C:\\ProgramData\\SmartBizOS");
+  const config = { ...defaults(), mode: /** @type {const} */ ("main"), runtimeVersion: "0.1.0" };
+  assert.equal(apiEnvironment(l, config, "0.1.0").SMARTBIZ_BACKUP_COPY_DIR, undefined);
+  const env = apiEnvironment(l, { ...config, backupCopyDir: "E:\\SmartBiz backups" }, "0.1.0");
+  assert.equal(env.SMARTBIZ_BACKUP_COPY_DIR, "E:\\SmartBiz backups");
+  assert.deepEqual(parseCli([encodeRequest({ command: "backup-copy", folder: null })]), {
+    command: "backup-copy",
+    folder: null,
+  });
 });
 
 test("restore only accepts backup file names inside the backups folder", () => {

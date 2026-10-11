@@ -283,3 +283,79 @@ async def test_backups_are_unavailable_where_none_are_kept(client: AsyncClient) 
     response = await client.get("/system/backups", headers=owner)
     assert response.status_code == 503
     assert response.json()["code"] == "backups_unavailable"
+
+
+async def test_every_backup_is_copied_to_the_owners_folder_with_the_same_rotation(
+    settings: Settings, tmp_path: Path
+) -> None:
+    usb = tmp_path / "usb" / "SmartBiz backups"
+    local = settings.model_copy(
+        update={
+            "pg_bin_dir": tmp_path,
+            "backup_dir": tmp_path / "backups",
+            "backup_keep": 2,
+            "backup_copy_dir": usb,
+        }
+    )
+
+    start = datetime(2026, 10, 1, 2, 0)
+    written = [
+        await backup.run_backup(local, now=start + timedelta(days=i), runner=fake_pg_dump) for i in range(3)
+    ]
+
+    assert sorted(p.name for p in usb.iterdir()) == [p.name for p in written[-2:]]
+    assert (usb / written[-1].name).read_bytes() == written[-1].read_bytes()
+    status = backup.copy_status(local)
+    assert status is not None
+    assert status["file"] == written[-1].name
+    assert status["error"] is None
+
+
+async def test_a_failed_copy_keeps_the_backup_and_reports_the_error(
+    settings: Settings, tmp_path: Path
+) -> None:
+    blocker = tmp_path / "not-a-folder"
+    blocker.write_text("a file where the folder should be", encoding="utf-8")
+    local = settings.model_copy(
+        update={
+            "pg_bin_dir": tmp_path,
+            "backup_dir": tmp_path / "backups",
+            "backup_copy_dir": blocker / "copies",
+        }
+    )
+
+    written = await backup.run_backup(local, runner=fake_pg_dump)
+
+    assert written.exists()
+    status = backup.copy_status(local)
+    assert status is not None
+    assert status["error"]
+
+
+async def test_the_backups_list_shows_the_copy_folder_and_the_last_copy(
+    settings: Settings, clean_db: None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    local = settings.model_copy(
+        update={
+            "pg_bin_dir": tmp_path,
+            "backup_dir": tmp_path / "backups",
+            "backup_copy_dir": tmp_path / "nas",
+        }
+    )
+    real = backup.backup_now
+    monkeypatch.setattr(backup, "backup_now", lambda s: real(s, runner=fake_pg_dump))
+    app: FastAPI = create_app(local)
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c,
+    ):
+        owner = bearer(await signup(c, "owner@copies.ae"))
+        created = await c.post("/system/backups", headers=owner)
+        listed = (await c.get("/system/backups", headers=owner)).json()
+
+    assert listed["copy_dir"] == str(tmp_path / "nas")
+    assert listed["last_copy"]["file"] == created.json()["name"]
+    assert listed["last_copy"]["error"] is None
+    assert [b["name"] for b in listed["backups"]] == [created.json()["name"]], (
+        "the status file is not a backup"
+    )

@@ -115,6 +115,31 @@ test("sign up and back up through the API service", { skip: !enabled }, async ()
   assert.ok(fs.statSync(path.join(l.backups, backup.json.name)).size > 1000);
 });
 
+test(
+  "the API service (NetworkService) can copy backups to a folder the owner chose",
+  { skip: !enabled },
+  async () => {
+    const copyDir = `${root}-copies`; // outside the server folder, created by an administrator, like a USB/NAS pick
+    try {
+      await manager.setBackupCopy(ctx, copyDir);
+      const login = await api("POST", "/auth/login", undefined, {
+        email: "owner@services.ae",
+        password: "correct horse battery",
+        client: "desktop",
+      });
+      const backup = await api("POST", "/system/backups", login.json.access_token);
+      assert.equal(backup.status, 201, JSON.stringify(backup.json));
+      assert.ok(fs.existsSync(path.join(copyDir, backup.json.name)), "copied by the service account");
+      const listed = await api("GET", "/system/backups", login.json.access_token);
+      assert.equal(listed.json.last_copy.error, null);
+    } finally {
+      await manager.setBackupCopy(ctx, null);
+      fs.rmSync(copyDir, { recursive: true, force: true });
+      for (const b of manager.listBackups(l).slice(1)) fs.rmSync(b.file); // keep one: the uninstall test counts it
+    }
+  },
+);
+
 test("the API service restarts after a crash", { skip: !enabled }, async () => {
   const { stdout } = await powershell(
     run,

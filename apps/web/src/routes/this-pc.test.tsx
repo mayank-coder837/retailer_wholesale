@@ -15,6 +15,7 @@ const INFO: RuntimeInfo = {
   previousVersion: null,
   addresses: ["192.168.1.20"],
   fingerprint: "ab".repeat(32),
+  backupCopyDir: null,
 };
 
 const BACKUPS = {
@@ -37,6 +38,8 @@ function bridge(role: "main" | "office", info: RuntimeInfo = INFO) {
     })),
     closePairing: vi.fn(async () => ({ ok: true as const })),
     restore: vi.fn(async () => ({ ok: true as const })),
+    chooseBackupCopy: vi.fn(async () => ({ ok: true as const })),
+    stopBackupCopy: vi.fn(async () => ({ ok: true as const })),
   };
   const disconnect = vi.fn(async () => ({ ok: true as const }));
   const session = {
@@ -139,6 +142,45 @@ describe("Settings → This PC", () => {
     expect(await screen.findAllByText("فعّل الوصول عبر شبكة المكتب أولاً.")).not.toHaveLength(0);
     expect(screen.queryByRole("button", { name: "عرض رمز الربط" })).toBeNull();
     expect(await screen.findByText("لا يحتفظ هذا الخادم بنسخ احتياطية محلية.")).toBeInTheDocument();
+  });
+
+  it("copies backups to a USB drive or NAS and shows when the last copy failed", async () => {
+    const { runtime } = bridge("main");
+    const { api } = shopApi({
+      signedIn: true,
+      "GET /system/backups": {
+        status: 200,
+        body: {
+          ...BACKUPS,
+          copy_dir: "E:\\SmartBiz backups",
+          last_copy: {
+            at: "2026-10-10T22:00:05Z",
+            file: BACKUPS.backups[0]!.name,
+            error: "PermissionError: Access is denied",
+          },
+        },
+      },
+    });
+    render(<App api={api} />);
+
+    expect(await screen.findByTestId("copy-dir")).toHaveTextContent("E:\\SmartBiz backups");
+    expect(screen.getByTestId("last-copy")).toHaveTextContent(/The last copy failed .*Access is denied/);
+    await userEvent.click(screen.getByRole("button", { name: "Change folder" }));
+    expect(runtime.chooseBackupCopy).toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Stop copying" }));
+    expect(runtime.stopBackupCopy).toHaveBeenCalled();
+  });
+
+  it("offers to choose a copy folder when none is set", async () => {
+    bridge("main");
+    const { api } = shopApi({ signedIn: true, "GET /system/backups": { status: 200, body: BACKUPS } });
+    render(<App api={api} />);
+
+    expect(
+      await screen.findByText("No folder chosen: backups are kept on this PC only."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Choose folder" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Stop copying" })).toBeNull();
   });
 
   it("lets an office PC disconnect from the main PC", async () => {

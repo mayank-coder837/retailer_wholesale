@@ -21,6 +21,7 @@ const CLI_ARG = "--runtime-cli=";
  *   | { command: "upgrade" }
  *   | { command: "uninstall", askRemoveData?: boolean, removeData?: boolean }
  *   | { command: "lan", enabled: boolean }
+ *   | { command: "backup-copy", folder: string | null }
  *   | { command: "restore", name: string }) & { root?: string }} CliRequest
  */
 
@@ -41,7 +42,7 @@ function parseCli(argv) {
   const arg = argv.find((a) => a.startsWith(CLI_ARG));
   if (!arg) return null;
   const request = JSON.parse(Buffer.from(arg.slice(CLI_ARG.length), "base64url").toString("utf8"));
-  if (!["setup", "upgrade", "uninstall", "lan", "restore"].includes(request?.command)) {
+  if (!["setup", "upgrade", "uninstall", "lan", "restore", "backup-copy"].includes(request?.command)) {
     throw new Error(`unknown runtime command: ${request?.command}`);
   }
   return request;
@@ -96,6 +97,9 @@ async function runCli(request, ctx) {
         break;
       case "restore":
         await manager.restore(withLog, backupPath(l, request.name));
+        break;
+      case "backup-copy":
+        await manager.setBackupCopy(withLog, request.folder);
         break;
     }
     log("done");

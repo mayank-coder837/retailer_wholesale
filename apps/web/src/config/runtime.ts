@@ -19,6 +19,7 @@ export interface RuntimeInfo {
   previousVersion: string | null;
   addresses: string[];
   fingerprint: string | null;
+  backupCopyDir: string | null;
 }
 
 export type PairingResult =
@@ -43,6 +44,9 @@ export interface DesktopBridge {
     openPairing(): Promise<PairingResult>;
     closePairing(): Promise<RuntimeResult>;
     restore(name: string): Promise<RuntimeResult>;
+    /** Founder decision F1: asks for a folder (USB drive, NAS); every new backup is also copied there. */
+    chooseBackupCopy(): Promise<RuntimeResult>;
+    stopBackupCopy(): Promise<RuntimeResult>;
   };
   /** Office PC only: forget the main PC and show the first-run screen. */
   disconnect?: () => Promise<RuntimeResult>;

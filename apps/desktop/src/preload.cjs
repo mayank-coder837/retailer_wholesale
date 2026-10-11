@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld("smartbiz", {
           closePairing: () => ipcRenderer.invoke("smartbiz:runtime:pairing-close"),
           /** @param {string} name */
           restore: (name) => ipcRenderer.invoke("smartbiz:runtime:restore", name),
+          /** Asks for a folder (USB drive, NAS) and copies every new backup there too. */
+          chooseBackupCopy: () => ipcRenderer.invoke("smartbiz:runtime:backup-copy", true),
+          stopBackupCopy: () => ipcRenderer.invoke("smartbiz:runtime:backup-copy", false),
         }
       : undefined,
   // Office PC only: forget the main PC and show the first-run screen again.

@@ -8,8 +8,10 @@ Backups never leave the main PC through the API: it lists them and makes new one
 """
 
 import asyncio
+import json
 import logging
 import os
+import shutil
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -88,7 +90,46 @@ async def run_backup(
         raise RuntimeError("pg_dump failed")
     partial.replace(target)  # only complete dumps ever carry the .dump name
     rotate(settings.backup_dir, settings.backup_keep)
+    if settings.backup_copy_dir is not None:
+        await asyncio.to_thread(copy_out, target, settings.backup_copy_dir, settings.backup_keep)
     return target
+
+
+COPY_STATUS = "copy-status.json"
+
+
+def copy_out(backup: Path, copy_dir: Path, keep: int) -> None:
+    """Copies a finished backup to the owner's folder (USB, NAS) with the same rotation.
+
+    A failed copy never fails the backup: the outcome goes to ``copy-status.json`` next to the backups, where
+    the app shows it.
+    """
+    status: dict[str, str | None] = {
+        "at": datetime.now(UTC).isoformat(),
+        "file": backup.name,
+        "error": None,
+    }
+    try:
+        copy_dir.mkdir(parents=True, exist_ok=True)
+        partial = copy_dir / f"{backup.name}.partial"
+        shutil.copyfile(backup, partial)
+        partial.replace(copy_dir / backup.name)
+        rotate(copy_dir, keep)
+    except OSError as error:
+        log.warning("backup copy to %s failed: %s", copy_dir, error)
+        status["error"] = f"{type(error).__name__}: {error.strerror or error}"
+    (backup.parent / COPY_STATUS).write_text(json.dumps(status), encoding="utf-8")
+
+
+def copy_status(settings: Settings) -> dict[str, str | None] | None:
+    if settings.backup_dir is None:
+        return None
+    path = settings.backup_dir / COPY_STATUS
+    try:
+        value: dict[str, str | None] = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value
 
 
 def next_run(now: datetime, hour: int) -> datetime:
@@ -130,9 +171,19 @@ class BackupOut(BaseModel):
     created_at: datetime
 
 
+class BackupCopyOut(BaseModel):
+    """The last copy to the owner's folder: when, which backup, and the error if it failed."""
+
+    at: datetime
+    file: str
+    error: str | None
+
+
 class BackupsOut(BaseModel):
     keep: int
     backups: list[BackupOut]
+    copy_dir: str | None = None
+    last_copy: BackupCopyOut | None = None
 
 
 def _describe(path: Path) -> BackupOut:
@@ -170,7 +221,13 @@ BackupCreate = Annotated[PermissionSet, require("backup.create")]
 async def list_backups_endpoint(perms: BackupView, settings: SettingsDep) -> BackupsOut:
     perms.require("backup.view")  # tenant-wide: a backup holds the whole database
     _require_configured(settings)
-    return BackupsOut(keep=settings.backup_keep, backups=list_backups(settings))
+    status = copy_status(settings)
+    return BackupsOut(
+        keep=settings.backup_keep,
+        backups=list_backups(settings),
+        copy_dir=str(settings.backup_copy_dir) if settings.backup_copy_dir else None,
+        last_copy=BackupCopyOut.model_validate(status) if status else None,
+    )
 
 
 @router.post("", operation_id="create_backup", status_code=status.HTTP_201_CREATED)

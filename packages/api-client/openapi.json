@@ -2021,6 +2021,38 @@
         ],
         "title": "AuditOut"
       },
+      "BackupCopyOut": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "file",
+          "error"
+        ],
+        "title": "BackupCopyOut",
+        "description": "The last copy to the owner's folder: when, which backup, and the error if it failed."
+      },
       "BackupOut": {
         "properties": {
           "name": {
@@ -2057,6 +2089,27 @@
             },
             "type": "array",
             "title": "Backups"
+          },
+          "copy_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copy Dir"
+          },
+          "last_copy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BackupCopyOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

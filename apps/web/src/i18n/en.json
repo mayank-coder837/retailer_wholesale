@@ -228,6 +228,15 @@
       "lan_off": "Turn on office network access first.",
       "backup_in_progress": "A backup is already running; try again in a minute.",
       "failed": "That did not work. Details are in the server log on this PC."
-    }
+    },
+    "copyTitle": "Copy to a USB drive or NAS",
+    "copyHint": "Every new backup is also copied to this folder, so the data survives if this PC breaks or is stolen. Anyone who can open the folder can read the backups.",
+    "copyNone": "No folder chosen: backups are kept on this PC only.",
+    "copyChoose": "Choose folder",
+    "copyChange": "Change folder",
+    "copyStop": "Stop copying",
+    "copyLastOk": "Last copy: {{date}}",
+    "copyLastFailed": "The last copy failed ({{date}}): {{error}}",
+    "copyNasHint": "A NAS folder must let this PC write without a user name and password."
   }
 }

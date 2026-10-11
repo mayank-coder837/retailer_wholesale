@@ -30,6 +30,7 @@ function apiEnvironment(l, config, version) {
     SMARTBIZ_CORS_ORIGINS: "[]", // the API serves the app itself: same origin, no CORS
     PYTHONUNBUFFERED: "1",
   };
+  if (config.backupCopyDir) env.SMARTBIZ_BACKUP_COPY_DIR = config.backupCopyDir;
   if (config.lan) {
     env.SMARTBIZ_TLS_CERT_FILE = l.certFile;
     env.SMARTBIZ_REFRESH_COOKIE_SECURE = "true";

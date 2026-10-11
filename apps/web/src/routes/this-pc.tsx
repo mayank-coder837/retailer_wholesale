@@ -243,9 +243,75 @@ function Backups({ onProblem }: { onProblem: (code: string | null) => void }) {
               ))}
             </ul>
           )}
+          <BackupCopy
+            copyDir={backups.data.copy_dir ?? null}
+            lastCopy={backups.data.last_copy ?? null}
+            onProblem={onProblem}
+          />
         </>
       )}
     </Section>
+  );
+}
+
+/** Founder decision F1: every backup is also copied to a folder the owner picks (USB drive, NAS). */
+function BackupCopy({
+  copyDir,
+  lastCopy,
+  onProblem,
+}: {
+  copyDir: string | null;
+  lastCopy: components["schemas"]["BackupCopyOut"] | null;
+  onProblem: (code: string | null) => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
+  const runtime = window.smartbiz?.runtime;
+  const change = useMutation({
+    mutationFn: (choose: boolean) => (choose ? runtime!.chooseBackupCopy() : runtime!.stopBackupCopy()),
+    onSuccess: (result) => {
+      if (!result.ok && result.code === "cancelled") return; // closed the folder picker
+      onProblem(result.ok ? null : result.code);
+      if (result.ok) void queryClient.invalidateQueries({ queryKey: ["backups"] });
+    },
+  });
+  const when = (at: string) =>
+    new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(new Date(at));
+
+  return (
+    <div className="mt-2 flex flex-col gap-2 border-t pt-4" aria-label={t("thisPc.copyTitle")} role="group">
+      <h3 className="font-semibold">{t("thisPc.copyTitle")}</h3>
+      <p className="text-sm text-muted-foreground">{t("thisPc.copyHint")}</p>
+      <p className="text-sm">
+        {copyDir ? (
+          <span dir="ltr" className="font-mono" data-testid="copy-dir">
+            {copyDir}
+          </span>
+        ) : (
+          t("thisPc.copyNone")
+        )}
+      </p>
+      {copyDir && lastCopy && (
+        <p className={lastCopy.error ? "text-sm text-destructive" : "text-sm"} data-testid="last-copy">
+          {lastCopy.error
+            ? t("thisPc.copyLastFailed", { date: when(lastCopy.at), error: lastCopy.error })
+            : t("thisPc.copyLastOk", { date: when(lastCopy.at) })}
+        </p>
+      )}
+      {runtime && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" disabled={change.isPending} onClick={() => change.mutate(true)}>
+            {copyDir ? t("thisPc.copyChange") : t("thisPc.copyChoose")}
+          </Button>
+          {copyDir && (
+            <Button variant="ghost" disabled={change.isPending} onClick={() => change.mutate(false)}>
+              {t("thisPc.copyStop")}
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground">{t("thisPc.copyNasHint")}</span>
+        </div>
+      )}
+    </div>
   );
 }
 

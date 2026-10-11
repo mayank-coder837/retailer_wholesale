@@ -17,6 +17,7 @@ const { product } = require("./layout.cjs");
  *   serverName: string,
  *   runtimeVersion: string | null,
  *   certFingerprint: string | null,
+ *   backupCopyDir: string | null,
  *   previousVersion: string | null,
  *   main: PairedMain | null,
  * }} RuntimeConfig
@@ -32,6 +33,7 @@ function defaults() {
     serverName: "Main PC",
     runtimeVersion: null,
     certFingerprint: null,
+    backupCopyDir: null,
     previousVersion: null,
     main: null,
   };

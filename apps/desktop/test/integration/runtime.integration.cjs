@@ -195,6 +195,25 @@ test("the API backs up through its read-only backup login", async () => {
   assert.match(write.stderr, /permission denied/);
 });
 
+test("every backup is also copied to the owner's folder (USB drive, NAS)", async () => {
+  const usb = path.join(root, "usb", "SmartBiz backups");
+  await manager.setBackupCopy(ctx, usb);
+
+  const viaApi = await api("POST", "/system/backups");
+  assert.equal(viaApi.status, 201, viaApi.text);
+  assert.deepEqual(fs.readdirSync(usb), [viaApi.json.name], "the API service copied its backup");
+  const listed = await api("GET", "/system/backups");
+  assert.equal(listed.json.copy_dir, usb);
+  assert.equal(listed.json.last_copy.error, null);
+
+  await new Promise((r) => setTimeout(r, 1100)); // backup names have one-second resolution
+  const beforeUpdate = await manager.backupNow(ctx); // the pre-update backup is made by the app
+  assert.ok(fs.existsSync(path.join(usb, path.basename(beforeUpdate))), "the app copied its backup too");
+
+  await manager.setBackupCopy(ctx, null);
+  for (const b of manager.listBackups(l)) fs.rmSync(b.file); // the restore test below expects only its own backup
+});
+
 test("backup and restore bring the data back", async () => {
   const backup = await manager.backupNow(ctx);
   assert.ok(fs.statSync(backup).size > 1000);

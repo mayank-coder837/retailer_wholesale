@@ -53,8 +53,8 @@ Phase 1 (ADR 0010).
 
 **Backups and updates**
 - Automatic `pg_dump` nightly and before every update, newest 14 kept, in `C:\ProgramData\SmartBizOS\backups`
-  (readable by administrators and the service only); "back up now" and restore from Settings → This PC. Copying
-  backups to a folder the owner chooses (USB/NAS) is an open follow-up (open questions, M0.6).
+  (readable by administrators and the service only); "back up now" and restore from Settings → This PC. Every new backup can also be copied to a
+  folder the owner chooses (USB drive, NAS; decision F1), same rotation.
 - An update stops the API, takes a backup, runs migrations, starts the API and checks `/health`; on failure it
   restores the backup and the previous app version.
 

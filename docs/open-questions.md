@@ -15,12 +15,12 @@ accountant reviews remain open.
 Also for the accountant before e-invoicing go-live: an invoice already sent through the ASP can only be reversed
 with a credit note, never cancelled ([A7](decisions-round-1.md#rules-to-build)).
 
-## Still open — founder (from M0.6)
+## Answered — founder, M0.6 (11 Oct 2026)
 
-| # | Question | Default in use meanwhile |
+| # | Question | Decision |
 | --- | --- | --- |
-| F1 | Should owners be able to copy backups to a folder they choose (USB drive, NAS) automatically? ADR 0008 suggested it. A copy outside the PC protects against disk failure and theft but leaves the protected folder. | Backups stay in `C:\ProgramData\SmartBizOS\backups`, readable by administrators only |
-| F2 | Should uninstalling offer "remove all data"? | Uninstall always keeps the database, backups and files, so reinstalling continues where the PC left off |
+| F1 | Copy backups automatically to a folder the owner chooses (USB drive, NAS)? | **Yes.** Settings → This PC → Backups → "Copy to a USB drive or NAS": every new backup (nightly, before updates, "back up now") is also copied there with the same rotation; a failed copy never fails the backup and shows on the page. A NAS share must accept the PC without a user name and password (shares with credentials: later). |
+| F2 | Should uninstalling offer "remove all data"? | **Yes.** An interactive uninstall of a main PC asks, in English and Arabic, with "Keep data" as the default. Silent uninstalls and updates never delete data. |
 
 ## Answered — round 1
 

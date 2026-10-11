@@ -619,6 +619,21 @@ export interface components {
             /** Reason */
             reason: string | null;
         };
+        /**
+         * BackupCopyOut
+         * @description The last copy to the owner's folder: when, which backup, and the error if it failed.
+         */
+        BackupCopyOut: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** File */
+            file: string;
+            /** Error */
+            error: string | null;
+        };
         /** BackupOut */
         BackupOut: {
             /** Name */
@@ -637,6 +652,9 @@ export interface components {
             keep: number;
             /** Backups */
             backups: components["schemas"]["BackupOut"][];
+            /** Copy Dir */
+            copy_dir?: string | null;
+            last_copy?: components["schemas"]["BackupCopyOut"] | null;
         };
         /** Body_upload_attachment */
         Body_upload_attachment: {

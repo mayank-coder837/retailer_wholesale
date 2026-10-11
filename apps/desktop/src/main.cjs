@@ -295,6 +295,7 @@ function startApp() {
         previousVersion: config.previousVersion,
         addresses: manager.lanAddresses(),
         fingerprint: config.certFingerprint,
+        backupCopyDir: config.backupCopyDir,
       };
     });
     ipcMain.handle("smartbiz:runtime:lan", async (event, enabled) => {
@@ -322,6 +323,22 @@ function startApp() {
       fromTrustedPage(event);
       manager.closePairing(l);
       return { ok: true };
+    });
+    // Founder decision F1: also copy every backup to a folder the owner picks (USB drive, NAS).
+    ipcMain.handle("smartbiz:runtime:backup-copy", async (event, choose) => {
+      fromTrustedPage(event);
+      let folder = null;
+      if (choose) {
+        const picked = await dialog.showOpenDialog(/** @type {BrowserWindow} */ (win), {
+          properties: ["openDirectory", "createDirectory"],
+        });
+        if (picked.canceled || !picked.filePaths[0]) return { ok: false, code: "cancelled" };
+        folder = picked.filePaths[0];
+      }
+      const code = await elevated({ command: "backup-copy", folder });
+      return code === EXIT.ok
+        ? { ok: true, folder }
+        : { ok: false, code: code === UAC_CANCELLED ? "uac_cancelled" : "failed" };
     });
     ipcMain.handle("smartbiz:runtime:restore", async (event, name) => {
       fromTrustedPage(event);

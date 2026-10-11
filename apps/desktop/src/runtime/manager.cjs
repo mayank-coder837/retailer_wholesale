@@ -327,7 +327,68 @@ async function backupNow(ctx, options = {}) {
   }
   fs.renameSync(partial, target);
   for (const old of listBackups(l).slice(BACKUP_KEEP)) fs.rmSync(old.file, { force: true });
+  if (config.backupCopyDir) copyOut(target, config.backupCopyDir);
   return target;
+}
+
+/**
+ * Copies a finished backup to the owner's folder (USB drive, NAS) with the same rotation, like the API does
+ * (apps/api/app/core/backup.py). A failed copy never fails the backup; the outcome goes to copy-status.json.
+ * @param {string} backup @param {string} copyDir
+ */
+function copyOut(backup, copyDir) {
+  const name = path.basename(backup);
+  /** @type {{ at: string, file: string, error: string | null }} */
+  const status = { at: new Date().toISOString(), file: name, error: null };
+  try {
+    fs.mkdirSync(copyDir, { recursive: true });
+    const partial = path.join(copyDir, `${name}.partial`);
+    fs.copyFileSync(backup, partial);
+    fs.renameSync(partial, path.join(copyDir, name));
+    const copies = fs
+      .readdirSync(copyDir)
+      .filter((f) => f.startsWith(BACKUP_PREFIX) && f.endsWith(".dump"))
+      .sort()
+      .reverse();
+    for (const old of copies.slice(BACKUP_KEEP)) fs.rmSync(path.join(copyDir, old), { force: true });
+  } catch (error) {
+    status.error = String(error instanceof Error ? error.message : error);
+  }
+  fs.writeFileSync(path.join(path.dirname(backup), "copy-status.json"), JSON.stringify(status));
+}
+
+/**
+ * Sets (or clears) the folder every backup is also copied to (founder decision F1), and restarts the API with it.
+ * The API service (NetworkService) does the copying: on NTFS it gets write access here; FAT/exFAT USB drives have no
+ * permissions; a NAS share must accept this PC without a user name and password.
+ * @param {Context} ctx @param {string | null} folder
+ */
+async function setBackupCopy(ctx, folder) {
+  const l = ctx.layout;
+  const config = readConfig(l.configFile);
+  if (!config.runtimeVersion) throw new Error("not set up");
+  if (folder !== null) {
+    if (!path.isAbsolute(folder)) throw new Error(`not an absolute folder: ${folder}`);
+    const resolved = path.resolve(folder);
+    const inside = path.relative(path.resolve(l.root).toLowerCase(), resolved.toLowerCase());
+    if (inside === "" || (!inside.startsWith("..") && !path.isAbsolute(inside))) {
+      throw new Error("the copy folder must be outside the server's own folder");
+    }
+    fs.mkdirSync(resolved, { recursive: true });
+    if (ctx.host.kind === "services") {
+      await ctx.runner("icacls", [resolved, "/grant", `${NETWORK_SERVICE}:(OI)(CI)M`, "/Q"], {
+        allowFailure: true,
+      });
+    }
+    folder = resolved;
+  }
+  config.backupCopyDir = folder;
+  writeConfig(l.configFile, config);
+  await ctx.host.stopApi();
+  await ctx.host.installApi(config.runtimeVersion, config);
+  await ctx.host.startApi(config.runtimeVersion, config);
+  await waitForHealthy(localApiUrl(config), { fingerprint: pin(config), timeoutMs: ctx.healthTimeoutMs });
+  return config;
 }
 
 /** Replaces the database with a backup, with the API stopped. @param {Context} ctx @param {string} file @param {{ version?: string }} [options] */
@@ -475,6 +536,7 @@ module.exports = {
   setupMain,
   uninstallMain,
   setLan,
+  setBackupCopy,
   backupNow,
   listBackups,
   restore,
