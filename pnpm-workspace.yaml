@@ -1,0 +1,9 @@
+packages:
+  - apps/web
+  - apps/desktop
+  - packages/*
+
+# Dependency build scripts are off by default; list each decision here.
+allowBuilds:
+  # Squirrel installer support; we build NSIS installers, so its script is not needed.
+  electron-winstaller: false

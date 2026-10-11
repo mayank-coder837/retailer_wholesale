@@ -1,0 +1,13 @@
+pnpm-lock.yaml
+**/dist
+**/release
+**/node_modules
+**/playwright-report
+**/test-results
+apps/api
+packages/api-client/openapi.json
+packages/api-client/src/schema.d.ts
+# Docs are hand-formatted (tables stay compact).
+docs/
+CLAUDE.md
+README.md

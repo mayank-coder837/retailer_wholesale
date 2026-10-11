@@ -1,0 +1,29 @@
+# Install once: `uvx pre-commit install`
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^apps/api/
+      - id: ruff-format
+        files: ^apps/api/
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (apps/api)
+        entry: uv run --directory apps/api mypy
+        language: system
+        pass_filenames: false
+        files: ^apps/api/app/
+      - id: prettier
+        name: prettier
+        entry: pnpm exec prettier --check
+        language: system
+        types_or: [ts, tsx, javascript, json, yaml, css, markdown]
+      - id: eslint-web
+        name: eslint (apps/web)
+        entry: pnpm --filter @smartbiz/web lint
+        language: system
+        pass_filenames: false
+        files: ^apps/web/

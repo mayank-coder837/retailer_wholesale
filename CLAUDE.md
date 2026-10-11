@@ -51,7 +51,7 @@ These protect money, tax and customer data. Never weaken them, and never edit a 
 | Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic |
 | DB | PostgreSQL 17 (RLS) — bundled on each branch's main PC and in the cloud; pgvector later (cloud) |
 | Jobs | Transactional outbox table. Local: an in-process worker in the API reads it. Cloud: Redis + Celery workers |
-| Files | Local: files folder on the main PC. Cloud: S3-compatible storage (MinIO in dev) |
+| Files | Local: files folder on the main PC. Cloud: S3-compatible storage (dev service chosen in M0.4) |
 | Frontend | Vite + React + TypeScript (client-side SPA), Tailwind, shadcn/ui, TanStack Query + Router, react-i18next (RTL) |
 | Desktop | Electron + electron-builder (NSIS `.exe`), electron-updater via GitHub Releases; bundles the UI, the API (packaged Python) and PostgreSQL 17 as Windows services; office PCs connect over the LAN |
 | Sync | Local outbox → cloud, append-only for posted records; see ADRs 0010–0011 |
