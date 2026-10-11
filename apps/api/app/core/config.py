@@ -9,11 +9,12 @@ from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_PRODUCT_CONFIG = REPO_ROOT / "packages" / "config" / "product.json"
+DEV_JWT_SECRET = "dev-only-insecure-jwt-secret-change-me-0123456789"  # noqa: S105 - rejected in prod
 
 
 class Environment(StrEnum):
@@ -44,6 +45,24 @@ class Settings(BaseSettings):
     jobs_backend: JobsBackend = JobsBackend.INPROCESS
     product_config_path: Path = DEFAULT_PRODUCT_CONFIG
     cors_origins: list[str] = ["http://localhost:5173"]
+
+    # The API's database login switches to this role on every connection, so row-level security always applies
+    # (ADR 0002). Migrations run as the owner and create it.
+    app_db_role: str = Field(default="smartbiz_app", pattern=r"^[a-z_][a-z0-9_]*$")
+
+    # Auth (ADR 0007)
+    jwt_secret: str = DEV_JWT_SECRET
+    access_token_ttl_s: int = 15 * 60
+    refresh_token_ttl_days: int = 30
+    refresh_cookie_secure: bool = False
+    login_max_failures: int = 5
+    login_lockout_minutes: int = 15
+
+    @model_validator(mode="after")
+    def _require_real_secrets_in_prod(self) -> "Settings":
+        if self.environment is Environment.PROD and self.jwt_secret == DEV_JWT_SECRET:
+            raise ValueError("SMARTBIZ_JWT_SECRET must be set in production")
+        return self
 
     @property
     def product(self) -> ProductInfo:

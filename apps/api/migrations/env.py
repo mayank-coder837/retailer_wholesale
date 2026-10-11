@@ -8,12 +8,13 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import get_settings
+from app.models_registry import metadata
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+# Tests pass their own database URL through config.attributes; otherwise use the app settings.
+config.set_main_option("sqlalchemy.url", config.attributes.get("database_url") or get_settings().database_url)
 
-# Module metadata is registered here from M0.2 onwards.
-target_metadata = None
+target_metadata = metadata
 
 
 def run_migrations_offline() -> None:

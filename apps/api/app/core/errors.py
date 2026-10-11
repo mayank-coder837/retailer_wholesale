@@ -30,6 +30,55 @@ class DatabaseUnavailableError(DomainError):
     title = "Database unavailable"
 
 
+class UnauthorizedError(DomainError):
+    code = "unauthorized"
+    status = HTTPStatus.UNAUTHORIZED
+    title = "Authentication required"
+
+
+class InvalidCredentialsError(UnauthorizedError):
+    code = "invalid_credentials"
+    title = "Email or password is incorrect"
+
+
+class AccountLockedError(DomainError):
+    code = "account_locked"
+    status = HTTPStatus.LOCKED
+    title = "Too many failed attempts; try again later"
+
+
+class InvalidRefreshTokenError(UnauthorizedError):
+    code = "invalid_refresh_token"
+    title = "Session expired; log in again"
+
+
+class RefreshTokenReusedError(UnauthorizedError):
+    code = "refresh_token_reused"
+    title = "This session was ended for safety; log in again"
+
+
+class NotFoundError(DomainError):
+    code = "not_found"
+    status = HTTPStatus.NOT_FOUND
+    title = "Not found"
+
+
+class ConflictError(DomainError):
+    code = "conflict"
+    status = HTTPStatus.CONFLICT
+    title = "Conflict"
+
+
+class EmailTakenError(ConflictError):
+    code = "email_taken"
+    title = "An account with this email already exists"
+
+
+class TenantSelectionRequiredError(ConflictError):
+    code = "tenant_selection_required"
+    title = "Choose which account to open"
+
+
 def problem(
     request: Request,
     *,
