@@ -46,6 +46,21 @@ async def test_web_refresh_uses_the_cookie(client: AsyncClient) -> None:
     assert response.json()["access_token"]
 
 
+async def test_cors_lets_the_web_app_send_the_refresh_cookie(client: AsyncClient) -> None:
+    allowed = await client.options(
+        "/auth/refresh",
+        headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": "POST"},
+    )
+    other = await client.options(
+        "/auth/refresh",
+        headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
+    )
+
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert allowed.headers["access-control-allow-credentials"] == "true"
+    assert "access-control-allow-origin" not in other.headers
+
+
 async def test_signup_rejects_duplicate_email(client: AsyncClient) -> None:
     await signup(client, "dup@alnoor.ae")
 

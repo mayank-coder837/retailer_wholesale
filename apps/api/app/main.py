@@ -51,6 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
+        # The web app sends the HttpOnly refresh cookie to /auth (M0.5). Only explicitly listed origins.
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["X-Request-ID", "Idempotent-Replayed"],

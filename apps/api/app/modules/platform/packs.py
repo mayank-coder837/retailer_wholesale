@@ -76,6 +76,7 @@ class Pack(BaseModel):
     name_en: str
     name_ar: str
     description: str
+    description_ar: str
     sections: PackSections
 
     def present_sections(self) -> list[str]:
@@ -88,6 +89,7 @@ class PackSummary(BaseModel):
     name_en: str
     name_ar: str
     description: str
+    description_ar: str
     sections: list[str]
 
 
@@ -122,6 +124,7 @@ def summaries() -> list[PackSummary]:
             name_en=p.name_en,
             name_ar=p.name_ar,
             description=p.description,
+            description_ar=p.description_ar,
             sections=p.present_sections(),
         )
         for p in load_packs().values()

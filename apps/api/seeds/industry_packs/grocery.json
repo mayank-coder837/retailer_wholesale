@@ -4,6 +4,7 @@
   "name_en": "Grocery and FMCG",
   "name_ar": "البقالة والسلع الاستهلاكية",
   "description": "Food and fast-moving goods with batches and expiry dates, sold by piece, weight or carton.",
+  "description_ar": "مواد غذائية وسلع سريعة الحركة بدفعات وتواريخ صلاحية، تُباع بالقطعة أو الوزن أو الكرتون.",
   "sections": {
     "settings": {
       "catalog.default_sales_unit": "pcs",

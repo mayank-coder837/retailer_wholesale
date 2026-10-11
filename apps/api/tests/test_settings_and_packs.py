@@ -157,3 +157,11 @@ async def test_packs_need_business_edit(client: AsyncClient) -> None:
 
     assert len(listed.json()) == 5
     assert applied.status_code == 403
+
+
+async def test_pack_catalogue_is_public_for_the_signup_wizard(client: AsyncClient) -> None:
+    response = await client.get("/industry-packs")
+
+    assert response.status_code == 200
+    assert {p["code"] for p in response.json()} >= {"textile", "grocery"}
+    assert all(p["name_ar"] and p["description_ar"] for p in response.json()), "bilingual (rule 10)"

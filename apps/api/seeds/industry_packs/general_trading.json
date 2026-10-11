@@ -4,6 +4,7 @@
   "name_en": "General trading",
   "name_ar": "التجارة العامة",
   "description": "Mixed goods bought in cartons and boxes and sold by piece, dozen or weight.",
+  "description_ar": "بضائع متنوعة تُشترى بالكرتون والصندوق وتُباع بالقطعة أو الدزينة أو الوزن.",
   "sections": {
     "settings": {
       "catalog.default_sales_unit": "pcs",

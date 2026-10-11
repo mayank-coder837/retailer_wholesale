@@ -4,6 +4,7 @@
   "name_en": "Hardware and building materials",
   "name_ar": "الأدوات ومواد البناء",
   "description": "Tools, fittings and materials sold by piece, box, length or weight.",
+  "description_ar": "أدوات وتجهيزات ومواد تُباع بالقطعة أو الصندوق أو الطول أو الوزن.",
   "sections": {
     "settings": {
       "catalog.default_sales_unit": "pcs"

@@ -4,6 +4,7 @@
   "name_en": "Textile and garments",
   "name_ar": "الأقمشة والملابس",
   "description": "Fabric bought by the roll and sold by the metre or yard; garments by size and colour.",
+  "description_ar": "أقمشة تُشترى بالرول وتُباع بالمتر أو الياردة، وملابس حسب المقاس واللون.",
   "sections": {
     "settings": {
       "catalog.default_sales_unit": "m",

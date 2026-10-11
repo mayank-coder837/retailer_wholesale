@@ -1459,6 +1459,7 @@
           "industry packs"
         ],
         "summary": "List Industry Packs",
+        "description": "Public: the catalogue is product seed data (no tenant data), and the sign-up wizard shows it.",
         "operationId": "list_industry_packs",
         "responses": {
           "200": {
@@ -1475,12 +1476,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/businesses/{business_id}/industry-packs": {
@@ -2539,6 +2535,10 @@
             "type": "string",
             "title": "Description"
           },
+          "description_ar": {
+            "type": "string",
+            "title": "Description Ar"
+          },
           "sections": {
             "items": {
               "type": "string"
@@ -2554,6 +2554,7 @@
           "name_en",
           "name_ar",
           "description",
+          "description_ar",
           "sections"
         ],
         "title": "PackSummary"

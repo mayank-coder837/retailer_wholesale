@@ -416,7 +416,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Industry Packs */
+        /**
+         * List Industry Packs
+         * @description Public: the catalogue is product seed data (no tenant data), and the sign-up wizard shows it.
+         */
         get: operations["list_industry_packs"];
         put?: never;
         post?: never;
@@ -836,6 +839,8 @@ export interface components {
             name_ar: string;
             /** Description */
             description: string;
+            /** Description Ar */
+            description_ar: string;
             /** Sections */
             sections: string[];
         };

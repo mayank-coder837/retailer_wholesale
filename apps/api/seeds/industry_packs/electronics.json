@@ -4,6 +4,7 @@
   "name_en": "Electronics",
   "name_ar": "الإلكترونيات",
   "description": "Phones, accessories and devices tracked by serial / IMEI, with warranty.",
+  "description_ar": "هواتف وإكسسوارات وأجهزة تُتابع بالرقم التسلسلي / IMEI مع الضمان.",
   "sections": {
     "settings": {
       "catalog.default_sales_unit": "pcs",

@@ -200,9 +200,8 @@ class ApplyPackIn(BaseModel):
 
 
 @router.get("/industry-packs", tags=["industry packs"], operation_id="list_industry_packs")
-async def list_industry_packs(
-    perms: Annotated[PermissionSet, require("business.view")],
-) -> list[packs.PackSummary]:
+async def list_industry_packs() -> list[packs.PackSummary]:
+    """Public: the catalogue is product seed data (no tenant data), and the sign-up wizard shows it."""
     return packs.summaries()
 
 
