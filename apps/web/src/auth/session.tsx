@@ -21,6 +21,19 @@ function failure(error: unknown): AuthResult {
   return { ok: false, code: problem.code ?? "unknown", memberships: problem.memberships };
 }
 
+export const NETWORK = "network";
+
+/** fetch rejects when the server cannot be reached; turn that into an ordinary error result. */
+async function reach<R extends { data?: unknown; error?: unknown }>(
+  call: Promise<R>,
+): Promise<R | { data: undefined; error: { code: string } }> {
+  try {
+    return await call;
+  } catch {
+    return { data: undefined, error: { code: NETWORK } };
+  }
+}
+
 /** Runs `fn` while holding a lock shared by every tab, so two tabs never rotate the same refresh token at once. */
 async function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
@@ -88,11 +101,13 @@ export function SessionProvider({ api, children }: { api: ApiClient; children: R
         clear();
         return { ok: false, code: "signed_out" };
       }
-      const { data, error } = await api.POST("/auth/refresh", { body: { refresh_token: stored } });
+      const { data, error } = await reach(api.POST("/auth/refresh", { body: { refresh_token: stored } }));
       if (!data) {
-        if (desktop) await desktop.clear();
+        const result = failure(error);
+        // An unreachable main PC is no reason to forget the desktop login; a rejected token is.
+        if (desktop && result.ok === false && result.code !== NETWORK) await desktop.clear();
         clear();
-        return failure(error);
+        return result;
       }
       await apply(data);
       return { ok: true };
@@ -122,9 +137,9 @@ export function SessionProvider({ api, children }: { api: ApiClient; children: R
 
   const login = useCallback(
     async (email: string, password: string, tenant?: string): Promise<AuthResult> => {
-      const { data, error } = await api.POST("/auth/login", {
-        body: { email, password, client, tenant_id: tenant ?? null },
-      });
+      const { data, error } = await reach(
+        api.POST("/auth/login", { body: { email, password, client, tenant_id: tenant ?? null } }),
+      );
       if (!data) return failure(error);
       await apply(data);
       return { ok: true };
@@ -134,7 +149,7 @@ export function SessionProvider({ api, children }: { api: ApiClient; children: R
 
   const signup = useCallback(
     async (body: Omit<SignupBody, "client">): Promise<AuthResult> => {
-      const { data, error } = await api.POST("/auth/signup", { body: { ...body, client } });
+      const { data, error } = await reach(api.POST("/auth/signup", { body: { ...body, client } }));
       if (!data) return failure(error);
       await apply(data);
       return { ok: true };
@@ -144,7 +159,9 @@ export function SessionProvider({ api, children }: { api: ApiClient; children: R
 
   const switchTenant = useCallback(
     async (tenant: string): Promise<AuthResult> => {
-      const { data, error } = await api.POST("/auth/switch-tenant", { body: { tenant_id: tenant, client } });
+      const { data, error } = await reach(
+        api.POST("/auth/switch-tenant", { body: { tenant_id: tenant, client } }),
+      );
       if (!data) return failure(error);
       await apply(data);
       return { ok: true };
@@ -154,7 +171,7 @@ export function SessionProvider({ api, children }: { api: ApiClient; children: R
 
   const logout = useCallback(async () => {
     const stored = desktop ? await desktop.getRefreshToken() : null;
-    await api.POST("/auth/logout", { body: { refresh_token: stored } });
+    await reach(api.POST("/auth/logout", { body: { refresh_token: stored } }));
     if (desktop) await desktop.clear();
     clear();
   }, [api, clear, desktop]);

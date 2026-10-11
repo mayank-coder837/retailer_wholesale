@@ -21,7 +21,12 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173,
+    strictPort: true,
+    // In Docker on Windows, file-change events do not cross the bind mount; poll there (infra/compose.yaml).
+    watch: process.env.VITE_POLL === "1" ? { usePolling: true, interval: 300 } : undefined,
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

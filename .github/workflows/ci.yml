@@ -80,7 +80,8 @@ jobs:
       - name: Start the API
         run: |
           cd apps/api
-          nohup uv run uvicorn app.main:app --port 8000 > ../../api.log 2>&1 &
+          # The venv's uvicorn directly: a background `uv run` would hold uv's cache lock and fail the job cleanup.
+          nohup .venv/bin/uvicorn app.main:app --port 8000 > ../../api.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://localhost:8000/health && exit 0; sleep 1; done
           cat ../../api.log; exit 1
       - run: pnpm --filter @smartbiz/web exec playwright install --with-deps chromium

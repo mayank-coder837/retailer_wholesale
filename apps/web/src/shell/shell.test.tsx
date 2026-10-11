@@ -7,6 +7,7 @@ import ar from "@/i18n/ar.json";
 
 import { App } from "@/app";
 import { initI18n, setLanguage } from "@/i18n";
+import { UNREACHABLE } from "@/test/fake-api";
 import { BUSINESSES, ME, shopApi, TOKEN } from "@/test/shop-api";
 
 function desktopBridge(stored: string | null) {
@@ -62,6 +63,44 @@ describe("App shell", () => {
     await screen.findByRole("heading", { name: "Welcome, Fatima Owner" });
     expect(calls.find((c) => c.path === "/auth/refresh")?.body).toEqual({ refresh_token: "stored-refresh" });
     expect(store.setRefreshToken).toHaveBeenCalledWith("rotated-refresh");
+  });
+
+  it("shows the login page instead of hanging when the server is unreachable", async () => {
+    const { api } = shopApi({ "POST /auth/refresh": UNREACHABLE, "GET /health": UNREACHABLE });
+    render(<App api={api} />);
+
+    expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
+  });
+
+  it("keeps the desktop login when the main PC is unreachable", async () => {
+    const store = desktopBridge("stored-refresh");
+    const { api } = shopApi({ "POST /auth/refresh": UNREACHABLE });
+    render(<App api={api} />);
+
+    await screen.findByRole("heading", { name: "Log in" });
+    expect(store.clear).not.toHaveBeenCalled();
+  });
+
+  it("forgets the desktop login when the server rejects the token", async () => {
+    const store = desktopBridge("revoked-refresh");
+    const { api } = shopApi({
+      "POST /auth/refresh": { status: 401, body: { code: "refresh_token_reused" } },
+    });
+    render(<App api={api} />);
+
+    await screen.findByRole("heading", { name: "Log in" });
+    expect(store.clear).toHaveBeenCalled();
+  });
+
+  it("explains a login attempt while the server is unreachable", async () => {
+    const { api } = shopApi({ "POST /auth/login": UNREACHABLE });
+    render(<App api={api} />);
+
+    await userEvent.type(await screen.findByLabelText("Email"), "owner@alnoor.ae");
+    await userEvent.type(screen.getByLabelText("Password"), "correct horse battery");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Cannot reach the server.");
   });
 
   it("does not call the API on desktop when nothing is stored", async () => {

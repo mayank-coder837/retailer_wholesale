@@ -28,7 +28,8 @@
       "invalid_credentials": "Email or password is incorrect.",
       "account_locked": "Too many failed attempts. Try again in 15 minutes.",
       "unauthorized": "You do not have access to that account.",
-      "unknown": "Could not log in. Check the server connection and try again."
+      "unknown": "Could not log in. Check the server connection and try again.",
+      "network": "Cannot reach the server. Check that the main PC is on and connected."
     }
   },
   "signup": {
@@ -141,9 +142,15 @@
     "export": "Export"
   },
   "special": {
-    "price": { "override_min": "Sell below the minimum price" },
-    "credit": { "override": "Override a customer's credit limit" },
-    "period": { "override_lock": "Post into a locked period" }
+    "price": {
+      "override_min": "Sell below the minimum price"
+    },
+    "credit": {
+      "override": "Override a customer's credit limit"
+    },
+    "period": {
+      "override_lock": "Post into a locked period"
+    }
   },
   "resources": {
     "tenant": "Account settings",
