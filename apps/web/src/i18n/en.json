@@ -1,0 +1,14 @@
+{
+  "home": {
+    "welcome": "Welcome to {{product}}",
+    "tagline": "Accounts, stock and sales in one place.",
+    "apiStatus": "Server",
+    "apiOnline": "Connected",
+    "apiOffline": "Not reachable",
+    "apiChecking": "Checking…"
+  },
+  "language": {
+    "label": "Language",
+    "switchTo": "العربية"
+  }
+}

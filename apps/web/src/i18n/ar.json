@@ -1,0 +1,14 @@
+{
+  "home": {
+    "welcome": "مرحبًا بك في {{product}}",
+    "tagline": "الحسابات والمخزون والمبيعات في مكان واحد.",
+    "apiStatus": "الخادم",
+    "apiOnline": "متصل",
+    "apiOffline": "غير متاح",
+    "apiChecking": "جارٍ التحقق…"
+  },
+  "language": {
+    "label": "اللغة",
+    "switchTo": "English"
+  }
+}
