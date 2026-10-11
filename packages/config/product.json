@@ -3,5 +3,6 @@
   "slug": "smartbiz-os",
   "appId": "ae.smartbiz.os",
   "servicePrefix": "SmartBizOS",
-  "localDbPort": 5440
+  "localDbPort": 5440,
+  "localApiPort": 8710
 }

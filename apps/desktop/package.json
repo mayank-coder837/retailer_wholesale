@@ -10,7 +10,8 @@
     "prepare-runtime": "node scripts/prepare-runtime.mjs",
     "dist": "node scripts/prepare-runtime.mjs && electron-builder --win nsis --config electron-builder.config.cjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"test/**/*.test.cjs\""
+    "test": "node --test \"test/**/*.test.cjs\"",
+    "test:integration": "node --test --test-timeout=300000 test/integration/runtime.integration.cjs"
   },
   "dependencies": {
     "@smartbiz/config": "workspace:*"

@@ -29,20 +29,24 @@ const skipWeb = process.argv.includes("--skip-web");
 // PostgreSQL server needs only these; pgAdmin, StackBuilder, docs, headers and symbols are dropped (~1 GB → ~70 MB).
 const PG_KEEP = ["bin", "lib", "share"];
 
+/** @param {string} message */
 function log(message) {
   console.log(`[prepare-runtime] ${message}`);
 }
 
+/** @param {string} command @param {string[]} args @param {import("node:child_process").ExecFileSyncOptions} [options] */
 function run(command, args, options = {}) {
   execFileSync(command, args, { stdio: "inherit", ...options });
 }
 
+/** @param {string} file */
 async function sha256(file) {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(file)) hash.update(chunk);
   return hash.digest("hex");
 }
 
+/** @param {{ file: string, url: string, sha256: string }} component */
 async function fetchVerified({ file, url, sha256: expected }) {
   mkdirSync(cacheDir, { recursive: true });
   const target = path.join(cacheDir, file);
@@ -60,6 +64,7 @@ async function fetchVerified({ file, url, sha256: expected }) {
   return target;
 }
 
+/** @param {string} archive */
 function extract(archive) {
   const dir = mkdtempSync(path.join(tmpdir(), "smartbiz-runtime-"));
   run("tar", ["-xf", archive, "-C", dir]); // Windows tar (bsdtar) handles .zip and .tar.gz
