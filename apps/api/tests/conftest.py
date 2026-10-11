@@ -29,8 +29,13 @@ API_DIR = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="session")
-def settings() -> Settings:
-    return Settings(environment=Environment.TEST, database_url=TEST_DATABASE_URL)
+def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
+    return Settings(
+        environment=Environment.TEST,
+        database_url=TEST_DATABASE_URL,
+        files_dir=tmp_path_factory.mktemp("files"),
+        worker_enabled=False,  # tests drive the worker with run_once()
+    )
 
 
 @pytest.fixture(scope="session")

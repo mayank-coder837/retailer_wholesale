@@ -13,7 +13,9 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import jobs, numbering
 from app.core.ids import new_id
+from app.core.platform_models import Attachment, AuditLog, IdempotencyKey, IndustryPackApplication, Setting
 from app.core.security import hash_password
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
 from app.modules.tenancy import service as tenancy
@@ -147,7 +149,109 @@ async def _role_assignment(session: AsyncSession, seed: TenantSeed) -> Any:
     return row.id
 
 
+async def _audit_log(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = AuditLog(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        action="create",
+        entity_type="business",
+        entity_id=seed.business_id,
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
+async def _allocate(session: AsyncSession, seed: TenantSeed) -> numbering.Allocated:
+    return await numbering.allocate(
+        session,
+        tenant_id=seed.tenant_id,
+        branch_id=seed.branch_id,
+        doc_type="sales_invoice",
+        fiscal_year="2026",
+        node_id=seed.node_id,
+        document_id=new_id(),
+    )
+
+
+async def _numbering_series(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _allocate(session, seed)).series_id
+
+
+async def _released_number(session: AsyncSession, seed: TenantSeed) -> Any:
+    allocated = await _allocate(session, seed)
+    row = await numbering.release(
+        session,
+        tenant_id=seed.tenant_id,
+        series_id=allocated.series_id,
+        number=allocated.number,
+        cancelled_document_id=new_id(),
+    )
+    return row.id
+
+
+async def _outbox_event(session: AsyncSession, seed: TenantSeed) -> Any:
+    return await jobs.publish(session, tenant_id=seed.tenant_id, event_type="test.noop")
+
+
+async def _idempotency_key(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = IdempotencyKey(
+        id=new_id(), tenant_id=seed.tenant_id, user_id=seed.user_id, key=new_id().hex, request_hash="0" * 64
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
+async def _attachment(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = Attachment(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        entity_type="business",
+        entity_id=seed.business_id,
+        filename="bill.pdf",
+        content_type="application/pdf",
+        size=1,
+        sha256="0" * 64,
+        storage_key=f"{seed.tenant_id}/{new_id()}",
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
+async def _setting(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = Setting(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        scope="business",
+        scope_id=seed.business_id,
+        key="ui.x",
+        value=1,
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
+async def _industry_pack_application(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = IndustryPackApplication(
+        id=new_id(), tenant_id=seed.tenant_id, business_id=seed.business_id, pack_code="textile", version=1
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
+    "audit_log": _audit_log,
+    "numbering_series": _numbering_series,
+    "released_number": _released_number,
+    "outbox_event": _outbox_event,
+    "idempotency_key": _idempotency_key,
+    "attachment": _attachment,
+    "setting": _setting,
+    "industry_pack_application": _industry_pack_application,
     "tenant": _tenant,
     "business": _business,
     "branch": _branch,
@@ -162,3 +266,6 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
 
 # Column holding the tenant id, where it is not ``tenant_id``.
 TENANT_COLUMN = {"tenant": "id"}
+# Tenant tables that are never synced to the cloud (local queues) and tables the app may only append to.
+NOT_SYNCED = frozenset({"sync_outbox", "outbox_event", "idempotency_key"})
+APPEND_ONLY = frozenset({"audit_log"})
