@@ -10,11 +10,20 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from app.core.db import apply_context
+from app.core.config import Settings
+from app.core.db import apply_context, create_engine
 from app.core.ids import new_id
 from app.models_registry import GLOBAL_TABLES
 from app.modules.tenancy.models import Branch
-from tests.factories import ISOLATION_FACTORIES, TENANT_COLUMN, TenantSeed, branch_in, seed_tenant
+from tests.factories import (
+    APPEND_ONLY,
+    ISOLATION_FACTORIES,
+    NOT_SYNCED,
+    TENANT_COLUMN,
+    TenantSeed,
+    branch_in,
+    seed_tenant,
+)
 
 pytestmark = pytest.mark.usefixtures("clean_db")
 
@@ -71,7 +80,9 @@ async def test_every_table_is_either_global_or_a_fully_protected_tenant_table(
         assert protected[table] == (True, True), f"{table}: RLS must be enabled and forced"
         assert table in policies, f"{table}: missing tenant policy"
         assert table in ISOLATION_FACTORIES, f"{table}: add an isolation factory in tests/factories.py"
-        if table != "sync_outbox":
+        if table in NOT_SYNCED:
+            assert table not in synced, f"{table}: local-only table must not be synced"
+        else:
             assert table in synced, f"{table}: missing sync_outbox_capture trigger"
 
 
@@ -96,17 +107,33 @@ async def test_tenant_cannot_read_change_or_claim_another_tenants_rows(
         await apply_context(s, tenant_id=seed_b.tenant_id)
         visible = await s.execute(text(f"SELECT count(*) FROM {table} WHERE id = :id"), {"id": row_a})
         assert visible.scalar_one() == 0
-        updated = await s.execute(text(f"UPDATE {table} SET {col} = {col} WHERE id = :id"), {"id": row_a})
-        assert updated.rowcount == 0  # type: ignore[attr-defined]
-        deleted = await s.execute(text(f"DELETE FROM {table} WHERE id = :id"), {"id": row_a})
-        assert deleted.rowcount == 0  # type: ignore[attr-defined]
 
-        with pytest.raises(DBAPIError, match="row-level security"):
-            async with s.begin_nested():
-                await s.execute(
-                    text(f"UPDATE {table} SET {col} = :a WHERE id = :id"),
-                    {"a": seed_a.tenant_id, "id": row_b},
-                )
+        if table in APPEND_ONLY:
+            # No UPDATE/DELETE for the app role; a row claiming another tenant cannot be inserted either.
+            for statement in (f"UPDATE {table} SET {col} = {col}", f"DELETE FROM {table}"):
+                with pytest.raises(DBAPIError, match="permission denied"):
+                    async with s.begin_nested():
+                        await s.execute(text(statement))
+            with pytest.raises(DBAPIError, match="row-level security"):
+                async with s.begin_nested():
+                    await s.execute(
+                        text(
+                            f"INSERT INTO {table} (id, tenant_id, action, entity_type, entity_id) "
+                            "VALUES (:id, :a, 'create', 'business', :e)"
+                        ),
+                        {"id": new_id(), "a": seed_a.tenant_id, "e": seed_a.business_id},
+                    )
+        else:
+            updated = await s.execute(text(f"UPDATE {table} SET {col} = {col} WHERE id = :id"), {"id": row_a})
+            assert updated.rowcount == 0  # type: ignore[attr-defined]
+            deleted = await s.execute(text(f"DELETE FROM {table} WHERE id = :id"), {"id": row_a})
+            assert deleted.rowcount == 0  # type: ignore[attr-defined]
+            with pytest.raises(DBAPIError, match="row-level security"):
+                async with s.begin_nested():
+                    await s.execute(
+                        text(f"UPDATE {table} SET {col} = :a WHERE id = :id"),
+                        {"a": seed_a.tenant_id, "id": row_b},
+                    )
 
     async with app_sessionmaker() as s, s.begin():
         await apply_context(s, tenant_id=seed_a.tenant_id)
@@ -133,6 +160,24 @@ async def test_api_connections_run_as_the_app_role(app_engine: AsyncEngine) -> N
         ).one()
     assert role == "smartbiz_app"
     assert bypass is False
+
+
+async def test_app_role_survives_a_failed_first_transaction(settings: Settings) -> None:
+    """Regression: SET ROLE must not live inside the connection's first transaction.
+
+    Otherwise a rollback undoes it and the pooled connection silently becomes the superuser login (no RLS).
+    """
+    engine = create_engine(settings)
+    try:
+        async with engine.connect() as conn:
+            with pytest.raises(DBAPIError):
+                await conn.execute(text("SELECT 1 / 0"))
+            await conn.rollback()
+            assert (await conn.execute(text("SELECT current_user"))).scalar_one() == "smartbiz_app"
+        async with engine.connect() as conn:  # the same pooled connection, checked out again
+            assert (await conn.execute(text("SELECT current_user"))).scalar_one() == "smartbiz_app"
+    finally:
+        await engine.dispose()
 
 
 async def test_child_cannot_point_at_another_tenants_parent(

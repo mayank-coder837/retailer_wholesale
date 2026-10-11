@@ -27,9 +27,10 @@ def create_engine(settings: Settings, *, as_app_role: bool = True) -> AsyncEngin
 
         @event.listens_for(engine.sync_engine, "connect")
         def _switch_role(dbapi_connection: Any, _record: Any) -> None:
-            cursor = dbapi_connection.cursor()
-            cursor.execute(f"SET ROLE {role}")
-            cursor.close()
+            # Run on the raw asyncpg connection, outside any transaction. Through the SQLAlchemy cursor it
+            # would join the implicit first transaction; if that rolled back, PostgreSQL would undo SET ROLE
+            # too, leaving a pooled connection as the (superuser) login with no RLS.
+            dbapi_connection.run_async(lambda conn: conn.execute(f"SET ROLE {role}"))
 
     return engine
 
