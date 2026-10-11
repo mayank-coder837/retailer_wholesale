@@ -189,13 +189,15 @@ test("LAN mode serves TLS with the main PC's certificate, and pairing pins it", 
   await assert.rejects(get(`${base}/health`, { fingerprint: "0".repeat(64) }), /fingerprint mismatch/);
 
   const { code } = manager.openPairing(l);
-  const paired = await pairWithMain({ host: "127.0.0.1", port: config.apiPort, code });
-  assert.equal(paired.fingerprint, fingerprint);
-  assert.equal(paired.serverName, "Deira main PC");
+  // Wrong first, then right: a retry must not reuse the first connection (it once did, and the retry failed).
   await assert.rejects(
     pairWithMain({ host: "127.0.0.1", port: config.apiPort, code: "WRONGCOD" }),
     /does not match/,
   );
+  const paired = await pairWithMain({ host: "127.0.0.1", port: config.apiPort, code: code.toLowerCase() });
+  assert.equal(paired.fingerprint, fingerprint);
+  assert.equal(paired.serverName, "Deira main PC");
+  await assert.rejects(get(`${base}/health`, { fingerprint: "0".repeat(64) }), /fingerprint mismatch/);
   manager.closePairing(l);
   await assert.rejects(pairWithMain({ host: "127.0.0.1", port: config.apiPort, code }), /not open/);
 

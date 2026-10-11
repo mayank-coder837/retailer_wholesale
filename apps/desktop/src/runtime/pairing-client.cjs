@@ -25,7 +25,6 @@ function pairWithMain(options) {
   const nonce = crypto.randomBytes(32).toString("hex");
   const body = JSON.stringify({ nonce });
   return new Promise((resolve, reject) => {
-    let fingerprint = "";
     const req = https.request(
       {
         host: options.host,
@@ -35,8 +34,11 @@ function pairWithMain(options) {
         headers: { "content-type": "application/json", "content-length": Buffer.byteLength(body) },
         rejectUnauthorized: false, // a self-signed certificate: trust is decided by the proof below
         timeout: options.timeoutMs ?? 5000,
+        agent: false, // a fresh connection each time: the proof must be about the certificate of *this* answer
       },
       (res) => {
+        const peer = /** @type {import("node:tls").TLSSocket} */ (res.socket).getPeerX509Certificate?.();
+        const fingerprint = peer ? crypto.createHash("sha256").update(peer.raw).digest("hex") : "";
         let text = "";
         res.on("data", (d) => (text += d));
         res.on("end", () => {
@@ -59,12 +61,6 @@ function pairWithMain(options) {
         });
       },
     );
-    req.on("socket", (socket) => {
-      socket.on("secureConnect", () => {
-        const peer = /** @type {import("node:tls").TLSSocket} */ (socket).getPeerX509Certificate();
-        fingerprint = peer ? crypto.createHash("sha256").update(peer.raw).digest("hex") : "";
-      });
-    });
     req.on("timeout", () => req.destroy(new PairingError("unreachable", "The main PC did not answer.")));
     req.on("error", (error) =>
       reject(

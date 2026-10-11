@@ -86,30 +86,49 @@ async function migrate(ctx, version, ownerPassword) {
   });
 }
 
-/** Grants each folder only what the services need (services mode). @param {Context} ctx */
+const NETWORK_SERVICE = "NT AUTHORITY\\NetworkService";
+
+/**
+ * Folder permissions (services mode). ProgramData lets every local user read by inheritance, so every folder holding
+ * customer data or keys drops inheritance: Administrators, SYSTEM and the service account only.
+ * @param {Layout} l @returns {{ dir: string, args: string[] }[]}
+ */
+function aclPlan(l) {
+  /** @param {string} dir @param {"F" | "M" | "RX"} serviceRight */
+  const restricted = (dir, serviceRight) => ({
+    dir,
+    args: [
+      dir,
+      "/inheritance:r",
+      "/grant:r",
+      "*S-1-5-32-544:(OI)(CI)F", // Administrators
+      "*S-1-5-18:(OI)(CI)F", // SYSTEM
+      `${NETWORK_SERVICE}:(OI)(CI)${serviceRight}`,
+      "/T",
+      "/Q",
+    ],
+  });
+  return [
+    restricted(l.pgdata, "F"),
+    restricted(l.secrets, "RX"),
+    restricted(l.tls, "RX"), // private key; the certificate's fingerprint is copied into config.json
+    restricted(l.backups, "M"),
+    restricted(l.files, "M"),
+    { dir: l.logs, args: [l.logs, "/grant", `${NETWORK_SERVICE}:(OI)(CI)M`, "/T", "/Q"] },
+    // Users: the app (no admin) writes the pairing code; the API only reads it.
+    { dir: l.pairing, args: [l.pairing, "/grant", "*S-1-5-32-545:(OI)(CI)M", "/T", "/Q"] },
+  ];
+}
+
+/** @param {Context} ctx */
 async function applyAcls(ctx) {
   if (ctx.host.kind !== "services") return;
-  const l = ctx.layout;
-  const grants = [
-    [l.pgdata, "NT AUTHORITY\\NetworkService:(OI)(CI)F"],
-    [l.files, "NT AUTHORITY\\NetworkService:(OI)(CI)M"],
-    [l.backups, "NT AUTHORITY\\NetworkService:(OI)(CI)M"],
-    [l.logs, "NT AUTHORITY\\NetworkService:(OI)(CI)M"],
-    [l.tls, "NT AUTHORITY\\NetworkService:(OI)(CI)R"],
-    [l.pairing, "*S-1-5-32-545:(OI)(CI)M"], // Users: the app (no admin) writes the pairing code
-  ];
-  for (const [dir, grant] of grants) await ctx.runner("icacls", [dir, "/grant", grant, "/T", "/Q"]);
-  // Secrets: Administrators, SYSTEM and the API service only; inheritance removed.
-  await ctx.runner("icacls", [
-    l.secrets,
-    "/inheritance:r",
-    "/grant:r",
-    "*S-1-5-32-544:(OI)(CI)F",
-    "*S-1-5-18:(OI)(CI)F",
-    "NT AUTHORITY\\NetworkService:(OI)(CI)R",
-    "/T",
-    "/Q",
-  ]);
+  for (const { args } of aclPlan(ctx.layout)) await ctx.runner("icacls", args);
+}
+
+/** The certificate to pin when the API speaks TLS. @param {import("./config.cjs").RuntimeConfig} config */
+function pin(config) {
+  return config.lan ? (config.certFingerprint ?? undefined) : undefined;
 }
 
 /** @param {Context} ctx @param {boolean} enabled @param {number} port */
@@ -216,13 +235,14 @@ async function setupMain(ctx, options) {
   );
   log("database ready");
 
+  config.certFingerprint = fingerprintOfFile(l.certFile);
   config.runtimeVersion = version;
   writeConfig(l.configFile, config);
   await ctx.host.installApi(version, config);
   await ctx.host.startApi(version, config);
   await firewall(ctx, config.lan, config.apiPort);
   await waitForHealthy(localApiUrl(config), {
-    fingerprint: config.lan ? fingerprintOfFile(l.certFile) : undefined,
+    fingerprint: pin(config),
     timeoutMs: ctx.healthTimeoutMs,
   });
   log(`API healthy at ${localApiUrl(config)}`);
@@ -240,7 +260,7 @@ async function setLan(ctx, enabled) {
   await ctx.host.startApi(config.runtimeVersion, config);
   await firewall(ctx, enabled, config.apiPort);
   await waitForHealthy(localApiUrl(config), {
-    fingerprint: enabled ? fingerprintOfFile(ctx.layout.certFile) : undefined,
+    fingerprint: pin(config),
     timeoutMs: ctx.healthTimeoutMs,
   });
   return config;
@@ -323,7 +343,7 @@ async function restore(ctx, file, options = {}) {
     await ctx.host.startApi(version, config);
   }
   await waitForHealthy(localApiUrl(config), {
-    fingerprint: config.lan ? fingerprintOfFile(l.certFile) : undefined,
+    fingerprint: pin(config),
     timeoutMs: ctx.healthTimeoutMs,
   });
 }
@@ -351,7 +371,7 @@ async function upgrade(ctx, options) {
     await ctx.host.installApi(newVersion, config);
     await ctx.host.startApi(newVersion, config);
     await waitForHealthy(localApiUrl(config), {
-      fingerprint: config.lan ? fingerprintOfFile(l.certFile) : undefined,
+      fingerprint: pin(config),
       timeoutMs: ctx.healthTimeoutMs,
     });
   } catch (error) {
@@ -361,7 +381,7 @@ async function upgrade(ctx, options) {
     await ctx.host.installApi(oldVersion, config);
     await ctx.host.startApi(oldVersion, config);
     await waitForHealthy(localApiUrl(config), {
-      fingerprint: config.lan ? fingerprintOfFile(l.certFile) : undefined,
+      fingerprint: pin(config),
       timeoutMs: ctx.healthTimeoutMs,
     });
     throw new UpgradeRolledBackError(`Upgrade to ${newVersion} failed; ${oldVersion} restored.`, error);
@@ -390,6 +410,22 @@ async function restoreWith(ctx, file, version, ownerPassword, port) {
   );
 }
 
+/**
+ * Removes the services, the firewall rule and the runtime copies. Data (database, backups, files, secrets, config)
+ * stays, so reinstalling continues where the PC left off. @param {Context} ctx
+ */
+async function uninstallMain(ctx) {
+  const l = ctx.layout;
+  const config = readConfig(l.configFile);
+  if (config.runtimeVersion) await ctx.host.uninstall(config.runtimeVersion);
+  await firewall(ctx, false, config.apiPort);
+  fs.rmSync(l.runtimes, { recursive: true, force: true });
+  fs.rmSync(l.services, { recursive: true, force: true });
+  config.runtimeVersion = null;
+  config.previousVersion = null;
+  writeConfig(l.configFile, config);
+}
+
 /** Opens pairing for office PCs: a fresh code, valid for `minutes`. @param {Layout} l @param {{ minutes?: number, now?: Date }} [options] */
 function openPairing(l, options = {}) {
   const bytes = crypto.randomBytes(8);
@@ -409,6 +445,7 @@ module.exports = {
   UpgradeRolledBackError,
   installRuntime,
   setupMain,
+  uninstallMain,
   setLan,
   backupNow,
   listBackups,
@@ -417,5 +454,7 @@ module.exports = {
   openPairing,
   closePairing,
   backupName,
+  aclPlan,
+  lanAddresses,
   PAIRING_ALPHABET,
 };

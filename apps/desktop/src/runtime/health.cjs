@@ -26,7 +26,9 @@ function fingerprintOfFile(certFile) {
 function get(url, options = {}) {
   const target = new URL(url);
   return new Promise((resolve, reject) => {
-    const common = { method: "GET", timeout: options.timeoutMs ?? 3000 };
+    // agent: false — never a kept-alive socket: the pin below is checked at each TLS handshake, and a reused
+    // connection has no handshake, so it would skip the check.
+    const common = { method: "GET", timeout: options.timeoutMs ?? 3000, agent: false };
     const callback = (/** @type {import("node:http").IncomingMessage} */ res) => {
       let body = "";
       res.on("data", (d) => (body += d));

@@ -16,6 +16,7 @@ const { product } = require("./layout.cjs");
  *   lan: boolean,
  *   serverName: string,
  *   runtimeVersion: string | null,
+ *   certFingerprint: string | null,
  *   previousVersion: string | null,
  *   main: PairedMain | null,
  * }} RuntimeConfig
@@ -30,6 +31,7 @@ function defaults() {
     lan: false,
     serverName: "Main PC",
     runtimeVersion: null,
+    certFingerprint: null,
     previousVersion: null,
     main: null,
   };
