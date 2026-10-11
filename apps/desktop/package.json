@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node scripts/run-electron.cjs --dev",
     "start": "node scripts/run-electron.cjs",
-    "dist": "electron-builder --win nsis --config electron-builder.config.cjs",
+    "prepare-runtime": "node scripts/prepare-runtime.mjs",
+    "dist": "node scripts/prepare-runtime.mjs && electron-builder --win nsis --config electron-builder.config.cjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.cjs\""
   },

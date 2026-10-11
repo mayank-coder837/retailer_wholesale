@@ -37,3 +37,7 @@ Thumbs.db
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Desktop runtime build (M0.6): downloaded components and the assembled runtime
+apps/desktop/.cache/
+apps/desktop/build/
