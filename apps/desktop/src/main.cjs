@@ -2,9 +2,10 @@
 "use strict";
 
 const path = require("node:path");
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, safeStorage, shell } = require("electron");
 
 const { resolveSettings, API_URL_ARG } = require("./settings.cjs");
+const { createTokenStore } = require("./token-store.cjs");
 
 const settings = resolveSettings({
   env: process.env,
@@ -52,7 +53,19 @@ function createWindow() {
   }
 }
 
+/** Refresh-token storage for the page, encrypted with safeStorage (Windows DPAPI). */
+function registerTokenIpc() {
+  const store = createTokenStore({
+    filePath: path.join(app.getPath("userData"), "session.bin"),
+    encryptor: safeStorage,
+  });
+  ipcMain.handle("smartbiz:token:get", () => store.get());
+  ipcMain.handle("smartbiz:token:set", (_event, token) => store.set(token));
+  ipcMain.handle("smartbiz:token:clear", () => store.clear());
+}
+
 app.whenReady().then(() => {
+  registerTokenIpc();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

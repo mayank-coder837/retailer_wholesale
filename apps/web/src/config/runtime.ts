@@ -9,7 +9,13 @@ export const DEFAULT_API_URL = "http://localhost:8000";
 
 export interface DesktopBridge {
   apiUrl?: string;
-  version?: string;
+  isDesktop?: boolean;
+  /** Refresh token kept encrypted by the desktop app (ADR 0007); used by the login screens in M0.5. */
+  session?: {
+    getRefreshToken(): Promise<string | null>;
+    setRefreshToken(token: string): Promise<void>;
+    clear(): Promise<void>;
+  };
 }
 
 declare global {
