@@ -13,11 +13,13 @@ const manager = require("./manager.cjs");
 const CLI_ARG = "--runtime-cli=";
 
 /**
+ * `askRemoveData`: an interactive uninstall (not silent, not an update); the app asks whether to delete the data
+ * and sets `removeData` from the answer.
  * `root` is set only when the app uses a data folder other than C:\ProgramData\SmartBizOS (development): an elevated
  * process does not inherit the caller's environment.
  * @typedef {({ command: "setup", serverName?: string }
  *   | { command: "upgrade" }
- *   | { command: "uninstall" }
+ *   | { command: "uninstall", askRemoveData?: boolean, removeData?: boolean }
  *   | { command: "lan", enabled: boolean }
  *   | { command: "restore", name: string }) & { root?: string }} CliRequest
  */
@@ -33,7 +35,9 @@ function encodeRequest(request) {
 /** @param {string[]} argv @returns {CliRequest | null} */
 function parseCli(argv) {
   if (argv.includes("--runtime-upgrade")) return { command: "upgrade" };
-  if (argv.includes("--runtime-uninstall")) return { command: "uninstall" };
+  if (argv.includes("--runtime-uninstall")) {
+    return { command: "uninstall", askRemoveData: argv.includes("--ask-remove-data") };
+  }
   const arg = argv.find((a) => a.startsWith(CLI_ARG));
   if (!arg) return null;
   const request = JSON.parse(Buffer.from(arg.slice(CLI_ARG.length), "base64url").toString("utf8"));
@@ -83,7 +87,9 @@ async function runCli(request, ctx) {
         break;
       }
       case "uninstall":
-        if (readConfig(l.configFile).mode === "main") await manager.uninstallMain(withLog);
+        if (readConfig(l.configFile).mode === "main") {
+          await manager.uninstallMain(withLog, { removeData: request.removeData });
+        }
         break;
       case "lan":
         await manager.setLan(withLog, request.enabled);
@@ -93,6 +99,9 @@ async function runCli(request, ctx) {
         break;
     }
     log("done");
+    if (request.command === "uninstall" && request.removeData) {
+      fs.rmSync(l.root, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); // logs too: nothing left
+    }
     return EXIT.ok;
   } catch (error) {
     log(`failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`);

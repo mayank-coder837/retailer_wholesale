@@ -38,6 +38,11 @@ const messages = {
     "update.rolledBack":
       "The update could not be applied to this PC's data, so the previous version was restored and is running. Details: {log}",
     "update.failed": "The local server could not be updated. Details: {log}",
+    "uninstall.question": "Also delete all business data on this PC?",
+    "uninstall.detail":
+      "The database, every backup and all attached files in {folder} will be deleted for good. Choose “Keep data” to reinstall later and continue where you left off.",
+    "uninstall.keep": "Keep data",
+    "uninstall.delete": "Delete everything",
   },
   ar: {
     title: "إعداد {product}",
@@ -71,6 +76,11 @@ const messages = {
     "update.rolledBack":
       "تعذّر تطبيق التحديث على بيانات هذا الحاسوب، لذلك أُعيد الإصدار السابق وهو يعمل الآن. التفاصيل: {log}",
     "update.failed": "تعذّر تحديث الخادم المحلي. التفاصيل: {log}",
+    "uninstall.question": "هل تريد أيضاً حذف كل بيانات العمل على هذا الحاسوب؟",
+    "uninstall.detail":
+      "ستُحذف قاعدة البيانات وكل النسخ الاحتياطية وكل الملفات المرفقة في {folder} نهائياً. اختر «الاحتفاظ بالبيانات» لتعيد التثبيت لاحقاً وتتابع من حيث توقفت.",
+    "uninstall.keep": "الاحتفاظ بالبيانات",
+    "uninstall.delete": "حذف كل شيء",
   },
 };
 

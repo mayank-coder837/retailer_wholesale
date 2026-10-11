@@ -10,10 +10,14 @@
 
 !macro customUnInstall
   ; Not during an update (the new installer runs the old uninstaller first): the services keep running.
-  ; Removes the services, the firewall rule and the runtime copies; the database, backups and files stay, so
-  ; reinstalling continues with the same data.
+  ; Removes the services, the firewall rule and the runtime copies. On an interactive uninstall the app asks, in
+  ; English and Arabic, whether to delete the business data too ("Keep data" is the default). A silent uninstall
+  ; never deletes data.
   ${ifNot} ${isUpdated}
-    ExecWait '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --runtime-uninstall' $0
+    IfSilent 0 +3
+      ExecWait '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --runtime-uninstall' $0
+      Goto +2
+    ExecWait '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --runtime-uninstall --ask-remove-data' $0
     DetailPrint "Local server removal: exit code $0"
   ${endIf}
 !macroend

@@ -426,10 +426,12 @@ async function restoreWith(ctx, file, version, ownerPassword, port) {
 }
 
 /**
- * Removes the services, the firewall rule and the runtime copies. Data (database, backups, files, secrets, config)
- * stays, so reinstalling continues where the PC left off. @param {Context} ctx
+ * Removes the services, the firewall rule and the runtime copies. By default the data (database, backups, files,
+ * secrets, config) stays, so reinstalling continues where the PC left off; `removeData` deletes it too (open
+ * question F2: only after the person said yes at an interactive uninstall). Logs stay for the caller to remove.
+ * @param {Context} ctx @param {{ removeData?: boolean }} [options]
  */
-async function uninstallMain(ctx) {
+async function uninstallMain(ctx, options = {}) {
   const l = ctx.layout;
   const config = readConfig(l.configFile);
   // A setup that failed half-way never recorded its version, but may have installed services: use the newest copy.
@@ -440,6 +442,13 @@ async function uninstallMain(ctx) {
   await firewall(ctx, false, config.apiPort);
   fs.rmSync(l.runtimes, { recursive: true, force: true });
   fs.rmSync(l.services, { recursive: true, force: true });
+  if (options.removeData) {
+    for (const dir of [l.pgdata, l.backups, l.files, l.secrets, l.tls, l.pairing]) {
+      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
+    }
+    fs.rmSync(l.configFile, { force: true });
+    return;
+  }
   config.runtimeVersion = null;
   config.previousVersion = null;
   writeConfig(l.configFile, config);

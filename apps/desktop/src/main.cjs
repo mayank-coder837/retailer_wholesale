@@ -63,7 +63,8 @@ const cliRequest = (() => {
 
 if (cliRequest) {
   const ctx = runtimeContext(cliRequest.root || dataRoot);
-  runCli(cliRequest, ctx)
+  confirmRemoveData(cliRequest, ctx.layout)
+    .then((request) => runCli(request, ctx))
     .catch(() => EXIT.failed)
     .then(async (code) => {
       // The installer has no text of its own for this: tell the person at the PC, in both languages.
@@ -84,6 +85,34 @@ if (cliRequest) {
   app.quit();
 } else {
   startApp();
+}
+
+/**
+ * Interactive uninstall of a main PC: ask, in both languages, whether to delete the business data too.
+ * "Keep data" is the default and the answer to closing the dialog.
+ * @param {import("./runtime/cli.cjs").CliRequest} request @param {ReturnType<typeof layout>} l
+ * @returns {Promise<import("./runtime/cli.cjs").CliRequest>}
+ */
+async function confirmRemoveData(request, l) {
+  if (request.command !== "uninstall" || !request.askRemoveData) return request;
+  if (readConfig(l.configFile).mode !== "main" || !fs.existsSync(l.pgdata)) return request;
+  await app.whenReady();
+  const t = (/** @type {string} */ key) =>
+    `${messages.en[key].replace("{folder}", l.root)}\n\n${messages.ar[key].replace("{folder}", l.root)}`;
+  const answer = dialog.showMessageBoxSync({
+    type: "warning",
+    title: product.name,
+    message: t("uninstall.question"),
+    detail: t("uninstall.detail"),
+    buttons: [
+      `${messages.en["uninstall.keep"]} / ${messages.ar["uninstall.keep"]}`,
+      `${messages.en["uninstall.delete"]} / ${messages.ar["uninstall.delete"]}`,
+    ],
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true,
+  });
+  return { ...request, removeData: answer === 1 };
 }
 
 function startApp() {

@@ -28,7 +28,6 @@ const tempRoot = () => fs.mkdtempSync(path.join(os.tmpdir(), "smartbiz-app-"));
 
 test("installer flags and encoded requests parse; anything else is not a runtime command", () => {
   assert.deepEqual(parseCli(["app.exe", "--runtime-upgrade"]), { command: "upgrade" });
-  assert.deepEqual(parseCli(["app.exe", "--runtime-uninstall"]), { command: "uninstall" });
   const request = { command: /** @type {const} */ ("setup"), serverName: 'Deira "main" & co — الرئيسي' };
   assert.deepEqual(parseCli(["app.exe", encodeRequest(request)]), request);
   assert.match(
@@ -38,6 +37,62 @@ test("installer flags and encoded requests parse; anything else is not a runtime
   );
   assert.equal(parseCli(["app.exe", "--inspect"]), null);
   assert.throws(() => parseCli([`--runtime-cli=${Buffer.from('{"command":"rm"}').toString("base64url")}`]));
+});
+
+test("uninstall asks about data only when the installer is interactive", () => {
+  assert.deepEqual(parseCli(["app.exe", "--runtime-uninstall"]), {
+    command: "uninstall",
+    askRemoveData: false,
+  });
+  assert.deepEqual(parseCli(["app.exe", "--runtime-uninstall", "--ask-remove-data"]), {
+    command: "uninstall",
+    askRemoveData: true,
+  });
+});
+
+/** A main PC's folders with a file in each, and a host that records what it was asked to do. */
+function fakeMainPc() {
+  const l = layout(path.join(tempRoot(), "SmartBizOS"));
+  for (const dir of [
+    l.pgdata,
+    l.backups,
+    l.files,
+    l.secrets,
+    l.tls,
+    l.pairing,
+    l.logs,
+    l.runtime("0.1.0").dir,
+  ]) {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "x"), "x");
+  }
+  writeConfig(l.configFile, { ...defaults(), mode: "main", runtimeVersion: "0.1.0" });
+  /** @type {(string | null)[]} */
+  const uninstalled = [];
+  const host = /** @type {any} */ ({
+    kind: "processes",
+    uninstall: async (/** @type {string | null} */ v) => void uninstalled.push(v),
+  });
+  const runner = async () => ({ code: 0, stdout: "", stderr: "" });
+  return { l, host, runner, uninstalled };
+}
+
+test("uninstall keeps the business data unless the person chose to delete it", async () => {
+  const kept = fakeMainPc();
+  assert.equal(await runCli({ command: "uninstall" }, { ...kept, layout: kept.l, sourceDir: "" }), EXIT.ok);
+  assert.deepEqual(kept.uninstalled, ["0.1.0"]);
+  for (const dir of [kept.l.pgdata, kept.l.backups, kept.l.files, kept.l.secrets])
+    assert.ok(fs.existsSync(dir), dir);
+  assert.equal(fs.existsSync(kept.l.runtimes), false);
+
+  const removed = fakeMainPc();
+  const code = await runCli(
+    { command: "uninstall", removeData: true },
+    { ...removed, layout: removed.l, sourceDir: "" },
+  );
+  assert.equal(code, EXIT.ok);
+  assert.deepEqual(removed.uninstalled, ["0.1.0"], "services removed before the data");
+  assert.equal(fs.existsSync(removed.l.root), false, "nothing left, logs included");
 });
 
 test("restore only accepts backup file names inside the backups folder", () => {
