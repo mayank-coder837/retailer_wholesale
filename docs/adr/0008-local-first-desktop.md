@@ -13,7 +13,7 @@ Phase 1 (ADR 0010).
 
 **Topology**
 - **Main PC (one per branch)** runs three Windows services installed by the SmartBiz OS installer:
-  `SmartBizOS-PostgreSQL` (PostgreSQL 16, bundled binaries, own data directory, port 5440 so it never collides
+  `SmartBizOS-PostgreSQL` (PostgreSQL 17, bundled binaries, own data directory, port 5440 so it never collides
   with another PostgreSQL on the PC), `SmartBizOS-API` (the same FastAPI app as the cloud) and the in-process
   outbox worker (ADR 0012).
 - **Office PCs** install the same `.exe` in *client mode*: no database, the UI talks to the main PC's API over

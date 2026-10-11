@@ -14,10 +14,10 @@ the same API, so permissions and audit are applied once. Decisions: `docs/adr/`,
  │        │ HTTPS over LAN (pinned cert)        │                 │ AI agent · WhatsApp · e-invoice ASP   │
  │        ▼                                     │                 │        │                              │
  │ Main PC: Electron app                        │   sync push/pull│        ▼                              │
- │   SPA ──► SmartBizOS-API (FastAPI) ──────────┼────────────────►│ API (same code) ─► PostgreSQL 16 (RLS)│
+ │   SPA ──► SmartBizOS-API (FastAPI) ──────────┼────────────────►│ API (same code) ─► PostgreSQL 17 (RLS)│
  │             │ in-process outbox worker       │  append-only    │   Celery + Redis workers, S3 files    │
  │             ▼                                │  posted records │                                       │
- │   SmartBizOS-PostgreSQL 16 (RLS), files dir, │                 │                                       │
+ │   SmartBizOS-PostgreSQL 17 (RLS), files dir, │                 │                                       │
  │   nightly + pre-update backups               │                 │                                       │
  └──────────────────────────────────────────────┘                 └───────────────────────────────────────┘
 ```
