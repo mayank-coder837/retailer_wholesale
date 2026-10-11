@@ -34,6 +34,8 @@ from app.core.security import (
     verify_password,
 )
 from app.modules.identity import repository as repo
+from app.modules.identity import roles_service
+from app.modules.identity.default_roles import OWNER
 from app.modules.identity.models import ClientKind, Membership, MembershipStatus, RefreshToken, UserAccount
 from app.modules.identity.schemas import LoginIn, MembershipOut, MeOut, SignupIn, TenantOut, UserOut
 from app.modules.tenancy import service as tenancy
@@ -127,6 +129,8 @@ async def signup(session: AsyncSession, settings: Settings, data: SignupIn) -> I
     )
     session.add(membership)
     await session.flush()
+    role_ids = await roles_service.create_default_roles(session, new_tenant.tenant_id)
+    await roles_service.assign_owner(session, new_tenant.tenant_id, membership.id, role_ids[OWNER])
     return await _issue(
         session,
         settings,

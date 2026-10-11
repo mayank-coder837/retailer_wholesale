@@ -11,6 +11,7 @@ from app.core import health
 from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import register_error_handlers
+from app.modules.identity import roles_router
 from app.modules.identity import router as identity_router
 from app.modules.tenancy import router as tenancy_router
 
@@ -42,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(identity_router.router)
     app.include_router(tenancy_router.router)
+    app.include_router(roles_router.router)
     return app
 
 
