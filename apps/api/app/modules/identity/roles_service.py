@@ -9,10 +9,11 @@ Guards:
 import uuid
 from collections.abc import Iterable, Sequence
 
-from sqlalchemy import case, delete, func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import audit
 from app.core.authz import PermissionDeniedError, PermissionSet, Scope
 from app.core.errors import ConflictError, NotFoundError, UnprocessableError
 from app.core.ids import new_id
@@ -154,14 +155,25 @@ async def get_role(session: AsyncSession, role_id: uuid.UUID) -> RoleOut:
 
 
 async def _set_role_permissions(
-    session: AsyncSession, tenant_id: uuid.UUID, role_id: uuid.UUID, codes: Iterable[str]
+    session: AsyncSession, role: Role, codes: Iterable[str], *, audit_change: bool = True
 ) -> None:
-    await session.execute(delete(RolePermission).where(RolePermission.role_id == role_id))
+    """Replaces a role's permissions; the change is audited once, as the old and new permission lists."""
+    wanted = set(codes)
+    current = {
+        rp.permission_code: rp
+        for rp in await session.scalars(select(RolePermission).where(RolePermission.role_id == role.id))
+    }
+    for code in current.keys() - wanted:
+        await session.delete(current[code])
     session.add_all(
-        RolePermission(id=new_id(), tenant_id=tenant_id, role_id=role_id, permission_code=code)
-        for code in codes
+        RolePermission(id=new_id(), tenant_id=role.tenant_id, role_id=role.id, permission_code=code)
+        for code in wanted - current.keys()
     )
     await session.flush()
+    if audit_change and wanted != current.keys():
+        await audit.record(
+            session, role, "update", changes={"permissions": [sorted(current), sorted(wanted)]}
+        )
 
 
 async def _flush_role(session: AsyncSession, role: Role) -> None:
@@ -183,7 +195,7 @@ async def create_role(session: AsyncSession, tenant_id: uuid.UUID, data: RoleIn)
         description=data.description,
     )
     await _flush_role(session, role)
-    await _set_role_permissions(session, tenant_id, role.id, codes)
+    await _set_role_permissions(session, role, codes)
     return _role_out(role, codes)
 
 
@@ -199,7 +211,7 @@ async def update_role(
             setattr(role, field, value)
     await _flush_role(session, role)
     if data.permissions is not None:
-        await _set_role_permissions(session, tenant_id, role.id, _validate_codes(data.permissions))
+        await _set_role_permissions(session, role, _validate_codes(data.permissions))
     return await get_role(session, role.id)
 
 
@@ -228,7 +240,7 @@ async def create_default_roles(session: AsyncSession, tenant_id: uuid.UUID) -> d
         )
         session.add(role)
         await session.flush()
-        await _set_role_permissions(session, tenant_id, role.id, sorted(default.permissions))
+        await _set_role_permissions(session, role, sorted(default.permissions), audit_change=False)
         ids[default.system_key] = role.id
     return ids
 
@@ -303,7 +315,9 @@ async def set_assignments(
         [(c.role_id, Scope(c.business_id, c.branch_id)) for c in current]
         + [(a.role_id, Scope(a.business_id, a.branch_id)) for a in assignments],
     )
-    await session.execute(delete(RoleAssignment).where(RoleAssignment.membership_id == membership_id))
+    for old in current:  # ORM deletes, so each removed assignment is audited
+        await session.delete(old)
+    await session.flush()
     unique = {(a.role_id, a.business_id, a.branch_id) for a in assignments}
     session.add_all(
         RoleAssignment(

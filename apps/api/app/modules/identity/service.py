@@ -11,6 +11,8 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audit import AuditContext
+from app.core.audit import set_context as set_audit_context
 from app.core.config import Settings
 from app.core.db import apply_context
 from app.core.errors import (
@@ -89,6 +91,7 @@ async def _issue(
         membership_id=membership_id,
         node_id=node.id if node else None,
         session_id=family,
+        client=client.value,
     )
     return IssuedTokens(
         access_token=create_access_token(principal, settings),
@@ -116,6 +119,7 @@ async def signup(session: AsyncSession, settings: Settings, data: SignupIn) -> I
             await session.flush()
     except IntegrityError as exc:  # concurrent sign-up with the same email
         raise EmailTakenError() from exc
+    set_audit_context(session, AuditContext(actor_user_id=user.id, client=data.client.value))
 
     new_tenant = await tenancy.create_tenant(
         session,

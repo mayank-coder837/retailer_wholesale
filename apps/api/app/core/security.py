@@ -40,6 +40,7 @@ class Principal:
     membership_id: uuid.UUID
     node_id: uuid.UUID | None
     session_id: uuid.UUID
+    client: str = "web"
 
 
 def create_access_token(principal: Principal, settings: Settings, *, now: datetime | None = None) -> str:
@@ -50,6 +51,7 @@ def create_access_token(principal: Principal, settings: Settings, *, now: dateti
         "mid": str(principal.membership_id),
         "nid": str(principal.node_id) if principal.node_id else None,
         "sid": str(principal.session_id),
+        "cli": principal.client,
         "iat": issued,
         "exp": issued + timedelta(seconds=settings.access_token_ttl_s),
     }
@@ -71,6 +73,7 @@ def decode_access_token(token: str, settings: Settings) -> Principal | None:
             membership_id=uuid.UUID(claims["mid"]),
             node_id=uuid.UUID(claims["nid"]) if claims.get("nid") else None,
             session_id=uuid.UUID(claims["sid"]),
+            client=str(claims.get("cli") or "web"),
         )
     except (jwt.PyJWTError, ValueError, KeyError, TypeError):
         return None

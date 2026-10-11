@@ -88,6 +88,7 @@ class Role(TenantScoped, Base):
 
 class RolePermission(TenantScoped, Base):
     __tablename__ = "role_permission"
+    __audit__ = False  # one audit entry per role change (old → new permission list) instead of one per row
     __table_args__ = (
         UniqueConstraint("role_id", "permission_code"),
         ForeignKeyConstraint(["tenant_id", "role_id"], ["role.tenant_id", "role.id"], ondelete="CASCADE"),
