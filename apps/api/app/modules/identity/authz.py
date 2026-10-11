@@ -9,9 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.authz import MembershipInactiveError, PermissionSet, Scope
 from app.core.deps import PrincipalDep, TenantSessionDep
-from app.core.permissions import is_known
+from app.core.permissions import ALL_PERMISSIONS, is_known
 from app.core.security import Principal
-from app.modules.identity.models import Membership, MembershipStatus, RoleAssignment, RolePermission
+from app.modules.identity.default_roles import OWNER
+from app.modules.identity.models import Membership, MembershipStatus, Role, RoleAssignment, RolePermission
 
 
 async def load_permissions(session: AsyncSession, principal: Principal) -> PermissionSet:
@@ -23,7 +24,16 @@ async def load_permissions(session: AsyncSession, principal: Principal) -> Permi
         .join(RoleAssignment, RoleAssignment.role_id == RolePermission.role_id)
         .where(RoleAssignment.membership_id == principal.membership_id)
     )
-    return PermissionSet.from_grants((code, Scope(business, branch)) for code, business, branch in rows)
+    grants = [(code, Scope(business, branch)) for code, business, branch in rows]
+    # Owner always holds every permission in the registry, including codes added after the role was created.
+    owner_scopes = await session.execute(
+        select(RoleAssignment.business_id, RoleAssignment.branch_id)
+        .join(Role, Role.id == RoleAssignment.role_id)
+        .where(RoleAssignment.membership_id == principal.membership_id, Role.system_key == OWNER)
+    )
+    for business, branch in owner_scopes:
+        grants.extend((code, Scope(business, branch)) for code in ALL_PERMISSIONS)
+    return PermissionSet.from_grants(grants)
 
 
 async def get_permissions(

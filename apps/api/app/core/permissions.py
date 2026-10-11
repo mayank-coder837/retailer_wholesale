@@ -31,6 +31,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "warehouse": (VIEW, CREATE, EDIT),
     "membership": (VIEW, CREATE, EDIT, DELETE),
     "role": (VIEW, CREATE, EDIT, DELETE),
+    "audit": (VIEW, EXPORT),
     # Masters
     "product": _MASTER,
     "price_list": _MASTER,
