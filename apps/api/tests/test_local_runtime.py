@@ -18,6 +18,7 @@ from app.core.config import Settings
 from app.core.local_secrets import read_secrets
 from app.main import create_app
 from app.scripts.make_cert import make_cert
+from tests.api_helpers import bearer, signup
 
 NONCE = "ab" * 32
 
@@ -199,3 +200,86 @@ def test_next_run_is_tonight_or_tomorrow() -> None:
     assert backup.next_run(datetime(2026, 10, 11, 1, 30), 2) == datetime(2026, 10, 11, 2, 0)
     assert backup.next_run(datetime(2026, 10, 11, 2, 0), 2) == datetime(2026, 10, 12, 2, 0)
     assert backup.next_run(datetime(2026, 10, 11, 23, 0), 2) == datetime(2026, 10, 12, 2, 0)
+
+
+def test_backups_log_in_as_the_backup_role_not_the_api(settings: Settings, tmp_path: Path) -> None:
+    local = settings.model_copy(
+        update={
+            "pg_bin_dir": tmp_path,
+            "database_url": "postgresql+asyncpg://smartbiz_api:api@127.0.0.1:5440/smartbiz",
+            "backup_database_url": "postgresql+asyncpg://smartbiz_backup:bk@127.0.0.1:5440/smartbiz",
+        }
+    )
+
+    command, env = backup.dump_command(local, tmp_path / "x.dump")
+
+    assert "--username=smartbiz_backup" in command
+    assert env["PGPASSWORD"] == "bk"
+
+
+def test_settings_take_the_backup_password_from_the_secrets_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.core import local_secrets
+
+    monkeypatch.setattr(local_secrets, "unprotect", lambda data: data)
+    secrets = tmp_path / "db.bin"
+    secrets.write_text(
+        json.dumps({"jwt_secret": "x" * 40, "db_password": "pw", "backup_password": "bk"}), encoding="utf-8"
+    )
+
+    loaded = Settings(
+        secrets_file=secrets,
+        database_url="postgresql+asyncpg://smartbiz_api@127.0.0.1:5440/smartbiz",
+        backup_database_url="postgresql+asyncpg://smartbiz_backup@127.0.0.1:5440/smartbiz",
+    )
+
+    assert loaded.backup_database_url == "postgresql+asyncpg://smartbiz_backup:bk@127.0.0.1:5440/smartbiz"
+
+
+@pytest.fixture
+async def backup_client(settings: Settings, clean_db: None, tmp_path: Path) -> AsyncIterator[AsyncClient]:
+    local = settings.model_copy(update={"pg_bin_dir": tmp_path, "backup_dir": tmp_path / "backups"})
+    app: FastAPI = create_app(local)
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c,
+    ):
+        yield c
+
+
+async def fake_pg_dump(command: list[str], _env: dict[str, str]) -> int:
+    target = next(part.removeprefix("--file=") for part in command if part.startswith("--file="))
+    Path(target).write_bytes(b"PGDMP" * 100)
+    return 0
+
+
+async def test_backup_now_and_list(backup_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    real = backup.backup_now
+    monkeypatch.setattr(backup, "backup_now", lambda s: real(s, runner=fake_pg_dump))
+    owner = bearer(await signup(backup_client, "owner@backup.ae"))
+
+    assert (await backup_client.get("/system/backups")).status_code == 401
+    created = await backup_client.post("/system/backups", headers=owner)
+    listed = await backup_client.get("/system/backups", headers=owner)
+
+    assert created.status_code == 201, created.text
+    assert created.json()["name"].startswith("smartbiz-")
+    assert created.json()["size_bytes"] == 500
+    assert listed.json()["keep"] == 14
+    assert [b["name"] for b in listed.json()["backups"]] == [created.json()["name"]]
+
+
+async def test_one_backup_at_a_time(backup_client: AsyncClient) -> None:
+    owner = bearer(await signup(backup_client, "owner@busy.ae"))
+    async with backup._running:
+        busy = await backup_client.post("/system/backups", headers=owner)
+    assert busy.status_code == 409
+    assert busy.json()["code"] == "backup_in_progress"
+
+
+async def test_backups_are_unavailable_where_none_are_kept(client: AsyncClient) -> None:
+    owner = bearer(await signup(client, "owner@cloud.ae"))
+    response = await client.get("/system/backups", headers=owner)
+    assert response.status_code == 503
+    assert response.json()["code"] == "backups_unavailable"

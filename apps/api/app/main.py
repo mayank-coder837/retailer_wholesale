@@ -77,6 +77,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(roles_router.router)
     app.include_router(platform_router.router)
     app.include_router(pairing.router)
+    app.include_router(backup.router)
     if settings.web_dir is not None:
         # The main PC's API also serves the app itself: one origin for the main PC and office PCs (M0.6).
         # Mounted last, so every API route above takes precedence.

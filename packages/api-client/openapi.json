@@ -1628,6 +1628,56 @@
           }
         }
       }
+    },
+    "/system/backups": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "List Backups Endpoint",
+        "operationId": "list_backups",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupsOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Create Backup Endpoint",
+        "operationId": "create_backup",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1970,6 +2020,51 @@
           "reason"
         ],
         "title": "AuditOut"
+      },
+      "BackupOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "size_bytes",
+          "created_at"
+        ],
+        "title": "BackupOut"
+      },
+      "BackupsOut": {
+        "properties": {
+          "keep": {
+            "type": "integer",
+            "title": "Keep"
+          },
+          "backups": {
+            "items": {
+              "$ref": "#/components/schemas/BackupOut"
+            },
+            "type": "array",
+            "title": "Backups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "keep",
+          "backups"
+        ],
+        "title": "BackupsOut"
       },
       "Body_upload_attachment": {
         "properties": {

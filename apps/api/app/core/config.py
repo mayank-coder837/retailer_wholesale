@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     pairing_file: Path | None = None  # the current pairing code, written by the desktop app on the main PC
     server_name: str | None = None  # shown to office PCs while pairing
     backup_dir: Path | None = None  # nightly pg_dump target; no backups when unset
+    # pg_dump login: read-only with BYPASSRLS (the API's own login cannot see past row-level security)
+    backup_database_url: str | None = None
     pg_bin_dir: Path | None = None  # folder holding pg_dump
     backup_keep: int = 14
     backup_hour: int = Field(default=2, ge=0, le=23)  # local time
@@ -84,6 +86,8 @@ class Settings(BaseSettings):
             secrets = read_secrets(self.secrets_file)
             self.jwt_secret = secrets["jwt_secret"]
             self.database_url = with_password(self.database_url, secrets["db_password"])
+            if self.backup_database_url is not None and "backup_password" in secrets:
+                self.backup_database_url = with_password(self.backup_database_url, secrets["backup_password"])
         return self
 
     @model_validator(mode="after")

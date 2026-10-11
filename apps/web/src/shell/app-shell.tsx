@@ -131,6 +131,15 @@ function SignedInShell() {
             >
               {t("nav.roles")}
             </Link>
+            {window.smartbiz?.role && (
+              <Link
+                to="/settings/this-pc"
+                className="rounded-md px-3 py-2 hover:bg-muted"
+                activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
+              >
+                {t("nav.thisPc")}
+              </Link>
+            )}
           </nav>
           <div className="mt-auto">
             <ServerStatus />

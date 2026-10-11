@@ -12,6 +12,7 @@ import { IndexRedirect } from "@/routes/index-redirect";
 import { LoginPage } from "@/routes/login";
 import { RolesPage } from "@/routes/roles";
 import { SignupPage } from "@/routes/signup";
+import { ThisPcPage } from "@/routes/this-pc";
 import { AppShell } from "@/shell/app-shell";
 
 const rootRoute = createRootRoute({ component: Outlet });
@@ -37,6 +38,11 @@ const rolesRoute = createRoute({
   path: "/settings/roles",
   component: RolesPage,
 });
+const thisPcRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/settings/this-pc",
+  component: ThisPcPage,
+});
 const voucherRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/vouchers/$kind",
@@ -53,6 +59,7 @@ const routeTree = rootRoute.addChildren([
   appRoute.addChildren([
     dashboardRoute,
     rolesRoute,
+    thisPcRoute,
     voucherRoute,
     page("/sales", "nav.sales"),
     page("/purchases", "nav.purchases"),

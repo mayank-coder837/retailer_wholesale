@@ -7,6 +7,7 @@ const path = require("node:path");
 
 const OWNER = "smartbiz"; // superuser: migrations, backups, restores
 const API_LOGIN = "smartbiz_api"; // the API's own login: no superuser, member of smartbiz_app (RLS always applies)
+const BACKUP_LOGIN = "smartbiz_backup"; // pg_dump for nightly / on-demand backups: read-only, sees every row
 const DATABASE = "smartbiz";
 
 /** @param {number} port */
@@ -55,8 +56,9 @@ function initdbArgs(pgBin, pgdata, pwfile) {
 }
 
 /**
- * SQL run as the owner after migrations: the API's login, a member of the app role (ADR 0002).
- * Passwords never appear in SQL: psql reads them from a variable.
+ * SQL run as the owner after migrations: the API's login, a member of the app role (ADR 0002), and the backup
+ * login, which reads everything (pg_read_all_data, BYPASSRLS) and can change nothing.
+ * Passwords never appear in SQL: psql reads them from variables.
  */
 function apiLoginSql() {
   return [
@@ -68,6 +70,14 @@ function apiLoginSql() {
     `ALTER ROLE ${API_LOGIN} PASSWORD :'api_password';`,
     `GRANT smartbiz_app TO ${API_LOGIN};`,
     `GRANT CONNECT ON DATABASE ${DATABASE} TO ${API_LOGIN};`,
+    `DO $$ BEGIN`,
+    `  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${BACKUP_LOGIN}') THEN`,
+    `    CREATE ROLE ${BACKUP_LOGIN} LOGIN NOSUPERUSER BYPASSRLS NOCREATEDB NOCREATEROLE;`,
+    `  END IF;`,
+    `END $$;`,
+    `ALTER ROLE ${BACKUP_LOGIN} PASSWORD :'backup_password';`,
+    `GRANT pg_read_all_data TO ${BACKUP_LOGIN};`,
+    `GRANT CONNECT ON DATABASE ${DATABASE} TO ${BACKUP_LOGIN};`,
     "",
   ].join("\n");
 }
@@ -89,6 +99,7 @@ function databaseUrl(user, port, password = "") {
 module.exports = {
   OWNER,
   API_LOGIN,
+  BACKUP_LOGIN,
   DATABASE,
   postgresqlConf,
   pgHbaConf,

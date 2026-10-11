@@ -92,7 +92,8 @@
     "accounts": "Accounts",
     "reports": "Reports",
     "settings": "Settings",
-    "roles": "Roles and permissions"
+    "roles": "Roles and permissions",
+    "thisPc": "This PC"
   },
   "shell": {
     "business": "Business",
@@ -186,5 +187,47 @@
     "pdc": "Post-dated cheques",
     "fiscal_period": "Fiscal periods",
     "report": "Reports"
+  },
+  "thisPc": {
+    "title": "This PC",
+    "browser": "These settings are available in the desktop app.",
+    "mainRole": "This is the main PC: it keeps the business data for this branch.",
+    "officeRole": "This is an office PC connected to the main PC at {{address}}.",
+    "serverTitle": "Server",
+    "serverName": "Name",
+    "version": "Version",
+    "lanTitle": "Office network access",
+    "lanOn": "On: office PCs can connect to this PC.",
+    "lanOff": "Off: only this PC can use the data.",
+    "lanTurnOn": "Turn on",
+    "lanTurnOff": "Turn off",
+    "adminHint": "Windows will ask for administrator approval.",
+    "pairTitle": "Connect an office PC",
+    "pairNeedsLan": "Turn on office network access first.",
+    "pairShow": "Show pairing code",
+    "pairInstructions": "On the office PC, choose “Office PC” and enter:",
+    "pairAddress": "Address",
+    "pairCode": "Code",
+    "pairExpires": "The code works until {{time}}.",
+    "pairClose": "Stop pairing",
+    "backupsTitle": "Backups",
+    "backupsHint": "A backup is made every night and before every update; the newest {{keep}} are kept.",
+    "backupNow": "Back up now",
+    "backingUp": "Backing up…",
+    "backupDone": "Backup saved: {{name}}",
+    "backupsNone": "No backups yet.",
+    "backupsUnavailable": "This server does not keep local backups.",
+    "backupsForbidden": "You do not have permission to see backups.",
+    "sizeMb": "{{size}} MB",
+    "restore": "Restore",
+    "restoreConfirm": "Replace all current data with the backup from {{date}}? Everything entered after it will be lost.",
+    "disconnect": "Disconnect from the main PC",
+    "disconnectConfirm": "Disconnect this PC? You can pair it again with a new code.",
+    "errors": {
+      "uac_cancelled": "Windows administrator approval was not given.",
+      "lan_off": "Turn on office network access first.",
+      "backup_in_progress": "A backup is already running; try again in a minute.",
+      "failed": "That did not work. Details are in the server log on this PC."
+    }
   }
 }

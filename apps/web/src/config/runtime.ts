@@ -8,15 +8,44 @@
  */
 export const DEFAULT_API_URL = "http://localhost:8000";
 
+export type RuntimeResult = { ok: true } | { ok: false; code: string };
+
+/** This PC's server, from the desktop app on the main PC (M0.6). */
+export interface RuntimeInfo {
+  serverName: string;
+  lan: boolean;
+  apiPort: number;
+  version: string | null;
+  previousVersion: string | null;
+  addresses: string[];
+  fingerprint: string | null;
+}
+
+export type PairingResult =
+  | { ok: true; code: string; expiresAt: string; addresses: string[]; port: number }
+  | { ok: false; code: string };
+
 export interface DesktopBridge {
   apiUrl?: string;
   isDesktop?: boolean;
+  /** "main": runs the database for the branch; "office": paired with a main PC; undefined: development. */
+  role?: "main" | "office";
   /** Refresh token kept encrypted by the desktop app (ADR 0007). */
   session?: {
     getRefreshToken(): Promise<string | null>;
     setRefreshToken(token: string): Promise<void>;
     clear(): Promise<void>;
   };
+  /** Main PC only. Changes needing Windows admin rights show a UAC prompt. */
+  runtime?: {
+    info(): Promise<RuntimeInfo>;
+    setLan(enabled: boolean): Promise<RuntimeResult>;
+    openPairing(): Promise<PairingResult>;
+    closePairing(): Promise<RuntimeResult>;
+    restore(name: string): Promise<RuntimeResult>;
+  };
+  /** Office PC only: forget the main PC and show the first-run screen. */
+  disconnect?: () => Promise<RuntimeResult>;
 }
 
 declare global {

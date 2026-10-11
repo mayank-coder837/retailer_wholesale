@@ -47,6 +47,11 @@ async function api(method, pathname, body) {
   return { status: response.status, json: isJson && text ? JSON.parse(text) : null, text };
 }
 
+async function readSecretsForTest() {
+  const { readSecrets } = require("../../src/runtime/secrets.cjs");
+  return readSecrets(run, l.secretsFile);
+}
+
 async function businessCount() {
   return (await api("GET", "/businesses")).json.length;
 }
@@ -159,6 +164,35 @@ test("the API logs in as a non-superuser: row-level security cannot be bypassed"
     },
   );
   assert.equal(stdout.trim(), "f|f");
+});
+
+test("the API backs up through its read-only backup login", async () => {
+  const created = await api("POST", "/system/backups");
+  assert.equal(created.status, 201, created.text);
+  assert.ok(created.json.size_bytes > 1000, "a real dump of every table, past row-level security");
+  const listed = await api("GET", "/system/backups");
+  assert.deepEqual(
+    listed.json.backups.map((/** @type {{ name: string }} */ b) => b.name),
+    [created.json.name],
+  );
+  fs.rmSync(path.join(l.backups, created.json.name)); // the restore test below expects exactly its own backup
+
+  const secrets = await readSecretsForTest();
+  const psql = path.join(l.runtime(readConfig(l.configFile).runtimeVersion ?? "").pgBin, "psql.exe");
+  const write = await run(
+    psql,
+    [
+      "--host=127.0.0.1",
+      `--port=${PORTS.dbPort}`,
+      "--username=smartbiz_backup",
+      "--no-password",
+      "--dbname=smartbiz",
+      "--set=ON_ERROR_STOP=1",
+    ],
+    { env: { PGPASSWORD: secrets.backup_password }, input: "DELETE FROM business;", allowFailure: true },
+  );
+  assert.notEqual(write.code, 0, "the backup login cannot change data");
+  assert.match(write.stderr, /permission denied/);
 });
 
 test("backup and restore bring the data back", async () => {

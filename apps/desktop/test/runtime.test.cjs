@@ -52,6 +52,16 @@ test("the API's database login is never a superuser and gets its password from a
   assert.match(sql, /GRANT smartbiz_app TO smartbiz_api/);
 });
 
+test("the backup login reads everything and can change nothing", () => {
+  const sql = pg.apiLoginSql();
+  assert.match(sql, /CREATE ROLE smartbiz_backup LOGIN NOSUPERUSER BYPASSRLS/);
+  assert.match(sql, /GRANT pg_read_all_data TO smartbiz_backup/);
+  assert.doesNotMatch(sql, /pg_write_all_data|GRANT smartbiz_app TO smartbiz_backup/);
+  assert.match(sql, /smartbiz_backup PASSWORD :'backup_password'/);
+  const env = apiEnvironment(l, config, "0.1.0");
+  assert.equal(env.SMARTBIZ_BACKUP_DATABASE_URL, "postgresql+asyncpg://smartbiz_backup@127.0.0.1:5440/smartbiz");
+});
+
 test("database URLs: the API's has no password (it comes from the DPAPI file)", () => {
   assert.equal(
     pg.databaseUrl("smartbiz_api", 5440),

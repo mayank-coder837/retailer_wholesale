@@ -32,6 +32,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "membership": (VIEW, CREATE, EDIT, DELETE),
     "role": (VIEW, CREATE, EDIT, DELETE),
     "audit": (VIEW, EXPORT),
+    "backup": (VIEW, CREATE),  # local runtime: list backups, back up now (restores need Windows admin)
     # Masters
     "product": _MASTER,
     "price_list": _MASTER,

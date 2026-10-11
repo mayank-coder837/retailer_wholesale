@@ -180,7 +180,13 @@ async function setupMain(ctx, options) {
   log(`runtime ${version}`);
 
   if (!fs.existsSync(l.secretsFile)) await writeSecrets(ctx.runner, l.secretsFile, generateSecrets());
-  const secrets = await readSecrets(ctx.runner, l.secretsFile);
+  let secrets = await readSecrets(ctx.runner, l.secretsFile);
+  const missing = Object.entries(generateSecrets()).filter(([key]) => !(key in secrets));
+  if (missing.length) {
+    // An older installation: add the secrets this version introduced, keep the rest.
+    secrets = { ...secrets, ...Object.fromEntries(missing) };
+    await writeSecrets(ctx.runner, l.secretsFile, secrets);
+  }
 
   if (!fs.existsSync(path.join(l.pgdata, "PG_VERSION"))) {
     const pwfile = path.join(l.secrets, `initdb-${crypto.randomUUID()}.tmp`);
@@ -231,7 +237,7 @@ async function setupMain(ctx, options) {
     ctx,
     version,
     secrets.owner_password,
-    `\\set api_password '${secrets.db_password}'\n${pg.apiLoginSql()}`,
+    `\\set api_password '${secrets.db_password}'\n\\set backup_password '${secrets.backup_password}'\n${pg.apiLoginSql()}`,
   );
   log("database ready");
 

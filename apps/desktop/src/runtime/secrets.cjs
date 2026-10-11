@@ -8,12 +8,12 @@ const fs = require("node:fs");
 
 const { powershell, psQuote } = require("./runner.cjs");
 
-/** @typedef {{ jwt_secret: string, db_password: string, owner_password: string }} Secrets */
+/** @typedef {{ jwt_secret: string, db_password: string, owner_password: string, backup_password: string }} Secrets */
 
 /** @returns {Secrets} */
 function generateSecrets() {
   const token = () => crypto.randomBytes(32).toString("base64url");
-  return { jwt_secret: token(), db_password: token(), owner_password: token() };
+  return { jwt_secret: token(), db_password: token(), owner_password: token(), backup_password: token() };
 }
 
 /**

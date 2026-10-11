@@ -4,7 +4,7 @@
 // How the API runs on the main PC: its environment, its uvicorn arguments and its WinSW service definition.
 
 const { SERVICE, product } = require("./layout.cjs");
-const { API_LOGIN, databaseUrl } = require("./postgres.cjs");
+const { API_LOGIN, BACKUP_LOGIN, databaseUrl } = require("./postgres.cjs");
 
 /**
  * @typedef {ReturnType<typeof import("./layout.cjs").layout>} Layout
@@ -22,6 +22,7 @@ function apiEnvironment(l, config, version) {
     SMARTBIZ_WEB_DIR: rt.web,
     SMARTBIZ_FILES_DIR: l.files,
     SMARTBIZ_BACKUP_DIR: l.backups,
+    SMARTBIZ_BACKUP_DATABASE_URL: databaseUrl(BACKUP_LOGIN, config.dbPort),
     SMARTBIZ_PG_BIN_DIR: rt.pgBin,
     SMARTBIZ_PRODUCT_CONFIG_PATH: rt.productConfig,
     SMARTBIZ_PAIRING_FILE: l.pairingFile,
