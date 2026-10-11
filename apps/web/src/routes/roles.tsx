@@ -1,13 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { components } from "@smartbiz/api-client";
 
 import { useApi } from "@/api/use-api";
-import { useSession } from "@/auth/use-session";
-import { LanguageSwitch } from "@/components/language-switch";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,26 +24,8 @@ const ACTIONS = [
 ] as const;
 const SPECIAL_RESOURCES = new Set(["price", "credit", "period"]);
 
+/** Inside the app shell, which handles sign-in, the header and the language switch. */
 export function RolesPage() {
-  const { t } = useTranslation();
-  const { accessToken } = useSession();
-
-  if (!accessToken) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <p>
-          {t("roles.loginFirst")}{" "}
-          <Link to="/login" className="underline">
-            {t("login.title")}
-          </Link>
-        </p>
-      </main>
-    );
-  }
-  return <RolesEditor />;
-}
-
-function RolesEditor() {
   const { t, i18n } = useTranslation();
   const api = useApi();
   const roles = useQuery({
@@ -67,10 +46,10 @@ function RolesEditor() {
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  if (roles.isPending || permissions.isPending) return <p className="px-4 py-10">{t("common.loading")}</p>;
+  if (roles.isPending || permissions.isPending) return <p>{t("common.loading")}</p>;
   if (roles.isError || permissions.isError) {
     return (
-      <p role="alert" className="px-4 py-10 text-destructive">
+      <p role="alert" className="text-destructive">
         {t("roles.forbidden")}
       </p>
     );
@@ -80,11 +59,8 @@ function RolesEditor() {
   const roleName = (r: Role) => (i18n.language === "ar" ? r.name_ar : r.name_en);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{t("roles.title")}</h1>
-        <LanguageSwitch />
-      </header>
+    <div className="flex max-w-6xl flex-col gap-6">
+      <h1 className="text-2xl font-bold">{t("roles.title")}</h1>
       <div className="flex flex-col gap-6 md:flex-row">
         <nav aria-label={t("roles.title")} className="flex shrink-0 flex-col gap-1 md:w-56">
           {roles.data.map((r) => (
@@ -108,7 +84,7 @@ function RolesEditor() {
           />
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

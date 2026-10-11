@@ -25,6 +25,7 @@ export function fakeApi(routes: Record<string, Handler | { status: number; body:
     const route = routes[`${input.method} ${url.pathname}`];
     const answer =
       typeof route === "function" ? route(body) : (route ?? { status: 404, body: { code: "not_found" } });
+    if (answer.status === 204) return new Response(null, { status: 204 });
     return new Response(JSON.stringify(answer.body), {
       status: answer.status,
       headers: { "content-type": "application/json" },

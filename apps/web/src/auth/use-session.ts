@@ -1,16 +1,26 @@
 import { createContext, useContext } from "react";
 
+import type { components } from "@smartbiz/api-client";
+
+export type SignupBody = components["schemas"]["SignupIn"];
+
 export interface TenantChoice {
   tenant_id: string;
   tenant_name: string;
 }
 
-export type LoginResult = { ok: true } | { ok: false; code: string; memberships?: TenantChoice[] };
+export type AuthResult = { ok: true } | { ok: false; code: string; memberships?: TenantChoice[] };
+
+export type SessionStatus = "loading" | "signed_in" | "signed_out";
 
 export interface Session {
+  status: SessionStatus;
   accessToken: string | null;
-  login(email: string, password: string, tenantId?: string): Promise<LoginResult>;
-  logout(): void;
+  tenantId: string | null;
+  login(email: string, password: string, tenantId?: string): Promise<AuthResult>;
+  signup(body: Omit<SignupBody, "client">): Promise<AuthResult>;
+  switchTenant(tenantId: string): Promise<AuthResult>;
+  logout(): Promise<void>;
 }
 
 export const SessionContext = createContext<Session | null>(null);
