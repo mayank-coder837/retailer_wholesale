@@ -13,6 +13,10 @@ columns (`due_date`, `supplier_ref`, `valid_until`, `shipping_address_id`) valid
 Vouchers without item lines (receipt, payment, contra, journal, expense) use `document` + `voucher_line`.
 Per-type behaviour lives in per-type posting classes, not in the table design.
 
+Update 2026-10-11 (decisions-round-1): statuses are `draft → posted → cancelled | reversed`; `item_transfer` is a
+document type with source and target lines; every type has a gap-free series; `reissue_of_id` links a replacement
+to the cancelled document whose number it reuses.
+
 ## Consequences
 - One implementation of numbering, linking (`document_link`), lifecycle and audit.
 - Partial indexes per `doc_type` keep lists fast; a check constraint ties `doc_type` to its allowed statuses.

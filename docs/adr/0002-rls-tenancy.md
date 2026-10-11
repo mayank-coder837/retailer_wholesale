@@ -22,6 +22,10 @@ prices, customers or books. Isolation must not depend on every developer (or the
   cannot read, update or delete A's rows. A CI check lists every table with a `tenant_id` column and fails if
   it has no policy or no isolation test.
 
+- **Local branch databases (ADR 0008)** hold one tenant, but run the same migrations, policies and tests, so the
+  code path is identical everywhere and the cloud copy — which holds every tenant — is protected by exactly the
+  rules already exercised locally.
+
 ## Consequences
 - Cross-tenant work (platform admin, billing) uses a separate role and code path, audited.
 - `SET LOCAL` is scoped to the transaction, so pooled connections never carry a stale tenant.

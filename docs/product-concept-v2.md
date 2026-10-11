@@ -5,6 +5,10 @@ Oct 7, 2026 · @Mayank
 > Converted from `Retail + Wholesale Business OS — Concept v2.pdf` on 2026-10-10. Tables were rebuilt from
 > the PDF text; arrows the PDF lost are restored as → and >. The two diagrams (system architecture, roadmap)
 > are images in the PDF and are described in words here; the PDF is the source of truth for them.
+>
+> **Product name: SmartBiz OS** (decided 11 Oct 2026). "Business OS" below is the concept's working title.
+> Where this concept differs from `decisions-round-1.md` (local-first desktop, moving-average costing, PDC memo,
+> Cancel/Reverse, pricing order), the decisions file wins.
 
 ## Executive summary
 

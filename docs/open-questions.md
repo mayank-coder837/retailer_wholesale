@@ -1,51 +1,65 @@
 # Open questions
 
-Decisions needed from the founder (F), an accountant (A), or both. Until answered, the system uses the marked
-default, made configurable where it touches money.
+Round 1 is answered: every question below links to its decision in
+[`decisions-round-1.md`](decisions-round-1.md) (founder, 11 Oct 2026; all interpretations confirmed). Only the
+accountant reviews remain open.
 
-## Founder — product and business
+## Still open — accountant review
 
-| # | Question | Default meanwhile |
+| # | Review | Default in use meanwhile |
 | --- | --- | --- |
-| F1 | Confirm the beachhead: UAE trading/wholesale SMBs, or another segment? | UAE trading/wholesale |
-| F2 | "AI Tally assistant": Tally-style entry + one-time migration, or two-way sync with customers who keep Tally? | Entry + migration only |
-| F3 | Which ASP partner(s) to approach for e-invoicing (Phase 2, deadline 1 Jul 2027)? | Pluggable adapter, no partner yet |
-| F4 | Team: solo founder with Claude Code, or hire a backend lead and an accountant advisor? | Solo; posting rules flagged for review |
-| F5 | Product name and domain (needed for the desktop app's name, installer and `app.<domain>` URL) | "Business OS", placeholder domain |
-| F6 | Pricing tiers and free-tier limit | Not built in Phase 0–1 |
-| F7 | Hosting provider in a UAE region (Azure UAE North, AWS me-central-1, Oracle Dubai, local)? | Decide before first customer data |
+| R1 | Every rule in [`posting-rules.md`](posting-rules.md) (all marked "default — to be confirmed by accountant") | As written |
+| R2 | Negative-stock cost adjustment: revaluing negative quantities at the incoming cost, difference to "stock cost adjustment" under cost of sales ([A6](decisions-round-1.md#rules-to-build); posting rule 27) | As written |
+| R3 | VAT 201 box mapping per tax code, and the Box 1 labels on the current EmaraTax form, before Phase 2 ([VAT 201 table](decisions-round-1.md#vat-201-box-mapping-a10)) | Mapping in `domain-model.md` → Tax |
 
-## Desktop app
+Also for the accountant before e-invoicing go-live: an invoice already sent through the ASP can only be reversed
+with a credit note, never cancelled ([A7](decisions-round-1.md#rules-to-build)).
 
-| # | Question | Default meanwhile |
+## Answered — round 1
+
+### Founder — product and business
+
+| # | Question | Answer |
 | --- | --- | --- |
-| D1 | Should the Electron shell load the hosted web app URL (always current, needs internet) or bundle a static build of the UI (works offline-first, but a static Next.js export loses server rendering)? | Load hosted URL + offline page (ADR 0008) |
-| D2 | How much must work offline in Phases 0–1? Only queued drafts, or also viewing recent data? | Queued drafts only |
-| D3 | Code-signing certificate before first customer release (Azure Trusted Signing ~$10/month)? | Unsigned in development |
-| D4 | Keep a browser/web version for customers too, or desktop-only for users (web only for phones/portal)? | Both, from one codebase |
+| F1 | Beachhead | UAE trading/wholesale SMBs — [F1](decisions-round-1.md#product-and-business-f1f7) |
+| F2 | AI Tally assistant scope | Fast entry + one-time migration, no two-way sync — [F2](decisions-round-1.md#product-and-business-f1f7) |
+| F3 | E-invoicing ASP | Not now; keep the adapter; choose by Jan 2027 — [F3](decisions-round-1.md#product-and-business-f1f7) |
+| F4 | Team | Solo founder with Claude Code — [F4](decisions-round-1.md#product-and-business-f1f7) |
+| F5 | Name and domain | **SmartBiz OS**, in one config value; no domain yet — [F5](decisions-round-1.md#product-and-business-f1f7) |
+| F6 | Pricing tiers | Not yet — [F6](decisions-round-1.md#product-and-business-f1f7) |
+| F7 | Hosting | Local Docker for development; free cloud tier for pilots; UAE region before real data — [F7](decisions-round-1.md#product-and-business-f1f7) |
 
-## Accountant — money, tax and posting
+### Desktop app
 
-| # | Question | Default meanwhile |
+| # | Question | Answer |
 | --- | --- | --- |
-| A1 | Confirm every rule in `posting-rules.md` (all marked "default — to be confirmed") | As written |
-| A2 | PDC received: reduce the customer balance at receipt (PDC asset account) or keep as memo until maturity like Tally? | Reduce at receipt (rules 14–17) |
-| A3 | VAT rounding: per line or per invoice; half-up or another FTA-accepted method? | Per line, half-up, 2 dp |
-| A4 | Purchase price variance when the bill differs from the goods receipt: to inventory (if still in stock) or to a variance account? | Variance account |
-| A5 | Cost pool per business (warehouses share cost) or per warehouse? | Per business |
-| A6 | Allow negative stock? If yes, at which cost, and how is it trued up? | Blocked |
-| A7 | Cancelling a posted document: reversal dated on the cancel date or the original date (if period open)? | Cancel date |
-| A8 | Delivery note before invoice: recognise COGS at delivery (default) or at invoice via a "goods delivered not invoiced" account? | COGS at delivery |
-| A9 | Do promotions stack with customer price lists, or does the first matching rule win? | First match wins |
-| A10 | VAT 201 box mapping (boxes 1a–1g by emirate, 2–11): confirm the rule for each tax code and document type | Draft mapping in seed data |
-| A11 | Default chart of accounts per industry pack: review before M1.5 | Generic UAE trading chart |
-| A12 | Gap-free numbering: which document types legally need it (tax invoices, credit notes)? | Tax invoices and credit notes gap-free |
+| D1 | Hosted URL or bundled? | Local-first like Tally: UI + API + PostgreSQL on each branch's main PC, cloud sync — [D1](decisions-round-1.md#desktop-app-d1d4), ADR 0008 |
+| D2 | Offline scope | Everything in the office works offline — [D2](decisions-round-1.md#desktop-app-d1d4) |
+| D3 | Code signing | Unsigned in development; buy before first customer release — [D3](decisions-round-1.md#desktop-app-d1d4) |
+| D4 | Browser version | Yes, one codebase, against the cloud — [D4](decisions-round-1.md#desktop-app-d1d4) |
 
-## Technical setup
+### Accountant topics (founder decisions)
 
-| # | Question | Default meanwhile |
+| # | Question | Answer |
 | --- | --- | --- |
-| T1 | The PC lacks Docker Desktop (needs WSL 2), `make`, `uv` and `pnpm`; Python is 3.13, spec says 3.12. Install these before M0.1? (`winget install Docker.DockerDesktop GnuWin32.Make astral-sh.uv pnpm.pnpm Python.Python.3.12`) | Install before M0.1 |
-| T2 | Celery or Dramatiq for jobs? (`CLAUDE.md` says Celery; Concept v2 allows either) | Celery |
-| T3 | LLM provider for M1.13 and data-residency limits on sending business data to it | Decide before M1.13 |
-| T4 | Keep `docs/kickoff-prompt.md` in the repo for history? | Not added |
+| A1 | Posting rules | As written except A2, A6, A7, A8 — [A1](decisions-round-1.md#accounting-tax-and-posting-a1a12); review still open (R1) |
+| A2 | PDC treatment | Memo until cleared, like Tally — [A2](decisions-round-1.md#rules-to-build) |
+| A3 | VAT rounding | Per line, half-up, 2 dp; line and total VAT shown; no setting — [A3](decisions-round-1.md#rules-to-build) |
+| A4 | Bill vs receipt price difference | Variance account — [A4](decisions-round-1.md#accounting-tax-and-posting-a1a12) |
+| A5 | Cost pool | One moving average across all warehouses; no FIFO in MVP — [A5](decisions-round-1.md#rules-to-build), ADR 0006 |
+| A6 | Negative stock | Allowed; Item Transfer to fix; negative-stock report — [A6](decisions-round-1.md#rules-to-build); review open (R2) |
+| A7 | Cancel vs reverse | Both; Cancel frees the number — [A7](decisions-round-1.md#rules-to-build) |
+| A8 | COGS timing | At invoice via goods delivered not invoiced; delivery note without prices — [A8](decisions-round-1.md#rules-to-build) |
+| A9 | Pricing / promotions | Last price to this customer first; history panel; first match wins — [A9](decisions-round-1.md#rules-to-build) |
+| A10 | VAT entry and VAT 201 | Exclusive / inclusive / no VAT; box mapping table — [A10](decisions-round-1.md#vat-201-box-mapping-a10); review open (R3) |
+| A11 | Chart of accounts | Generic UAE trading chart — [A11](decisions-round-1.md#accounting-tax-and-posting-a1a12) |
+| A12 | Gap-free numbering | Every document and voucher type — [A12](decisions-round-1.md#rules-to-build) |
+
+### Technical
+
+| # | Question | Answer |
+| --- | --- | --- |
+| T1 | Install missing tools | Yes, before M0.1 — [T1](decisions-round-1.md#technical-setup-t1t4) |
+| T2 | Jobs | Celery in the cloud; in-process worker on branch PCs (ADR 0012) — [T2](decisions-round-1.md#technical-setup-t1t4) |
+| T3 | LLM provider | Decide before M1.13 — [T3](decisions-round-1.md#technical-setup-t1t4) |
+| T4 | Keep kickoff prompt | No — [T4](decisions-round-1.md#technical-setup-t1t4) |

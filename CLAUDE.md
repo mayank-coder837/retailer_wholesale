@@ -1,9 +1,14 @@
-# Business OS — guide for Claude Code
+# SmartBiz OS — guide for Claude Code
 
-A multi-tenant, configurable business operating system for UAE/GCC traders, wholesalers and retailers:
-accounting, inventory, sales, purchasing, VAT and an AI assistant in one product.
-Delivered as a Windows desktop app (.exe) backed by one hosted API; see `docs/adr/0008-desktop-client.md`.
+SmartBiz OS is a multi-tenant, configurable business operating system for UAE/GCC traders, wholesalers and
+retailers: accounting, inventory, sales, purchasing, VAT and an AI assistant in one product.
+It is **local-first, like Tally**: a Windows desktop app bundles the UI, the API and PostgreSQL on each branch's
+main PC, other office PCs connect over the LAN, and data syncs to the cloud (`docs/adr/0008-local-first-desktop.md`).
 Full product spec: `docs/product-concept-v2.md`. Original concept: `docs/product-concept-v1.pdf`.
+Founder decisions: `docs/decisions-round-1.md` — where it conflicts with other docs, it wins.
+
+The product name lives in one config value (`packages/config/product.json` → `name`, default "SmartBiz OS");
+never hard-code it.
 
 First customer (beachhead): UAE trading and wholesale SMBs (2–50 staff) moving off Tally, Excel and WhatsApp.
 When a design choice is unclear, choose what serves that customer's daily workflow.
@@ -16,11 +21,15 @@ These protect money, tax and customer data. Never weaken them, and never edit a 
 
 1. **Tenant isolation.** Every business table has `tenant_id`. PostgreSQL row-level security is enabled on every
    tenant table; the API sets `app.tenant_id` per request/transaction. Any new table without RLS + an isolation
-   test is incomplete.
+   test is incomplete. This applies to the local branch database too: the same migrations run locally and in
+   the cloud.
 2. **No floats for money or quantity.** Python `Decimal`, DB `NUMERIC(19,4)` for amounts, `NUMERIC(19,6)` for
    quantities, rates and conversion factors. Round only at defined points with the currency's rules (AED = 2 dp).
-3. **Posted means permanent.** Financial and stock documents move `draft → posted → cancelled`. Posted documents
-   are never updated or deleted; corrections are reversals or credit/debit notes.
+3. **Posted means permanent.** Financial and stock documents move `draft → posted → cancelled | reversed`.
+   Posted rows (documents, journal lines, stock moves) are never updated or deleted. Corrections are new rows:
+   **Cancel** (open period only) writes reversing entries dated on the original date and frees the number for a
+   replacement, keeping the cancelled version in full in the audit log; **Reverse** writes a reversal or credit/debit
+   note dated on the chosen day. See `docs/posting-rules.md`.
 4. **Double entry always balances.** Every journal entry satisfies sum(debit) = sum(credit), enforced by a
    deferred DB constraint/trigger as well as in code.
 5. **Stock comes from the stock ledger.** Current stock and stock value are derived from immutable `stock_move`
@@ -40,15 +49,16 @@ These protect money, tax and customer data. Never weaken them, and never edit a 
 | Area | Choice |
 | --- | --- |
 | Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic |
-| DB | PostgreSQL 16 (RLS), pgvector later |
-| Jobs | Redis + Celery workers, transactional outbox table |
-| Files | S3-compatible storage (MinIO locally) |
-| Frontend | Next.js (App Router) + TypeScript, Tailwind, shadcn/ui, TanStack Query, next-intl |
-| Desktop | Electron shell + electron-builder (NSIS `.exe`), electron-updater via GitHub Releases; shows the web UI and talks only to the cloud API |
+| DB | PostgreSQL 16 (RLS) — bundled on each branch's main PC and in the cloud; pgvector later (cloud) |
+| Jobs | Transactional outbox table. Local: an in-process worker in the API reads it. Cloud: Redis + Celery workers |
+| Files | Local: files folder on the main PC. Cloud: S3-compatible storage (MinIO in dev) |
+| Frontend | Vite + React + TypeScript (client-side SPA), Tailwind, shadcn/ui, TanStack Query + Router, react-i18next (RTL) |
+| Desktop | Electron + electron-builder (NSIS `.exe`), electron-updater via GitHub Releases; bundles the UI, the API (packaged Python) and PostgreSQL 16 as Windows services; office PCs connect over the LAN |
+| Sync | Local outbox → cloud, append-only for posted records; see ADRs 0010–0011 |
 | API client | Generated from the FastAPI OpenAPI schema — never hand-write API types |
 | Tests | pytest, pytest-asyncio, Hypothesis (property tests), factory_boy; Vitest + Playwright on web |
 | Tooling | uv, ruff, mypy (strict on `app/`), pnpm, ESLint, Prettier, pre-commit, GitHub Actions |
-| Local dev | Docker Compose |
+| Local dev | Docker Compose (developers only; customer PCs never need Docker) |
 
 ## Repository layout
 
@@ -62,10 +72,11 @@ apps/
       ai/              # tool registry (later phases)
     migrations/        # Alembic
     seeds/             # industry packs, default chart of accounts, units (JSON/YAML)
-  web/                 # Next.js app
-  desktop/             # Electron shell: main/preload, packaging, auto-update (no business logic)
+  web/                 # Vite + React SPA (same build for desktop and browser)
+  desktop/             # Electron: main/preload, runs bundled API + PostgreSQL, LAN setup, backups, updates (no business logic)
 packages/
   api-client/          # generated TypeScript client
+  config/              # product.json (product name and shared constants)
 docs/
   product-concept-v2.md
   architecture.md
@@ -86,8 +97,9 @@ A module may call another module's **service** functions, never query its tables
 - Permissions are strings `resource.action` (actions: view, create, edit, delete, approve, post, export).
   Check with a FastAPI dependency `require("sales_invoice.post")`; scope by business/branch where relevant.
 - Errors: typed domain exceptions mapped to RFC 7807 problem responses with a stable `code`.
-- Document numbers come from the numbering-series service (per business, document type, fiscal year), allocated
-  at post time, gap-free where the tax rules need it.
+- Document numbers come from the numbering-series service (per branch, document type, fiscal year), allocated by
+  the branch's main database at post time (at save for quotations), gap-free for **every** document type. Each
+  series has exactly one owner, so local and cloud numbers never clash (ADR 0010).
 - Business configuration (industries, units, attributes, chart of accounts, templates) is seed data, not code branches.
 - Keep functions small and typed; no business logic in routers or React components.
 
@@ -126,3 +138,5 @@ make gen-client  # regenerate packages/api-client from OpenAPI
 - **TRN**: UAE tax registration number. **FTA**: Federal Tax Authority.
 - **ASP**: accredited e-invoicing service provider. **PINT-AE**: the UAE structured e-invoice format (Peppol).
 - **Bill-wise**: settling payments against specific invoices, as in Tally.
+- **Main PC**: the branch PC that runs the bundled API and PostgreSQL; other office PCs are clients over the LAN.
+- **Item Transfer**: moves quantity from one item to another at the source's average cost (Tally's stock journal).
