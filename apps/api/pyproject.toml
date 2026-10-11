@@ -1,0 +1,50 @@
+[project]
+name = "smartbiz-api"
+version = "0.1.0"
+description = "SmartBiz OS API (FastAPI modular monolith)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic>=1.20.0",
+    "asyncpg>=0.32.0",
+    "fastapi>=0.143.0",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy[asyncio]>=2.1.4",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF", "N", "SIM", "PT"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/**" = ["N999"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests", "app"]
+
+[dependency-groups]
+dev = [
+    "factory-boy>=3.3.3",
+    "httpx>=0.28.1",
+    "hypothesis>=6.169.0",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.0",
+]
