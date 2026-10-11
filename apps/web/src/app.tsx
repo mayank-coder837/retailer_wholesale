@@ -5,17 +5,20 @@ import { useState } from "react";
 import type { ApiClient } from "@smartbiz/api-client";
 
 import { ApiProvider } from "@/api/context";
+import { SessionProvider } from "@/auth/session";
 import { createAppRouter } from "@/router";
 
 export function App({ api }: { api: ApiClient }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   const [router] = useState(() => createAppRouter());
 
   return (
     <ApiProvider client={api}>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <SessionProvider api={api}>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </SessionProvider>
     </ApiProvider>
   );
 }

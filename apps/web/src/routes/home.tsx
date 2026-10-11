@@ -1,15 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import product from "@smartbiz/config";
 
 import { useApi } from "@/api/use-api";
+import { useSession } from "@/auth/use-session";
 import { LanguageSwitch } from "@/components/language-switch";
 import { cn } from "@/lib/utils";
 
 export function HomePage() {
   const { t } = useTranslation();
   const api = useApi();
+  const { accessToken } = useSession();
   const health = useQuery({
     queryKey: ["health"],
     queryFn: async () => {
@@ -49,6 +52,11 @@ export function HomePage() {
         />
         {t("home.apiStatus")}: {statusText}
       </p>
+      <nav className="flex gap-4 text-sm">
+        <Link to={accessToken ? "/settings/roles" : "/login"} className="underline">
+          {accessToken ? t("roles.title") : t("login.title")}
+        </Link>
+      </nav>
     </main>
   );
 }

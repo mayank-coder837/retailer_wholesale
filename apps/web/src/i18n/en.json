@@ -1,4 +1,7 @@
 {
+  "common": {
+    "loading": "Loading…"
+  },
   "home": {
     "welcome": "Welcome to {{product}}",
     "tagline": "Accounts, stock and sales in one place.",
@@ -10,5 +13,80 @@
   "language": {
     "label": "Language",
     "switchTo": "العربية"
+  },
+  "login": {
+    "title": "Log in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "chooseAccount": "Choose which account to open",
+    "errors": {
+      "invalid_credentials": "Email or password is incorrect.",
+      "account_locked": "Too many failed attempts. Try again in 15 minutes.",
+      "unauthorized": "You do not have access to that account.",
+      "unknown": "Could not log in. Check the server connection and try again."
+    }
+  },
+  "roles": {
+    "title": "Roles and permissions",
+    "loginFirst": "Log in to manage roles.",
+    "forbidden": "You do not have permission to view roles.",
+    "resource": "Area",
+    "special": "Special permissions",
+    "save": "Save changes",
+    "saved": "Saved.",
+    "saveFailed": "Could not save. You may not have permission to change roles.",
+    "ownerLocked": "The Owner role always has every permission and cannot be changed."
+  },
+  "actions": {
+    "view": "View",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "approve": "Approve",
+    "post": "Post",
+    "cancel": "Cancel",
+    "reverse": "Reverse",
+    "export": "Export"
+  },
+  "special": {
+    "price": { "override_min": "Sell below the minimum price" },
+    "credit": { "override": "Override a customer's credit limit" },
+    "period": { "override_lock": "Post into a locked period" }
+  },
+  "resources": {
+    "tenant": "Account settings",
+    "business": "Businesses",
+    "branch": "Branches",
+    "warehouse": "Warehouses",
+    "membership": "Users",
+    "role": "Roles",
+    "product": "Products",
+    "price_list": "Price lists",
+    "customer": "Customers",
+    "supplier": "Suppliers",
+    "account": "Chart of accounts",
+    "quotation": "Quotations",
+    "sales_order": "Sales orders",
+    "delivery_note": "Delivery notes",
+    "sales_invoice": "Sales invoices",
+    "sales_return": "Sales returns",
+    "purchase_order": "Purchase orders",
+    "goods_receipt": "Goods receipts",
+    "purchase_bill": "Purchase bills",
+    "purchase_return": "Purchase returns",
+    "receipt": "Receipt vouchers",
+    "payment": "Payment vouchers",
+    "contra": "Contra vouchers",
+    "journal": "Journal vouchers",
+    "expense": "Expense vouchers",
+    "credit_note": "Credit notes",
+    "debit_note": "Debit notes",
+    "stock_adjustment": "Stock adjustments",
+    "stock_transfer": "Stock transfers",
+    "item_transfer": "Item transfers",
+    "pdc": "Post-dated cheques",
+    "fiscal_period": "Fiscal periods",
+    "report": "Reports"
   }
 }
