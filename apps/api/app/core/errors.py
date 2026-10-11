@@ -69,6 +69,12 @@ class ConflictError(DomainError):
     title = "Conflict"
 
 
+class UnprocessableError(DomainError):
+    code = "unprocessable"
+    status = HTTPStatus.UNPROCESSABLE_ENTITY
+    title = "The request cannot be applied"
+
+
 class EmailTakenError(ConflictError):
     code = "email_taken"
     title = "An account with this email already exists"

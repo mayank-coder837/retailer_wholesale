@@ -1,0 +1,79 @@
+{
+  "$comment": "Default roles created for every new tenant (M0.3). Patterns expand against app/core/permissions.py. Owners can edit every role except Owner after signup.",
+  "roles": [
+    {
+      "system_key": "owner",
+      "name_en": "Owner",
+      "name_ar": "المالك",
+      "description": "Full access, including users, roles and settings.",
+      "include": ["*"]
+    },
+    {
+      "system_key": "manager",
+      "name_en": "Manager",
+      "name_ar": "المدير",
+      "description": "Runs the business day to day; cannot change roles, delete users, change account settings or post into locked periods.",
+      "include": ["*"],
+      "exclude": ["role.create", "role.edit", "role.delete", "membership.delete", "tenant.edit", "period.override_lock"]
+    },
+    {
+      "system_key": "salesperson",
+      "name_en": "Salesperson",
+      "name_ar": "مندوب مبيعات",
+      "description": "Quotes, orders and invoices for customers; sees stock and prices; no vouchers.",
+      "include": [
+        "business.view", "branch.view", "warehouse.view",
+        "product.view", "price_list.view",
+        "customer.view", "customer.create", "customer.edit",
+        "quotation.view", "quotation.create", "quotation.edit", "quotation.delete", "quotation.post", "quotation.export",
+        "sales_order.view", "sales_order.create", "sales_order.edit", "sales_order.delete", "sales_order.post",
+        "delivery_note.view",
+        "sales_invoice.view", "sales_invoice.create", "sales_invoice.edit", "sales_invoice.delete", "sales_invoice.post", "sales_invoice.export",
+        "sales_return.view", "sales_return.create", "sales_return.edit",
+        "receipt.view", "pdc.view"
+      ]
+    },
+    {
+      "system_key": "warehouse",
+      "name_en": "Warehouse",
+      "name_ar": "أمين المستودع",
+      "description": "Receives and delivers goods, counts and moves stock.",
+      "include": [
+        "business.view", "branch.view", "warehouse.view", "product.view",
+        "sales_order.view", "purchase_order.view",
+        "delivery_note.view", "delivery_note.create", "delivery_note.edit", "delivery_note.delete", "delivery_note.post", "delivery_note.export",
+        "goods_receipt.view", "goods_receipt.create", "goods_receipt.edit", "goods_receipt.delete", "goods_receipt.post", "goods_receipt.export",
+        "stock_adjustment.view", "stock_adjustment.create", "stock_adjustment.edit", "stock_adjustment.delete",
+        "stock_transfer.*",
+        "item_transfer.view", "item_transfer.create", "item_transfer.edit", "item_transfer.delete"
+      ],
+      "exclude": ["stock_transfer.reverse"]
+    },
+    {
+      "system_key": "accountant",
+      "name_en": "Accountant",
+      "name_ar": "المحاسب",
+      "description": "Vouchers, cheques, invoices and bills, periods and reports.",
+      "include": [
+        "business.view", "branch.view", "warehouse.view", "product.view", "price_list.view",
+        "customer.*", "supplier.*", "account.*",
+        "receipt.*", "payment.*", "contra.*", "journal.*", "expense.*", "credit_note.*", "debit_note.*",
+        "sales_invoice.*", "sales_return.*", "purchase_bill.*", "purchase_return.*",
+        "pdc.*", "fiscal_period.*", "report.*", "period.override_lock"
+      ]
+    },
+    {
+      "system_key": "cashier",
+      "name_en": "Cashier",
+      "name_ar": "أمين الصندوق",
+      "description": "Counter sales and cash received.",
+      "include": [
+        "business.view", "branch.view", "warehouse.view",
+        "product.view", "price_list.view", "customer.view", "customer.create",
+        "sales_invoice.view", "sales_invoice.create", "sales_invoice.post",
+        "receipt.view", "receipt.create", "receipt.post",
+        "pdc.view", "pdc.create"
+      ]
+    }
+  ]
+}

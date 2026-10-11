@@ -85,6 +85,8 @@ class Branch(TenantScoped, Base):
     __tablename__ = "branch"
     __table_args__ = (
         UniqueConstraint("tenant_id", "id"),
+        # Lets children (role assignments) reference a branch *and* prove it belongs to their business.
+        UniqueConstraint("tenant_id", "business_id", "id"),
         UniqueConstraint("business_id", "code"),
         ForeignKeyConstraint(["tenant_id", "business_id"], ["business.tenant_id", "business.id"]),
         CheckConstraint(_in("emirate", Emirate), name="emirate"),
