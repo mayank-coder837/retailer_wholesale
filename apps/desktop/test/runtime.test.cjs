@@ -59,7 +59,10 @@ test("the backup login reads everything and can change nothing", () => {
   assert.doesNotMatch(sql, /pg_write_all_data|GRANT smartbiz_app TO smartbiz_backup/);
   assert.match(sql, /smartbiz_backup PASSWORD :'backup_password'/);
   const env = apiEnvironment(l, config, "0.1.0");
-  assert.equal(env.SMARTBIZ_BACKUP_DATABASE_URL, "postgresql+asyncpg://smartbiz_backup@127.0.0.1:5440/smartbiz");
+  assert.equal(
+    env.SMARTBIZ_BACKUP_DATABASE_URL,
+    "postgresql+asyncpg://smartbiz_backup@127.0.0.1:5440/smartbiz",
+  );
 });
 
 test("database URLs: the API's has no password (it comes from the DPAPI file)", () => {

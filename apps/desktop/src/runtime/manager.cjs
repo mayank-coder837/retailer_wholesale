@@ -11,6 +11,7 @@ const path = require("node:path");
 const { localApiUrl } = require("./api-service.cjs");
 const { readConfig, writeConfig } = require("./config.cjs");
 const { fingerprintOfFile, waitForHealthy } = require("./health.cjs");
+const { product } = require("./layout.cjs");
 const pg = require("./postgres.cjs");
 const { powershell, psQuote } = require("./runner.cjs");
 const { generateSecrets, readSecrets, writeSecrets } = require("./secrets.cjs");
@@ -91,32 +92,38 @@ const NETWORK_SERVICE = "NT AUTHORITY\\NetworkService";
 /**
  * Folder permissions (services mode). ProgramData lets every local user read by inheritance, so every folder holding
  * customer data or keys drops inheritance: Administrators, SYSTEM and the service account only.
+ *
+ * Two steps per folder: reset everything inside to plain inheritance, then set the folder's own ACL, which Windows
+ * propagates to the files. (`/inheritance:r` with `/T` would strip each file's inherited entries, and `(OI)(CI)`
+ * grants do not apply to files: initdb's files ended up readable by nobody, PostgreSQL included.)
  * @param {Layout} l @returns {{ dir: string, args: string[] }[]}
  */
 function aclPlan(l) {
   /** @param {string} dir @param {"F" | "M" | "RX"} serviceRight */
-  const restricted = (dir, serviceRight) => ({
-    dir,
-    args: [
+  const restricted = (dir, serviceRight) => [
+    { dir, args: [dir, "/reset", "/T", "/Q"] },
+    {
       dir,
-      "/inheritance:r",
-      "/grant:r",
-      "*S-1-5-32-544:(OI)(CI)F", // Administrators
-      "*S-1-5-18:(OI)(CI)F", // SYSTEM
-      `${NETWORK_SERVICE}:(OI)(CI)${serviceRight}`,
-      "/T",
-      "/Q",
-    ],
-  });
+      args: [
+        dir,
+        "/inheritance:r",
+        "/grant:r",
+        "*S-1-5-32-544:(OI)(CI)F", // Administrators
+        "*S-1-5-18:(OI)(CI)F", // SYSTEM
+        `${NETWORK_SERVICE}:(OI)(CI)${serviceRight}`,
+        "/Q",
+      ],
+    },
+  ];
   return [
-    restricted(l.pgdata, "F"),
-    restricted(l.secrets, "RX"),
-    restricted(l.tls, "RX"), // private key; the certificate's fingerprint is copied into config.json
-    restricted(l.backups, "M"),
-    restricted(l.files, "M"),
-    { dir: l.logs, args: [l.logs, "/grant", `${NETWORK_SERVICE}:(OI)(CI)M`, "/T", "/Q"] },
+    ...restricted(l.pgdata, "F"),
+    ...restricted(l.secrets, "RX"),
+    ...restricted(l.tls, "RX"), // private key; the certificate's fingerprint is copied into config.json
+    ...restricted(l.backups, "M"),
+    ...restricted(l.files, "M"),
+    { dir: l.logs, args: [l.logs, "/grant", `${NETWORK_SERVICE}:(OI)(CI)M`, "/Q"] },
     // Users: the app (no admin) writes the pairing code; the API only reads it.
-    { dir: l.pairing, args: [l.pairing, "/grant", "*S-1-5-32-545:(OI)(CI)M", "/T", "/Q"] },
+    { dir: l.pairing, args: [l.pairing, "/grant", "*S-1-5-32-545:(OI)(CI)M", "/Q"] },
   ];
 }
 
@@ -134,10 +141,12 @@ function pin(config) {
 /** @param {Context} ctx @param {boolean} enabled @param {number} port */
 async function firewall(ctx, enabled, port) {
   if (ctx.host.kind !== "services") return;
-  const name = "SmartBiz OS API";
+  const name = `${product.name} API`;
+  // Get-… | Remove-…: when no rule exists the pipeline is empty and exits 0 (Remove-… alone exits 1).
+  const existing = `Get-NetFirewallRule -DisplayName ${psQuote(name)} -ErrorAction SilentlyContinue`;
   const script = enabled
-    ? `if (-not (Get-NetFirewallRule -DisplayName ${psQuote(name)} -ErrorAction SilentlyContinue)) { New-NetFirewallRule -DisplayName ${psQuote(name)} -Direction Inbound -Protocol TCP -LocalPort ${port} -Profile Private -Action Allow | Out-Null }`
-    : `Remove-NetFirewallRule -DisplayName ${psQuote(name)} -ErrorAction SilentlyContinue`;
+    ? `if (-not (${existing})) { New-NetFirewallRule -DisplayName ${psQuote(name)} -Direction Inbound -Protocol TCP -LocalPort ${port} -Profile Private -Action Allow | Out-Null }; exit 0`
+    : `${existing} | Remove-NetFirewallRule; exit 0`;
   await powershell(ctx.runner, script);
 }
 
@@ -423,7 +432,11 @@ async function restoreWith(ctx, file, version, ownerPassword, port) {
 async function uninstallMain(ctx) {
   const l = ctx.layout;
   const config = readConfig(l.configFile);
-  if (config.runtimeVersion) await ctx.host.uninstall(config.runtimeVersion);
+  // A setup that failed half-way never recorded its version, but may have installed services: use the newest copy.
+  const installed = fs.existsSync(l.runtimes)
+    ? fs.readdirSync(l.runtimes).filter((d) => !d.endsWith(".partial"))
+    : [];
+  await ctx.host.uninstall(config.runtimeVersion ?? installed.sort().at(-1) ?? null);
   await firewall(ctx, false, config.apiPort);
   fs.rmSync(l.runtimes, { recursive: true, force: true });
   fs.rmSync(l.services, { recursive: true, force: true });

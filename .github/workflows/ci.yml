@@ -89,6 +89,42 @@ jobs:
       - if: failure()
         run: cat api.log
 
+  # M0.6 acceptance: the bundled runtime (PostgreSQL, Python + API, WinSW) on Windows, as child processes and as
+  # real Windows services (the runner is an administrator).
+  local-runtime:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache pinned runtime downloads
+        uses: actions/cache@v4
+        with:
+          path: apps/desktop/.cache/downloads
+          key: runtime-downloads-${{ hashFiles('apps/desktop/runtime.lock.json') }}
+      - run: pnpm --filter @smartbiz/desktop prepare-runtime
+      - run: pnpm --filter @smartbiz/desktop test:integration
+      - name: Windows services
+        env:
+          SMARTBIZ_SERVICES_TEST: "1"
+        working-directory: apps/desktop
+        run: node --test --test-timeout=300000 test/integration/services.integration.cjs
+      - if: failure()
+        name: Runtime logs
+        shell: pwsh
+        run: |
+          Get-ChildItem $env:TEMP -Directory -Filter 'smartbiz-rt-*' | ForEach-Object {
+            Get-ChildItem "$($_.FullName)\install\logs" -File -ErrorAction SilentlyContinue | ForEach-Object { "== $_"; Get-Content $_.FullName -Tail 80 }
+          }
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddHours(-1) } -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProviderName -match 'PostgreSQL|SmartBiz' } | Select-Object -First 30 TimeCreated, Message | Format-List
+
   api-client-drift:
     runs-on: ubuntu-latest
     steps:

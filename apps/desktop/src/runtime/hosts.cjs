@@ -25,7 +25,7 @@ const { powershell, psQuote } = require("./runner.cjs");
  *   installApi(version: string, config: RuntimeConfig): Promise<void>,
  *   startApi(version: string, config: RuntimeConfig): Promise<void>,
  *   stopApi(): Promise<void>,
- *   uninstall(version: string): Promise<void>,
+ *   uninstall(version: string | null): Promise<void>,
  * }} Host
  */
 
@@ -42,7 +42,7 @@ function serviceHost(runner, l) {
   const stopService = (/** @type {string} */ name) =>
     powershell(
       runner,
-      `$s = Get-Service -Name ${psQuote(name)} -ErrorAction SilentlyContinue; if ($s -and $s.Status -ne 'Stopped') { Stop-Service -Name ${psQuote(name)} -Force; $s.WaitForStatus('Stopped', '00:01:00') }`,
+      `$s = Get-Service -Name ${psQuote(name)} -ErrorAction SilentlyContinue; if ($s -and $s.Status -ne 'Stopped') { Stop-Service -Name ${psQuote(name)} -Force; $s.WaitForStatus('Stopped', '00:01:00') }; exit 0`, // a missing service is already stopped
     );
   const exists = async (/** @type {string} */ name) =>
     (
@@ -90,12 +90,11 @@ function serviceHost(runner, l) {
     async stopApi() {
       await stopService(SERVICE.api);
     },
-    async uninstall(version) {
-      await stopService(SERVICE.api);
-      if (await exists(SERVICE.api)) await winsw(["uninstall"]);
-      await stopService(SERVICE.postgres);
-      if (await exists(SERVICE.postgres)) {
-        await runner(pgCtl(version), ["unregister", "-N", SERVICE.postgres], { allowFailure: true });
+    // sc.exe needs neither WinSW nor pg_ctl, so a half-finished setup can always be removed.
+    async uninstall() {
+      for (const name of [SERVICE.api, SERVICE.postgres]) {
+        await stopService(name);
+        if (await exists(name)) await runner("sc.exe", ["delete", name]);
       }
     },
   };
@@ -152,7 +151,7 @@ function processHost(runner, l) {
     stopApi,
     async uninstall(version) {
       await stopApi();
-      await this.stopPostgres(version);
+      if (version) await this.stopPostgres(version);
     },
   };
 }

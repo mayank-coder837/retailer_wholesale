@@ -167,10 +167,14 @@ test("folders with customer data or keys drop inherited permissions (ProgramData
   const l = layout("C:\\ProgramData\\SmartBizOS");
   const plan = aclPlan(l);
   for (const dir of [l.pgdata, l.secrets, l.tls, l.backups, l.files]) {
-    const entry = plan.find((p) => p.dir === dir);
-    assert.ok(entry, dir);
-    assert.ok(entry.args.includes("/inheritance:r"), `${dir} must not inherit Users:read`);
-    assert.ok(!entry.args.some((a) => a.startsWith("*S-1-5-32-545")), `${dir} must not grant Users`);
+    const steps = plan.filter((p) => p.dir === dir).map((p) => p.args);
+    assert.deepEqual(steps[0], [dir, "/reset", "/T", "/Q"], `${dir}: everything inside inherits first`);
+    assert.ok(steps[1]?.includes("/inheritance:r"), `${dir} must not inherit Users:read`);
+    assert.ok(!steps.flat().some((a) => a.startsWith("*S-1-5-32-545")), `${dir} must not grant Users`);
+  }
+  // Regression: with /T, /inheritance:r left initdb's files with an empty ACL and PostgreSQL could not start.
+  for (const { args } of plan) {
+    assert.ok(!(args.includes("/inheritance:r") && args.includes("/T")), args.join(" "));
   }
   const pairing = plan.find((p) => p.dir === l.pairing);
   assert.ok(
