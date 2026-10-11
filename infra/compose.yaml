@@ -29,12 +29,15 @@ services:
     environment:
       SMARTBIZ_DATABASE_URL: postgresql+asyncpg://smartbiz:smartbiz@db:5432/smartbiz
       SMARTBIZ_CORS_ORIGINS: '["http://localhost:5173"]'
+      SMARTBIZ_FILES_DIR: /data/files
     ports:
       - "8000:8000"
     volumes:
       - ../apps/api/app:/repo/apps/api/app
       - ../apps/api/migrations:/repo/apps/api/migrations
+      - ../apps/api/seeds:/repo/apps/api/seeds
       - ../packages/config:/repo/packages/config
+      - files-data:/data/files
     depends_on:
       db:
         condition: service_healthy
@@ -62,3 +65,4 @@ services:
 
 volumes:
   db-data:
+  files-data:

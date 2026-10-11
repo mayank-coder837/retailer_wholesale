@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     # (ADR 0002). Migrations run as the owner and create it.
     app_db_role: str = Field(default="smartbiz_app", pattern=r"^[a-z_][a-z0-9_]*$")
 
+    # Attachments: a folder on the main PC (ADR 0008); the cloud S3 adapter arrives with M2.1.
+    files_dir: Path = REPO_ROOT / "var" / "files"
+    max_upload_bytes: int = 20 * 1024 * 1024
+    # Background jobs: the API runs the in-process worker unless disabled (tests drive it directly).
+    worker_enabled: bool = True
+
     # Auth (ADR 0007)
     jwt_secret: str = DEV_JWT_SECRET
     access_token_ttl_s: int = 15 * 60

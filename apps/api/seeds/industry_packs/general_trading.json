@@ -1,0 +1,28 @@
+{
+  "code": "general_trading",
+  "version": 1,
+  "name_en": "General trading",
+  "name_ar": "التجارة العامة",
+  "description": "Mixed goods bought in cartons and boxes and sold by piece, dozen or weight.",
+  "sections": {
+    "settings": {
+      "catalog.default_sales_unit": "pcs",
+      "inventory.negative_stock_warning": true
+    },
+    "units": [
+      { "code": "pcs", "family": "count", "name_en": "Piece", "name_ar": "قطعة", "symbol": "pcs", "decimals": 0 },
+      { "code": "dozen", "family": "count", "name_en": "Dozen", "name_ar": "دزينة", "symbol": "dz", "decimals": 0, "factor_to_family_base": 12 },
+      { "code": "box", "family": "count", "name_en": "Box", "name_ar": "صندوق", "symbol": "box", "decimals": 0 },
+      { "code": "carton", "family": "count", "name_en": "Carton", "name_ar": "كرتون", "symbol": "ctn", "decimals": 0 },
+      { "code": "kg", "family": "weight", "name_en": "Kilogram", "name_ar": "كيلوغرام", "symbol": "kg", "decimals": 3 }
+    ],
+    "attributes": [
+      { "code": "color", "name_en": "Colour", "name_ar": "اللون", "values": [] },
+      { "code": "size", "name_en": "Size", "name_ar": "المقاس", "values": [] }
+    ],
+    "custom_fields": [
+      { "entity_type": "product", "key": "origin_country", "label_en": "Country of origin", "label_ar": "بلد المنشأ", "data_type": "text" },
+      { "entity_type": "product", "key": "hs_code", "label_en": "HS code", "label_ar": "رمز النظام المنسق", "data_type": "text" }
+    ]
+  }
+}

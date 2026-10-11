@@ -26,6 +26,7 @@ test-results/
 .env.*
 !.env.example
 infra/data/
+var/
 
 # editors / OS
 .vscode/
