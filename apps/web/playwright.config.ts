@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * Two projects:
+ * - smoke: no API needed (signed-out pages);
+ * - full: the onboarding acceptance flow against the real API (VITE_API_URL, default http://localhost:8000).
+ */
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -10,7 +15,10 @@ export default defineConfig({
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "smoke", testMatch: /smoke\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
+    { name: "full", testMatch: /onboarding\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
+  ],
   webServer: {
     command: "pnpm dev",
     url: "http://localhost:5173",

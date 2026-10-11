@@ -52,7 +52,41 @@ jobs:
       - run: pnpm --filter @smartbiz/desktop test
       - run: pnpm --filter @smartbiz/web build
       - run: pnpm --filter @smartbiz/web exec playwright install --with-deps chromium
-      - run: pnpm --filter @smartbiz/web e2e
+      - run: pnpm --filter @smartbiz/web e2e --project=smoke
+
+  # M0.5 acceptance: the onboarding flow in a real browser against the real API and database.
+  e2e-full:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: smartbiz
+          POSTGRES_PASSWORD: smartbiz
+          POSTGRES_DB: smartbiz
+        ports: ["5440:5432"]
+        options: >-
+          --health-cmd "pg_isready -U smartbiz" --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cd apps/api && uv sync --frozen && uv run alembic upgrade head
+      - name: Start the API
+        run: |
+          cd apps/api
+          nohup uv run uvicorn app.main:app --port 8000 > ../../api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/health && exit 0; sleep 1; done
+          cat ../../api.log; exit 1
+      - run: pnpm --filter @smartbiz/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @smartbiz/web e2e --project=full
+      - if: failure()
+        run: cat api.log
 
   api-client-drift:
     runs-on: ubuntu-latest
