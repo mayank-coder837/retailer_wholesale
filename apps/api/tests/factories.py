@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ids import new_id
 from app.core.security import hash_password
-from app.modules.identity.models import Membership, UserAccount
+from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Emirate, Node, NodeKind
 from app.modules.tenancy.schemas import BranchIn, BusinessIn, WarehouseIn
@@ -110,6 +110,43 @@ async def _sync_outbox(session: AsyncSession, _seed: TenantSeed) -> Any:
     return (await session.execute(text("SELECT max(id) FROM sync_outbox"))).scalar_one()
 
 
+async def _new_role(session: AsyncSession, seed: TenantSeed) -> Role:
+    role = Role(id=new_id(), tenant_id=seed.tenant_id, name_en=f"Role {new_id().hex[:6]}", name_ar="دور")
+    session.add(role)
+    await session.flush()
+    return role
+
+
+async def _role(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _new_role(session, seed)).id
+
+
+async def _role_permission(session: AsyncSession, seed: TenantSeed) -> Any:
+    role = await _new_role(session, seed)
+    row = RolePermission(
+        id=new_id(), tenant_id=seed.tenant_id, role_id=role.id, permission_code="product.view"
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
+async def _role_assignment(session: AsyncSession, seed: TenantSeed) -> Any:
+    role = await _new_role(session, seed)
+    membership_id = await _membership(session, seed)
+    row = RoleAssignment(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        membership_id=membership_id,
+        role_id=role.id,
+        business_id=seed.business_id,
+        branch_id=seed.branch_id,
+    )
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "tenant": _tenant,
     "business": _business,
@@ -118,6 +155,9 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "node": _node,
     "membership": _membership,
     "sync_outbox": _sync_outbox,
+    "role": _role,
+    "role_permission": _role_permission,
+    "role_assignment": _role_assignment,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.
