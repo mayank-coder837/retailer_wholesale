@@ -12,7 +12,8 @@ from app.main import create_app
 
 def export(path: Path) -> None:
     schema = create_app().openapi()
-    path.write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # newline="\n": identical bytes on Windows and in CI, so the client-drift check compares like with like.
+    path.write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":
