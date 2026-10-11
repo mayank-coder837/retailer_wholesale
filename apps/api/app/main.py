@@ -1,13 +1,16 @@
 """FastAPI application factory."""
 
+import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app import __version__
-from app.core import health
+from app.core import backup, health, pairing
 from app.core.config import JobsBackend, Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import register_error_handlers
@@ -36,7 +39,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.worker = worker
         if settings.worker_enabled and settings.jobs_backend is JobsBackend.INPROCESS:
             worker.start()
+        backups = (
+            asyncio.create_task(backup.nightly(settings), name="smartbiz-backups")
+            if settings.backup_dir and settings.pg_bin_dir
+            else None
+        )
         yield
+        if backups is not None:
+            backups.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await backups
         await worker.stop()
         await engine.dispose()
 
@@ -64,6 +76,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(tenancy_router.router)
     app.include_router(roles_router.router)
     app.include_router(platform_router.router)
+    app.include_router(pairing.router)
+    if settings.web_dir is not None:
+        # The main PC's API also serves the app itself: one origin for the main PC and office PCs (M0.6).
+        # Mounted last, so every API route above takes precedence.
+        app.mount("/", StaticFiles(directory=settings.web_dir, html=True), name="web")
     return app
 
 

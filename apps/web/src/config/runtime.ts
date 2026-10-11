@@ -2,8 +2,9 @@
  * The SPA is one build for every target, so the API address is decided at runtime:
  * 1. the desktop app's preload bridge (`window.smartbiz.apiUrl`) — local main PC or paired LAN address;
  * 2. `config.json` next to index.html — set per deployment (local API, cloud);
- * 3. `VITE_API_URL` at build time — development;
- * 4. the local API default.
+ * 3. `VITE_API_URL` at build time — development (`.env.development`);
+ * 4. the page's own origin when the API serves the app (M0.6);
+ * 5. the local API default.
  */
 export const DEFAULT_API_URL = "http://localhost:8000";
 
@@ -42,5 +43,10 @@ export async function resolveApiUrl(fetchImpl: typeof fetch = fetch): Promise<st
     // No config file (e.g. tests, file:// without it): fall through.
   }
 
-  return import.meta.env.VITE_API_URL || DEFAULT_API_URL;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  // Served by the API itself (main PC, office PCs, cloud): the API is this page's own origin.
+  if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+    return window.location.origin;
+  }
+  return DEFAULT_API_URL;
 }

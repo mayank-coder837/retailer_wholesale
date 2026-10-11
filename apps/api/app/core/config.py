@@ -56,6 +56,17 @@ class Settings(BaseSettings):
     # Background jobs: the API runs the in-process worker unless disabled (tests drive it directly).
     worker_enabled: bool = True
 
+    # Local runtime (M0.6, ADR 0008). Set by the desktop app's service configuration on the main PC.
+    web_dir: Path | None = None  # built SPA served by the API (same origin for main and office PCs)
+    secrets_file: Path | None = None  # DPAPI-encrypted JSON: jwt_secret, db_password (Windows)
+    tls_cert_file: Path | None = None  # self-signed certificate office PCs pin when pairing
+    pairing_file: Path | None = None  # the current pairing code, written by the desktop app on the main PC
+    server_name: str | None = None  # shown to office PCs while pairing
+    backup_dir: Path | None = None  # nightly pg_dump target; no backups when unset
+    pg_bin_dir: Path | None = None  # folder holding pg_dump
+    backup_keep: int = 14
+    backup_hour: int = Field(default=2, ge=0, le=23)  # local time
+
     # Auth (ADR 0007)
     jwt_secret: str = DEV_JWT_SECRET
     access_token_ttl_s: int = 15 * 60
@@ -63,6 +74,17 @@ class Settings(BaseSettings):
     refresh_cookie_secure: bool = False
     login_max_failures: int = 5
     login_lockout_minutes: int = 15
+
+    @model_validator(mode="after")
+    def _load_local_secrets(self) -> "Settings":
+        """On the main PC, secrets come from a DPAPI-encrypted file, never from plain configuration."""
+        if self.secrets_file is not None:
+            from app.core.local_secrets import read_secrets
+
+            secrets = read_secrets(self.secrets_file)
+            self.jwt_secret = secrets["jwt_secret"]
+            self.database_url = with_password(self.database_url, secrets["db_password"])
+        return self
 
     @model_validator(mode="after")
     def _require_real_secrets_in_prod(self) -> "Settings":
@@ -73,6 +95,12 @@ class Settings(BaseSettings):
     @property
     def product(self) -> ProductInfo:
         return load_product(self.product_config_path)
+
+
+def with_password(url: str, password: str) -> str:
+    from sqlalchemy import make_url
+
+    return make_url(url).set(password=password).render_as_string(hide_password=False)
 
 
 @lru_cache

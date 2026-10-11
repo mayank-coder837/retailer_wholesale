@@ -447,6 +447,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/pairing/challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Challenge
+         * @description Public: proves this server knows the code shown on the main PC and owns the certificate in use.
+         */
+        post: operations["pairing_challenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -696,6 +716,23 @@ export interface components {
             costing_method: string;
             /** Negative Stock Allowed */
             negative_stock_allowed: boolean;
+        };
+        /** ChallengeIn */
+        ChallengeIn: {
+            /**
+             * Nonce
+             * @description 32 random bytes, hex
+             */
+            nonce: string;
+        };
+        /** ChallengeOut */
+        ChallengeOut: {
+            /** Product */
+            product: string;
+            /** Server Name */
+            server_name: string;
+            /** Proof */
+            proof: string;
         };
         /**
          * ClientKind
@@ -2101,6 +2138,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pairing_challenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengeOut"];
                 };
             };
             /** @description Validation Error */
