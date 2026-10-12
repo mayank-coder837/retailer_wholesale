@@ -22,7 +22,7 @@ const { apiEnvironment } = require("../src/runtime/api-service.cjs");
 const { defaults, readConfig, writeConfig } = require("../src/runtime/config.cjs");
 const { runElevated, UAC_CANCELLED } = require("../src/runtime/elevate.cjs");
 const { layout } = require("../src/runtime/layout.cjs");
-const { aclPlan, setBackupCopy } = require("../src/runtime/manager.cjs");
+const { aclPlan, freePort, portInUse, setBackupCopy } = require("../src/runtime/manager.cjs");
 
 const FP = "ab".repeat(32);
 const tempRoot = () => fs.mkdtempSync(path.join(os.tmpdir(), "smartbiz-app-"));
@@ -127,6 +127,21 @@ test("the API is told where to copy backups", () => {
     command: "backup-copy",
     folder: null,
   });
+});
+
+test("a port held by another program is skipped for the next free one", async () => {
+  const net = require("node:net");
+  const other = net.createServer();
+  await new Promise((r) => other.listen({ host: "127.0.0.1", port: 0 }, () => r(undefined)));
+  const taken = /** @type {import("node:net").AddressInfo} */ (other.address()).port;
+  try {
+    assert.equal(await portInUse(taken), true);
+    const next = await freePort(taken);
+    assert.ok(next > taken);
+    assert.equal(await portInUse(next), false);
+  } finally {
+    other.close();
+  }
 });
 
 test("restore only accepts backup file names inside the backups folder", () => {

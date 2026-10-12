@@ -5,6 +5,7 @@
 // Every step is idempotent: re-running setup after a failure continues where it stopped.
 const crypto = require("node:crypto");
 const fs = require("node:fs");
+const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
 
@@ -150,6 +151,34 @@ async function firewall(ctx, enabled, port) {
   await powershell(ctx.runner, script);
 }
 
+/**
+ * True when something already answers or listens on 127.0.0.1:port (another PostgreSQL, Docker, any program).
+ * @param {number} port
+ */
+async function portInUse(port) {
+  const answers = await new Promise((resolve) => {
+    const socket = net.connect({ host: "127.0.0.1", port });
+    socket.setTimeout(1000);
+    socket.once("connect", () => (socket.destroy(), resolve(true)));
+    socket.once("timeout", () => (socket.destroy(), resolve(false)));
+    socket.once("error", () => resolve(false));
+  });
+  if (answers) return true;
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.once("error", () => resolve(true));
+    server.listen({ host: "127.0.0.1", port, exclusive: true }, () => server.close(() => resolve(false)));
+  });
+}
+
+/** The first free port from `start` on. @param {number} start */
+async function freePort(start) {
+  for (let port = start; port < start + 50; port += 1) {
+    if (!(await portInUse(port))) return port;
+  }
+  throw new Error(`no free port between ${start} and ${start + 49}`);
+}
+
 /** LAN addresses to put in the certificate (informational: office PCs pin the fingerprint). */
 function lanAddresses() {
   return Object.values(os.networkInterfaces())
@@ -208,6 +237,17 @@ async function setupMain(ctx, options) {
     }
     log("database cluster created");
   }
+  // Another program on our port (another PostgreSQL, Docker…): move to the next free port, unless it is our own
+  // PostgreSQL already running from an earlier setup.
+  const ownRunning =
+    (await ctx.runner(path.join(rt.pgBin, "pg_ctl.exe"), ["status", "-D", l.pgdata], { allowFailure: true }))
+      .code === 0;
+  if (!ownRunning && (await portInUse(config.dbPort))) {
+    const port = await freePort(config.dbPort + 1);
+    log(`port ${config.dbPort} is used by another program; the database uses ${port}`);
+    config.dbPort = port;
+    writeConfig(l.configFile, config);
+  }
   fs.writeFileSync(path.join(l.pgdata, "postgresql.conf"), pg.postgresqlConf(config.dbPort));
   fs.writeFileSync(path.join(l.pgdata, "pg_hba.conf"), pg.pgHbaConf());
 
@@ -251,6 +291,12 @@ async function setupMain(ctx, options) {
   log("database ready");
 
   config.certFingerprint = fingerprintOfFile(l.certFile);
+  // Our API has never run before the first setup finishes, so anything on its port is another program.
+  if (!config.runtimeVersion && (await portInUse(config.apiPort))) {
+    const port = await freePort(config.apiPort + 1);
+    log(`port ${config.apiPort} is used by another program; the API uses ${port}`);
+    config.apiPort = port;
+  }
   config.runtimeVersion = version;
   writeConfig(l.configFile, config);
   await ctx.host.installApi(version, config);
@@ -546,5 +592,7 @@ module.exports = {
   backupName,
   aclPlan,
   lanAddresses,
+  portInUse,
+  freePort,
   PAIRING_ALPHABET,
 };
