@@ -10,6 +10,7 @@ import sys
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi import FastAPI
@@ -198,10 +199,20 @@ def test_settings_take_the_password_and_jwt_secret_from_the_secrets_file(
     assert loaded.database_url == "postgresql+asyncpg://owner:pw@127.0.0.1:5440/smartbiz"
 
 
-def test_next_run_is_tonight_or_tomorrow() -> None:
-    assert backup.next_run(datetime(2026, 10, 11, 1, 30), 2) == datetime(2026, 10, 11, 2, 0)
-    assert backup.next_run(datetime(2026, 10, 11, 2, 0), 2) == datetime(2026, 10, 12, 2, 0)
-    assert backup.next_run(datetime(2026, 10, 11, 23, 0), 2) == datetime(2026, 10, 12, 2, 0)
+def test_the_daily_backup_runs_at_3pm_dubai_time_whatever_the_pc_clock_zone() -> None:
+    dubai = ZoneInfo("Asia/Dubai")  # UTC+4, no daylight saving
+    assert Settings().backup_hour == 15
+    assert Settings().backup_time_zone == "Asia/Dubai"
+
+    morning = datetime(2026, 10, 11, 6, 30, tzinfo=UTC)  # 10:30 in Dubai
+    assert backup.next_run(morning, 15, dubai) == datetime(2026, 10, 11, 15, 0, tzinfo=dubai)
+    assert backup.next_run(morning, 15, dubai) == datetime(2026, 10, 11, 11, 0, tzinfo=UTC)
+    at_three = datetime(2026, 10, 11, 11, 0, tzinfo=UTC)  # exactly 15:00 in Dubai: next one is tomorrow
+    assert backup.next_run(at_three, 15, dubai) == datetime(2026, 10, 12, 15, 0, tzinfo=dubai)
+    india = datetime(
+        2026, 10, 11, 14, 0, tzinfo=ZoneInfo("Asia/Kolkata")
+    )  # a PC set to India time: 12:30 Dubai
+    assert backup.next_run(india, 15, dubai) == datetime(2026, 10, 11, 15, 0, tzinfo=dubai)
 
 
 def test_backups_log_in_as_the_backup_role_not_the_api(settings: Settings, tmp_path: Path) -> None:

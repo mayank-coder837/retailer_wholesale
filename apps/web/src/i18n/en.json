@@ -211,7 +211,7 @@
     "pairExpires": "The code works until {{time}}.",
     "pairClose": "Stop pairing",
     "backupsTitle": "Backups",
-    "backupsHint": "A backup is made every night and before every update; the newest {{keep}} are kept.",
+    "backupsHint": "A backup is made every day at 3 p.m. Dubai time (or as soon as this PC starts, if it was off) and before every update; the newest {{keep}} are kept.",
     "backupNow": "Back up now",
     "backingUp": "Backing up…",
     "backupDone": "Backup saved: {{name}}",

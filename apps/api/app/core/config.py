@@ -69,7 +69,9 @@ class Settings(BaseSettings):
     backup_copy_dir: Path | None = None
     pg_bin_dir: Path | None = None  # folder holding pg_dump
     backup_keep: int = 14
-    backup_hour: int = Field(default=2, ge=0, le=23)  # local time
+    # Daily automatic backup: 15:00 Dubai time by default (founder, 12 Oct 2026), whatever the PC's clock zone
+    backup_hour: int = Field(default=15, ge=0, le=23)
+    backup_time_zone: str = "Asia/Dubai"
 
     # Auth (ADR 0007)
     jwt_secret: str = DEV_JWT_SECRET

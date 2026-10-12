@@ -52,7 +52,8 @@ Phase 1 (ADR 0010).
   individually (ADR 0007). Pairing is saved per Windows user, so office PCs need no admin rights.
 
 **Backups and updates**
-- Automatic `pg_dump` nightly and before every update, newest 14 kept, in `C:\ProgramData\SmartBizOS\backups`
+- Automatic `pg_dump` every day at 15:00 Dubai time (founder, 12 Oct 2026; a catch-up backup at start-up when the
+  PC was off) and before every update, newest 14 kept, in `C:\ProgramData\SmartBizOS\backups`
   (readable by administrators and the service only); "back up now" and restore from Settings → This PC. Every new backup can also be copied to a
   folder the owner chooses (USB drive, NAS; decision F1), same rotation.
 - An update stops the API, takes a backup, runs migrations, starts the API and checks `/health`; on failure it

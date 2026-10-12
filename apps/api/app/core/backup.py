@@ -17,6 +17,7 @@ from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, status
 from pydantic import BaseModel
@@ -132,9 +133,11 @@ def copy_status(settings: Settings) -> dict[str, str | None] | None:
     return value
 
 
-def next_run(now: datetime, hour: int) -> datetime:
-    candidate = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-    return candidate if candidate > now else candidate + timedelta(days=1)
+def next_run(now: datetime, hour: int, zone: ZoneInfo) -> datetime:
+    """The next ``hour``:00 on the clock of ``zone`` (Asia/Dubai by default), whatever the PC's zone."""
+    local = now.astimezone(zone)
+    candidate = local.replace(hour=hour, minute=0, second=0, microsecond=0)
+    return candidate if candidate > local else candidate + timedelta(days=1)
 
 
 CATCH_UP_AFTER = timedelta(hours=24)
@@ -156,18 +159,19 @@ async def _backup_logged(settings: Settings, kind: str) -> None:
 
 
 async def nightly(settings: Settings, *, startup_delay_s: float = 60) -> None:
-    """Runs forever (cancelled at shutdown): one backup per night at ``backup_hour`` local time.
+    """Runs forever (cancelled at shutdown): one backup a day at ``backup_hour`` in ``backup_time_zone``.
 
-    Shops often switch the main PC off at closing time, so the 2 a.m. backup never runs. A minute after the
+    If the main PC was off at that hour, the backup would be skipped. A minute after the
     server starts (PostgreSQL settled), a backup is made at once if the newest is more than a day old.
     """
     await asyncio.sleep(startup_delay_s)
     if needs_catch_up(settings, datetime.now(UTC)):
         await _backup_logged(settings, "catch-up")
+    zone = ZoneInfo(settings.backup_time_zone)
     while True:
-        now = datetime.now()
-        await asyncio.sleep((next_run(now, settings.backup_hour) - now).total_seconds())
-        await _backup_logged(settings, "nightly")
+        now = datetime.now(UTC)
+        await asyncio.sleep((next_run(now, settings.backup_hour, zone) - now).total_seconds())
+        await _backup_logged(settings, "daily")
 
 
 # One backup at a time per API process (the nightly job and "back up now" share it).
