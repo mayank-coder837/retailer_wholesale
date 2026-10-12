@@ -1,7 +1,9 @@
 """API pieces of the local runtime (M0.6): pairing proof, serving the SPA, backups."""
 
+import asyncio
 import hashlib
 import json
+import os
 import ssl
 import subprocess
 import sys
@@ -359,3 +361,39 @@ async def test_the_backups_list_shows_the_copy_folder_and_the_last_copy(
     assert [b["name"] for b in listed["backups"]] == [created.json()["name"]], (
         "the status file is not a backup"
     )
+
+
+def test_a_catch_up_backup_is_due_when_the_newest_is_a_day_old(settings: Settings, tmp_path: Path) -> None:
+    folder = tmp_path / "backups"
+    local = settings.model_copy(update={"backup_dir": folder})
+    now = datetime(2026, 10, 12, 9, 0, tzinfo=UTC)
+
+    assert backup.needs_catch_up(local, now), "no backup at all"
+
+    folder.mkdir()
+    newest = folder / "smartbiz-20261011-020000.dump"
+    newest.write_bytes(b"PGDMP")
+    stamp = datetime(2026, 10, 11, 18, 0, tzinfo=UTC).timestamp()  # 15 hours before `now`
+    os.utime(newest, (stamp, stamp))
+    assert not backup.needs_catch_up(local, now)
+
+    stamp = datetime(2026, 10, 11, 8, 0, tzinfo=UTC).timestamp()  # 25 hours: the PC was off last night
+    os.utime(newest, (stamp, stamp))
+    assert backup.needs_catch_up(local, now)
+
+
+async def test_the_server_catches_up_at_start_when_last_nights_backup_was_missed(
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    local = settings.model_copy(update={"pg_bin_dir": tmp_path, "backup_dir": tmp_path / "backups"})
+    real = backup.run_backup
+    monkeypatch.setattr(backup, "run_backup", lambda s: real(s, runner=fake_pg_dump))
+
+    task = asyncio.create_task(backup.nightly(local, startup_delay_s=0))
+    for _ in range(100):
+        if backup.list_backups(local):
+            break
+        await asyncio.sleep(0.02)
+    task.cancel()
+
+    assert len(backup.list_backups(local)) == 1, "one backup straight away, not at 2 a.m."

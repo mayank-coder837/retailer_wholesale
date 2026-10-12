@@ -137,17 +137,37 @@ def next_run(now: datetime, hour: int) -> datetime:
     return candidate if candidate > now else candidate + timedelta(days=1)
 
 
-async def nightly(settings: Settings) -> None:
-    """Runs forever (cancelled at shutdown): one backup per night at ``backup_hour`` local time."""
+CATCH_UP_AFTER = timedelta(hours=24)
+
+
+def needs_catch_up(settings: Settings, now: datetime) -> bool:
+    """True when there is no backup younger than a day, e.g. the main PC was switched off at night."""
+    newest = max((b.created_at for b in list_backups(settings)), default=None)
+    return newest is None or now - newest >= CATCH_UP_AFTER
+
+
+async def _backup_logged(settings: Settings, kind: str) -> None:
+    try:
+        async with _running:
+            path = await run_backup(settings)
+        log.info("%s backup written: %s", kind, path)
+    except Exception:  # never let a failed backup stop the next one
+        log.exception("%s backup failed", kind)
+
+
+async def nightly(settings: Settings, *, startup_delay_s: float = 60) -> None:
+    """Runs forever (cancelled at shutdown): one backup per night at ``backup_hour`` local time.
+
+    Shops often switch the main PC off at closing time, so the 2 a.m. backup never runs. A minute after the
+    server starts (PostgreSQL settled), a backup is made at once if the newest is more than a day old.
+    """
+    await asyncio.sleep(startup_delay_s)
+    if needs_catch_up(settings, datetime.now(UTC)):
+        await _backup_logged(settings, "catch-up")
     while True:
         now = datetime.now()
         await asyncio.sleep((next_run(now, settings.backup_hour) - now).total_seconds())
-        try:
-            async with _running:
-                path = await run_backup(settings)
-            log.info("nightly backup written: %s", path)
-        except Exception:  # never let a failed night stop the next one
-            log.exception("nightly backup failed")
+        await _backup_logged(settings, "nightly")
 
 
 # One backup at a time per API process (the nightly job and "back up now" share it).
