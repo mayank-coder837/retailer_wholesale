@@ -7,8 +7,17 @@ defaults through the same keys.
 from dataclasses import dataclass
 from typing import Any
 
+from app.core.money import ROUND_OFF_STEPS, RoundOffMode, RoundOffPlace
+
 SCOPES = ("tenant", "business", "branch", "user")
 PRICE_MODES = ("vat_exclusive", "vat_inclusive", "no_vat")
+ROUND_OFF_PLACES = {
+    RoundOffPlace.INVOICE_TOTAL: "bill total",
+    RoundOffPlace.RECEIPT: "payment receipt",
+    RoundOffPlace.PAYMENT: "payment voucher",
+    RoundOffPlace.TAX_LINE: "VAT of each line",
+    RoundOffPlace.TAX_TOTAL: "total VAT",
+}
 
 
 @dataclass(frozen=True)
@@ -57,4 +66,32 @@ SETTINGS: dict[str, SettingDef] = {
     "catalog.default_sales_unit": SettingDef(
         str, "pcs", ("tenant", "business"), description="Unit suggested for new products"
     ),
+    # Optional round-off, off by default (founder, 15 Oct 2026). Amounts are always in fils (2 dp); these
+    # round further, and the difference posts to the round-off account. VAT round-off: open question R4.
+    **{
+        f"rounding.{place.value}.{part}": definition
+        for place, label in ROUND_OFF_PLACES.items()
+        for part, definition in (
+            (
+                "mode",
+                SettingDef(
+                    str,
+                    RoundOffMode.OFF.value,
+                    ("tenant", "business"),
+                    tuple(m.value for m in RoundOffMode),
+                    f"Round-off of the {label}: off, nearest, up or down",
+                ),
+            ),
+            (
+                "step",
+                SettingDef(
+                    str,
+                    "1.00",
+                    ("tenant", "business"),
+                    ROUND_OFF_STEPS,
+                    f"Round-off step of the {label} (AED)",
+                ),
+            ),
+        )
+    },
 }

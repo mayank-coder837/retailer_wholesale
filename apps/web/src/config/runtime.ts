@@ -48,7 +48,7 @@ export interface DesktopBridge {
     openPairing(): Promise<PairingResult>;
     closePairing(): Promise<RuntimeResult>;
     restore(name: string): Promise<RuntimeResult>;
-    /** Founder decision F1: asks for a folder (USB drive, NAS); every new backup is also copied there. */
+    /** Founder decision L1: asks for a folder (USB drive, NAS); every new backup is also copied there. */
     chooseBackupCopy(): Promise<RuntimeResult>;
     stopBackupCopy(): Promise<RuntimeResult>;
     /** Switches this PC's network from Public to Private so office PCs can connect (admin). */

@@ -177,7 +177,10 @@ never cancelled or its number reused (accountant to confirm before go-live).
 
 ## Other
 
-**34. Rounding** — a cash-rounding difference on a document total goes to `rounding`.
+**34. Rounding** — a round-off difference goes to `rounding` (L4: optional per business, off by default,
+separately for the bill total, receipt, payment, line VAT and total VAT). Invoice rounded up: Dr customer / Cr
+`rounding`; rounded down: Dr `rounding` / Cr customer (mirror image for bills, receipts and payments). VAT
+round-off stays off until the accountant answers R4.
 
 **35. Opening balances (import)** — each account's balance against `opening_balance_equity`; customer/supplier
 openings create `bill` rows per outstanding invoice; opening stock creates `opening` stock moves at the given cost

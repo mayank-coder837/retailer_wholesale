@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     backup_dir: Path | None = None  # nightly pg_dump target; no backups when unset
     # pg_dump login: read-only with BYPASSRLS (the API's own login cannot see past row-level security)
     backup_database_url: str | None = None
-    # Every new backup is also copied here (USB drive, NAS share), same rotation; the owner chooses it (F1)
+    # Every new backup is also copied here (USB drive, NAS share), same rotation; the owner chooses it (L1)
     backup_copy_dir: Path | None = None
     pg_bin_dir: Path | None = None  # folder holding pg_dump
     backup_keep: int = 14

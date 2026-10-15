@@ -353,7 +353,7 @@ function startApp() {
       manager.closePairing(l);
       return { ok: true };
     });
-    // Founder decision F1: also copy every backup to a folder the owner picks (USB drive, NAS).
+    // Founder decision L1: also copy every backup to a folder the owner picks (USB drive, NAS).
     ipcMain.handle("smartbiz:runtime:backup-copy", async (event, choose) => {
       fromTrustedPage(event);
       let folder = null;

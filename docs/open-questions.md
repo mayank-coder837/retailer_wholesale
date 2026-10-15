@@ -10,18 +10,22 @@ accountant reviews remain open.
 | --- | --- | --- |
 | R1 | Every rule in [`posting-rules.md`](posting-rules.md) (all marked "default — to be confirmed by accountant") | As written |
 | R2 | Negative-stock cost adjustment: revaluing negative quantities at the incoming cost, difference to "stock cost adjustment" under cost of sales ([A6](decisions-round-1.md#rules-to-build); posting rule 27) | As written |
+| R4 | VAT round-off (L4): may a business round line VAT or total VAT beyond fils (e.g. to 0.05 or 1.00 AED)? This loosens A3 ("VAT per line to the fils, total = sum of lines, fixed for every business"), and rounding the total VAT breaks "total = sum of lines". Is it acceptable on a UAE tax invoice and in the VAT return, and if so, which account takes the difference? | Option built but off; A3 applies |
 | R3 | VAT 201 box mapping per tax code, and the Box 1 labels on the current EmaraTax form, before Phase 2 ([VAT 201 table](decisions-round-1.md#vat-201-box-mapping-a10)) | Mapping in `domain-model.md` → Tax |
 
 Also for the accountant before e-invoicing go-live: an invoice already sent through the ASP can only be reversed
 with a credit note, never cancelled ([A7](decisions-round-1.md#rules-to-build)).
 
-## Answered — founder, M0.6 (11 Oct 2026)
+## Answered — founder, after round 1
+
+Labelled L1, L2, … so they never collide with round 1's F1–F7.
 
 | # | Question | Decision |
 | --- | --- | --- |
-| F1 | Copy backups automatically to a folder the owner chooses (USB drive, NAS)? | **Yes.** Settings → This PC → Backups → "Copy to a USB drive or NAS": every new backup (nightly, before updates, "back up now") is also copied there with the same rotation; a failed copy never fails the backup and shows on the page. A NAS share must accept the PC without a user name and password (shares with credentials: later). |
-| F3 | Round converted quantities to the base unit's decimals (1 yd → 0.91 m)? | **No — exact** (15 Oct 2026). 1 yd = 0.9144 m; a unit's decimals limit only what is typed; a conversion that would need rounding is refused. |
-| F2 | Should uninstalling offer "remove all data"? | **Yes.** An interactive uninstall of a main PC asks, in English and Arabic, with "Keep data" as the default. Silent uninstalls and updates never delete data. |
+| L1 | Copy backups automatically to a folder the owner chooses (USB drive, NAS)? (12 Oct 2026) | **Yes.** Settings → This PC → Backups → "Copy to a USB drive or NAS": every new backup (daily, before updates, "back up now") is also copied there with the same rotation; a failed copy never fails the backup and shows on the page. A NAS share must accept the PC without a user name and password (shares with credentials: later). |
+| L2 | Should uninstalling offer "remove all data"? (12 Oct 2026) | **Yes.** An interactive uninstall of a main PC asks, in English and Arabic, with "Keep data" as the default. Silent uninstalls and updates never delete data. |
+| L3 | Round converted quantities to the base unit's decimals (1 yd → 0.91 m)? (15 Oct 2026) | **No — exact.** 1 yd = 0.9144 m; a unit's decimals limit only what is typed; a conversion that would need rounding is refused. |
+| L4 | Round-off on money (15 Oct 2026) | **An option, off by default**, separately for the bill total, payment receipt, payment voucher, line VAT and total VAT: off / nearest / up / down, step 0.05, 0.25, 0.50 or 1.00 AED; the difference posts to the `rounding` account (posting rule 34). Amounts are always in fils (2 dp) at settlement points. VAT round-off stays off until the accountant answers R4. |
 
 ## Answered — round 1
 

@@ -283,7 +283,7 @@ function Backups({ onProblem }: { onProblem: (code: string | null) => void }) {
   );
 }
 
-/** Founder decision F1: every backup is also copied to a folder the owner picks (USB drive, NAS). */
+/** Founder decision L1: every backup is also copied to a folder the owner picks (USB drive, NAS). */
 function BackupCopy({
   copyDir,
   lastCopy,

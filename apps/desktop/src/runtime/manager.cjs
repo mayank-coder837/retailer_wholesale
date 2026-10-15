@@ -405,7 +405,7 @@ function copyOut(backup, copyDir) {
 }
 
 /**
- * Sets (or clears) the folder every backup is also copied to (founder decision F1), and restarts the API with it.
+ * Sets (or clears) the folder every backup is also copied to (founder decision L1), and restarts the API with it.
  * The API service (NetworkService) does the copying: on NTFS it gets write access here; FAT/exFAT USB drives have no
  * permissions; a NAS share must accept this PC without a user name and password.
  * @param {Context} ctx @param {string | null} folder
