@@ -177,14 +177,16 @@ describe("App shell", () => {
     expect(screen.queryByRole("heading", { name: "Sales invoice (F8)" })).not.toBeInTheDocument();
   });
 
-  it("navigates to Phase 1 areas from the sidebar", async () => {
-    const { api } = shopApi({ signedIn: true });
+  it("navigates from the sidebar to built areas and to areas still to come", async () => {
+    const { api } = shopApi({ signedIn: true, "GET /products": { status: 200, body: [] } });
     render(<App api={api} />);
     await screen.findByRole("heading", { name: "Welcome, Fatima Owner" });
 
     await userEvent.click(screen.getByRole("link", { name: "Inventory" }));
+    expect(await screen.findByRole("heading", { name: "Products" })).toBeInTheDocument(); // built in M1.2
 
-    expect(await screen.findByText("Inventory arrives in Phase 1.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("link", { name: "Sales" }));
+    expect(await screen.findByText("Sales arrives in Phase 1.")).toBeInTheDocument();
   });
 
   it("is right-to-left in Arabic", async () => {
@@ -206,6 +208,17 @@ describe("Translations", () => {
       Object.entries(o).flatMap(([k, v]) =>
         v && typeof v === "object" ? keys(v as object, `${prefix}${k}.`) : [`${prefix}${k}`],
       );
-    expect(keys(ar).sort()).toEqual(keys(en).sort());
+    // Plural forms differ by language (English: one/other; Arabic: zero/one/two/few/many/other), so compare
+    // the words without their plural endings: a missing translation still fails.
+    const words = (o: object) =>
+      [...new Set(keys(o).map((k) => k.replace(/_(zero|one|two|few|many|other)$/, "")))].sort();
+    expect(words(ar)).toEqual(words(en));
+  });
+
+  it("every Arabic plural has all six forms", () => {
+    const plurals = Object.keys(ar.catalog).filter((k) => k.startsWith("variantCount_"));
+    expect(plurals.sort()).toEqual(
+      ["zero", "one", "two", "few", "many", "other"].map((f) => `variantCount_${f}`).sort(),
+    );
   });
 });
