@@ -1587,6 +1587,280 @@
         }
       }
     },
+    "/units": {
+      "get": {
+        "tags": [
+          "units"
+        ],
+        "summary": "List Units",
+        "operationId": "list_units",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnitOut"
+                  },
+                  "title": "Response List Units"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "units"
+        ],
+        "summary": "Create Unit",
+        "operationId": "create_unit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/units/convert": {
+      "get": {
+        "tags": [
+          "units"
+        ],
+        "summary": "Convert Units",
+        "operationId": "convert_units",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "qty",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "title": "Qty"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 20,
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 20,
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/units/{unit_id}": {
+      "get": {
+        "tags": [
+          "units"
+        ],
+        "summary": "Get Unit",
+        "operationId": "get_unit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "unit_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Unit Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "units"
+        ],
+        "summary": "Update Unit",
+        "operationId": "update_unit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "unit_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Unit Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pairing/challenge": {
       "post": {
         "tags": [
@@ -2447,6 +2721,44 @@
         ],
         "title": "ClientKind"
       },
+      "ConversionOut": {
+        "properties": {
+          "qty": {
+            "type": "string",
+            "title": "Qty"
+          },
+          "from_unit": {
+            "type": "string",
+            "title": "From Unit"
+          },
+          "to_unit": {
+            "type": "string",
+            "title": "To Unit"
+          },
+          "factor": {
+            "type": "string",
+            "title": "Factor"
+          },
+          "result": {
+            "type": "string",
+            "title": "Result"
+          },
+          "rounded": {
+            "type": "boolean",
+            "title": "Rounded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "qty",
+          "from_unit",
+          "to_unit",
+          "factor",
+          "result",
+          "rounded"
+        ],
+        "title": "ConversionOut"
+      },
       "DatabaseHealthOut": {
         "properties": {
           "database": {
@@ -3167,6 +3479,214 @@
           "membership_id"
         ],
         "title": "TokenOut"
+      },
+      "UnitIn": {
+        "properties": {
+          "family": {
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Family",
+            "description": "Family code: count, length, …"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "symbol": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol"
+          },
+          "decimals": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Decimals",
+            "description": "Decimal places a quantity in this unit may have"
+          },
+          "factor_to_family_base": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Factor To Family Base",
+            "description": "How many family base units one of this unit is"
+          }
+        },
+        "type": "object",
+        "required": [
+          "family",
+          "code",
+          "name_en",
+          "name_ar",
+          "symbol",
+          "decimals",
+          "factor_to_family_base"
+        ],
+        "title": "UnitIn"
+      },
+      "UnitOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "family": {
+            "type": "string",
+            "title": "Family"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "decimals": {
+            "type": "integer",
+            "title": "Decimals"
+          },
+          "factor_to_family_base": {
+            "type": "string",
+            "title": "Factor To Family Base"
+          },
+          "is_family_base": {
+            "type": "boolean",
+            "title": "Is Family Base"
+          },
+          "is_standard": {
+            "type": "boolean",
+            "title": "Is Standard"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "family",
+          "code",
+          "name_en",
+          "name_ar",
+          "symbol",
+          "decimals",
+          "factor_to_family_base",
+          "is_family_base",
+          "is_standard",
+          "archived_at"
+        ],
+        "title": "UnitOut"
+      },
+      "UnitPatch": {
+        "properties": {
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 6.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals"
+          },
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          }
+        },
+        "type": "object",
+        "title": "UnitPatch",
+        "description": "Factor and family are fixed once a unit exists: lines converted with it must keep their meaning."
       },
       "UserOut": {
         "properties": {

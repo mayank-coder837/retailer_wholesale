@@ -447,6 +447,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Units */
+        get: operations["list_units"];
+        put?: never;
+        /** Create Unit */
+        post: operations["create_unit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/units/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Convert Units */
+        get: operations["convert_units"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/units/{unit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Unit */
+        get: operations["get_unit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Unit */
+        patch: operations["update_unit"];
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -794,6 +847,21 @@ export interface components {
          * @enum {string}
          */
         ClientKind: "web" | "desktop";
+        /** ConversionOut */
+        ConversionOut: {
+            /** Qty */
+            qty: string;
+            /** From Unit */
+            from_unit: string;
+            /** To Unit */
+            to_unit: string;
+            /** Factor */
+            factor: string;
+            /** Result */
+            result: string;
+            /** Rounded */
+            rounded: boolean;
+        };
         /** DatabaseHealthOut */
         DatabaseHealthOut: {
             /** Database */
@@ -1086,6 +1154,76 @@ export interface components {
              * Format: uuid
              */
             membership_id: string;
+        };
+        /** UnitIn */
+        UnitIn: {
+            /**
+             * Family
+             * @description Family code: count, length, …
+             */
+            family: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Symbol */
+            symbol: string;
+            /**
+             * Decimals
+             * @description Decimal places a quantity in this unit may have
+             */
+            decimals: number;
+            /**
+             * Factor To Family Base
+             * @description How many family base units one of this unit is
+             */
+            factor_to_family_base: number | string;
+        };
+        /** UnitOut */
+        UnitOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Family */
+            family: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Symbol */
+            symbol: string;
+            /** Decimals */
+            decimals: number;
+            /** Factor To Family Base */
+            factor_to_family_base: string;
+            /** Is Family Base */
+            is_family_base: boolean;
+            /** Is Standard */
+            is_standard: boolean;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /**
+         * UnitPatch
+         * @description Factor and family are fixed once a unit exists: lines converted with it must keep their meaning.
+         */
+        UnitPatch: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Symbol */
+            symbol?: string | null;
+            /** Decimals */
+            decimals?: number | null;
+            /** Archived */
+            archived?: boolean | null;
         };
         /** UserOut */
         UserOut: {
@@ -2193,6 +2331,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_units: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    convert_units: {
+        parameters: {
+            query: {
+                qty: number | string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOut"];
                 };
             };
             /** @description Validation Error */

@@ -23,7 +23,7 @@
       "description": "Quotes, orders and invoices for customers; sees stock and prices; no vouchers.",
       "include": [
         "business.view", "branch.view", "warehouse.view",
-        "product.view", "price_list.view",
+        "unit.view", "product.view", "price_list.view",
         "customer.view", "customer.create", "customer.edit",
         "quotation.view", "quotation.create", "quotation.edit", "quotation.delete", "quotation.post", "quotation.export",
         "sales_order.view", "sales_order.create", "sales_order.edit", "sales_order.delete", "sales_order.post",
@@ -39,7 +39,7 @@
       "name_ar": "أمين المستودع",
       "description": "Receives and delivers goods, counts and moves stock.",
       "include": [
-        "business.view", "branch.view", "warehouse.view", "product.view",
+        "business.view", "branch.view", "warehouse.view", "unit.view", "product.view",
         "sales_order.view", "purchase_order.view",
         "delivery_note.view", "delivery_note.create", "delivery_note.edit", "delivery_note.delete", "delivery_note.post", "delivery_note.export",
         "goods_receipt.view", "goods_receipt.create", "goods_receipt.edit", "goods_receipt.delete", "goods_receipt.post", "goods_receipt.export",
@@ -55,7 +55,7 @@
       "name_ar": "المحاسب",
       "description": "Vouchers, cheques, invoices and bills, periods and reports.",
       "include": [
-        "business.view", "branch.view", "warehouse.view", "product.view", "price_list.view",
+        "business.view", "branch.view", "warehouse.view", "unit.view", "product.view", "price_list.view",
         "customer.*", "supplier.*", "account.*",
         "receipt.*", "payment.*", "contra.*", "journal.*", "expense.*", "credit_note.*", "debit_note.*",
         "sales_invoice.*", "sales_return.*", "purchase_bill.*", "purchase_return.*",
@@ -69,7 +69,7 @@
       "description": "Counter sales and cash received.",
       "include": [
         "business.view", "branch.view", "warehouse.view",
-        "product.view", "price_list.view", "customer.view", "customer.create",
+        "unit.view", "product.view", "price_list.view", "customer.view", "customer.create",
         "sales_invoice.view", "sales_invoice.create", "sales_invoice.post",
         "receipt.view", "receipt.create", "receipt.post",
         "pdc.view", "pdc.create"

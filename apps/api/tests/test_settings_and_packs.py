@@ -98,8 +98,8 @@ async def test_applying_a_pack_is_idempotent(client: AsyncClient) -> None:
     assert first.json() == {
         "pack_code": "textile",
         "version": 1,
-        "applied_sections": ["settings"],
-        "pending_sections": ["units", "attributes", "custom_fields"],
+        "applied_sections": ["settings", "units"],  # units apply from M1.1
+        "pending_sections": ["attributes", "custom_fields"],
         "changed": True,
     }
     assert second.json()["changed"] is False
@@ -119,9 +119,13 @@ def units_applier() -> Iterator[list[str]]:
     async def apply_units(_s: AsyncSession, _t: Any, _b: Any, units: Any) -> None:
         received.extend(u.code for u in units)
 
+    real = packs._APPLIERS.get("units")  # the catalog module's applier (M1.1)
     packs.register_applier("units", apply_units)
     yield received
-    packs._APPLIERS.pop("units", None)
+    if real is not None:
+        packs.register_applier("units", real)
+    else:
+        packs._APPLIERS.pop("units", None)
 
 
 async def test_pending_sections_apply_once_their_module_exists(

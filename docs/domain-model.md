@@ -56,15 +56,16 @@ tenant ─┬─ business (TRN, base currency, fiscal start, costing method)
 
 | Entity | Key fields | Relationships / rules |
 | --- | --- | --- |
-| unit_family | code (`count, length, weight, volume, area, time`), base_unit_id | System seed (tenant_id null) + tenant-defined |
-| unit | family_id, code (`pcs, m, kg, roll, carton`), name_en/_ar, symbol, decimals (allowed decimal places) | System or tenant rows |
-| unit_conversion | from_unit_id, to_unit_id, factor | Standard, within one family (1 km = 1000 m). Always factor > 0 |
+| unit_family | code (`count, length, weight, volume, area, time`), name_en/_ar | Per tenant: standard families copied in at sign-up (ADR 0013) |
+| unit | family_id, code (`pcs, m, kg, roll, carton`), name_en/_ar, symbol, decimals (allowed decimal places), factor_to_family_base (> 0), is_family_base (one per family, factor 1), is_standard, archived_at | Per tenant: standard units + the tenant's own. Factor and family are fixed once created |
 | product_unit | product_id, unit_id, factor_to_base, is_purchase_default, is_sales_default, sale_price, min_price | Product-level, may cross families: 1 roll = 50 m, 1 carton = 24 pcs |
 | product.base_unit_id | the inventory unit | Stock and costing are always in the base unit |
 
 Rules: conversion happens once, at entry: `qty_base = round(qty_entered × factor_to_base, base_unit.decimals)`.
 Lines store `qty_entered, uom_entered, factor_to_base, qty_base`, so history survives later factor changes.
 Factors are stored in the direction unit → base, so they are exact for the common cases (24, 50, 0.001).
+Standard conversions within a family go through the family base (no table of unit pairs, ADR 0013).
+The engine is `app/modules/catalog/uom.py` (M1.1).
 
 ## Catalog
 
