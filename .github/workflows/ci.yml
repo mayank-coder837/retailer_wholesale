@@ -115,6 +115,14 @@ jobs:
           SMARTBIZ_SERVICES_TEST: "1"
         working-directory: apps/desktop
         run: node --test --test-timeout=300000 test/integration/services.integration.cjs
+      # The real .exe: silent install, set up as main PC, sign-up, backup, install over it, silent uninstall.
+      - name: Build the installer
+        run: pnpm --filter @smartbiz/desktop exec electron-builder --win nsis --config electron-builder.config.cjs
+      - name: Installer smoke test
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem apps/desktop/release -Filter '*-setup-*.exe' | Select-Object -First 1).FullName
+          ./apps/desktop/scripts/installer-smoke.ps1 -Setup $setup
       - if: failure()
         name: Runtime logs
         shell: pwsh

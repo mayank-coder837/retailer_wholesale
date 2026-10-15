@@ -50,6 +50,10 @@ Phase 1 (ADR 0010).
   10 minutes) shown on the main PC. The office PC checks `HMAC(code, nonce | certificate fingerprint)` against the
   certificate it saw itself, then pins that certificate; the code never crosses the network. Users still log in
   individually (ADR 0007). Pairing is saved per Windows user, so office PCs need no admin rights.
+- Addresses change (DHCP, phone hotspots): an office PC that loses the main PC broadcasts a UDP question
+  (port 8711); the main PC answers with its certificate fingerprint, and the office PC moves only to an
+  answer with the pinned fingerprint. Pairing can also use the computer name. Settings warns when Windows
+  treats the network as Public (the firewall rules are Private only) and can switch it.
 
 **Backups and updates**
 - Automatic `pg_dump` every day at 15:00 Dubai time (founder, 12 Oct 2026; a catch-up backup at start-up when the
