@@ -1,0 +1,34 @@
+{
+  "code": "hardware",
+  "version": 1,
+  "name_en": "Hardware and building materials",
+  "name_ar": "الأدوات ومواد البناء",
+  "description": "Tools, fittings and materials sold by piece, box, length or weight.",
+  "description_ar": "أدوات وتجهيزات ومواد تُباع بالقطعة أو الصندوق أو الطول أو الوزن.",
+  "sections": {
+    "settings": {
+      "catalog.default_sales_unit": "pcs"
+    },
+    "units": [
+      { "code": "pcs", "family": "count", "name_en": "Piece", "name_ar": "قطعة", "symbol": "pcs", "decimals": 0 },
+      { "code": "box", "family": "count", "name_en": "Box", "name_ar": "صندوق", "symbol": "box", "decimals": 0 },
+      { "code": "bag", "family": "count", "name_en": "Bag", "name_ar": "كيس", "symbol": "bag", "decimals": 0 },
+      { "code": "m", "family": "length", "name_en": "Metre", "name_ar": "متر", "symbol": "m", "decimals": 2 },
+      { "code": "ft", "family": "length", "name_en": "Foot", "name_ar": "قدم", "symbol": "ft", "decimals": 2, "factor_to_family_base": 0.3048 },
+      { "code": "kg", "family": "weight", "name_en": "Kilogram", "name_ar": "كيلوغرام", "symbol": "kg", "decimals": 3 },
+      { "code": "ton", "family": "weight", "name_en": "Tonne", "name_ar": "طن", "symbol": "t", "decimals": 3, "factor_to_family_base": 1000 },
+      { "code": "sqm", "family": "area", "name_en": "Square metre", "name_ar": "متر مربع", "symbol": "m²", "decimals": 2 }
+    ],
+    "attributes": [
+      { "code": "size", "name_en": "Size", "name_ar": "المقاس", "values": [] },
+      { "code": "material", "name_en": "Material", "name_ar": "المادة", "values": [
+        { "value_en": "Steel", "value_ar": "فولاذ" }, { "value_en": "Brass", "value_ar": "نحاس" },
+        { "value_en": "PVC", "value_ar": "بي في سي" }, { "value_en": "Aluminium", "value_ar": "ألمنيوم" }
+      ] },
+      { "code": "finish", "name_en": "Finish", "name_ar": "التشطيب", "values": [] }
+    ],
+    "custom_fields": [
+      { "entity_type": "product", "key": "brand_model", "label_en": "Brand model no.", "label_ar": "رقم الموديل", "data_type": "text" }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+import "@testing-library/jest-dom/vitest";
+
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+
+// jsdom has no scrolling; the router calls window.scrollTo on navigation.
+window.scrollTo = () => {};
+
+// Vitest globals are off, so Testing Library's automatic cleanup isn't registered; do it here.
+afterEach(() => {
+  cleanup();
+});

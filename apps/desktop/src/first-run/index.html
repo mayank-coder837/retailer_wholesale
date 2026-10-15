@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title></title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --card: #ffffff;
+        --text: #18202b;
+        --muted: #5b6575;
+        --line: #d9dee6;
+        --accent: #0f6e5a;
+        --accent-text: #ffffff;
+        --error: #b42318;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #11151b;
+          --card: #1a2029;
+          --text: #e8ecf1;
+          --muted: #9aa5b4;
+          --line: #2c3542;
+          --accent: #3fb592;
+          --accent-text: #08130f;
+          --error: #f97066;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.5 "Segoe UI",
+          Tahoma,
+          sans-serif;
+      }
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 40px 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0;
+      }
+      .intro {
+        color: var(--muted);
+        margin: 4px 0 28px;
+      }
+      .choices {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      input {
+        font: inherit;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--text);
+      }
+      #code {
+        font-family: Consolas, monospace;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        padding: 9px 14px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: var(--accent-text);
+        cursor: pointer;
+        margin-top: auto;
+      }
+      button.link {
+        background: transparent;
+        color: var(--accent);
+        border-color: var(--line);
+        margin: 0;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+      .status {
+        min-height: 1.5em;
+        font-size: 13px;
+      }
+      .status.error {
+        color: var(--error);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1 data-t="title"></h1>
+        <button type="button" class="link" id="language" data-t="otherLanguage"></button>
+      </header>
+      <p class="intro" data-t="intro"></p>
+      <div class="choices">
+        <section>
+          <h2 data-t="mainTitle"></h2>
+          <p data-t="mainBody"></p>
+          <label><span data-t="mainName"></span><input id="server-name" maxlength="60" /></label>
+          <div class="status" id="main-status" role="status"></div>
+          <button type="button" id="setup-main" data-t="mainButton"></button>
+        </section>
+        <section>
+          <h2 data-t="officeTitle"></h2>
+          <p data-t="officeBody"></p>
+          <label
+            ><span data-t="officeAddress"></span
+            ><input id="address" placeholder="192.168.1.20 / MAIN-PC" dir="ltr"
+          /></label>
+          <label><span data-t="officeCode"></span><input id="code" maxlength="12" dir="ltr" /></label>
+          <div class="status" id="office-status" role="status"></div>
+          <button type="button" id="pair" data-t="officeButton"></button>
+        </section>
+      </div>
+    </main>
+    <script src="first-run.js"></script>
+  </body>
+</html>

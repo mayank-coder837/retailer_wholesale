@@ -1,0 +1,245 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "next": "Next",
+    "back": "Back",
+    "optional": "optional"
+  },
+  "server": {
+    "label": "Server",
+    "online": "Connected",
+    "offline": "Not reachable",
+    "checking": "Checking…"
+  },
+  "language": {
+    "label": "Language",
+    "switchTo": "العربية"
+  },
+  "login": {
+    "title": "Log in",
+    "tagline": "Accounts, stock and sales in one place.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "noAccount": "New to {{product}}?",
+    "createAccount": "Create an account",
+    "chooseAccount": "Choose which account to open",
+    "errors": {
+      "invalid_credentials": "Email or password is incorrect.",
+      "account_locked": "Too many failed attempts. Try again in 15 minutes.",
+      "unauthorized": "You do not have access to that account.",
+      "unknown": "Could not log in. Check the server connection and try again.",
+      "network": "Cannot reach the server. Check that the main PC is on and connected."
+    }
+  },
+  "signup": {
+    "title": "Set up {{product}}",
+    "stepOf": "Step {{step}} of {{total}}",
+    "haveAccount": "Already have an account?",
+    "submit": "Create account",
+    "creating": "Setting up your account…",
+    "steps": {
+      "account": "Your account",
+      "business": "Your business",
+      "office": "Head office",
+      "vat": "VAT and currency",
+      "industry": "Industry"
+    },
+    "fields": {
+      "fullName": "Your name",
+      "email": "Email",
+      "password": "Password (at least 10 characters)",
+      "tenantName": "Account name (usually your trade name)",
+      "legalNameEn": "Legal name in English",
+      "legalNameAr": "Legal name in Arabic",
+      "tradeLicense": "Trade licence number",
+      "branchNameEn": "Branch name in English",
+      "branchNameAr": "Branch name in Arabic",
+      "emirate": "Emirate",
+      "emirateHint": "Sales from this branch are reported under this emirate in the VAT return.",
+      "vatRegistered": "Registered for VAT",
+      "trn": "Tax registration number (TRN)",
+      "currency": "Base currency",
+      "fiscalStart": "Financial year starts in",
+      "industry": "What do you trade in?",
+      "industryHint": "Sets up units, product attributes and defaults for your trade. You can change them later.",
+      "noIndustry": "Skip for now"
+    },
+    "errors": {
+      "required": "This is required.",
+      "email": "Enter a valid email address.",
+      "password": "Use at least 10 characters.",
+      "trn": "The TRN has 15 digits.",
+      "email_taken": "An account with this email already exists. Log in instead.",
+      "unknown": "Could not create the account. Check the details and the server connection."
+    }
+  },
+  "emirates": {
+    "abu_dhabi": "Abu Dhabi",
+    "dubai": "Dubai",
+    "sharjah": "Sharjah",
+    "ajman": "Ajman",
+    "umm_al_quwain": "Umm Al Quwain",
+    "ras_al_khaimah": "Ras Al Khaimah",
+    "fujairah": "Fujairah"
+  },
+  "nav": {
+    "main": "Main menu",
+    "dashboard": "Dashboard",
+    "sales": "Sales",
+    "purchases": "Purchases",
+    "inventory": "Inventory",
+    "accounts": "Accounts",
+    "reports": "Reports",
+    "settings": "Settings",
+    "roles": "Roles and permissions",
+    "thisPc": "This PC"
+  },
+  "shell": {
+    "business": "Business",
+    "account": "Account",
+    "logout": "Log out",
+    "comingSoon": "{{title}} arrives in Phase 1.",
+    "comingSoonHint": "The foundation is ready: roles, numbering, audit and VAT settings are in place."
+  },
+  "vouchers": {
+    "sales": "Sales invoice (F8)",
+    "purchase": "Purchase bill (F9)",
+    "payment": "Payment voucher (F5)",
+    "receipt": "Receipt voucher (F6)"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}",
+    "subtitle": "Today at a glance",
+    "phase1": "Available in Phase 1",
+    "kpi": {
+      "salesToday": "Sales today",
+      "receivables": "Receivables",
+      "afterPdc": "Outstanding after PDCs",
+      "chequesDue": "Cheques due this week",
+      "cashBank": "Cash and bank",
+      "lowStock": "Low-stock items"
+    }
+  },
+  "roles": {
+    "title": "Roles and permissions",
+    "forbidden": "You do not have permission to view roles.",
+    "resource": "Area",
+    "special": "Special permissions",
+    "save": "Save changes",
+    "saved": "Saved.",
+    "saveFailed": "Could not save. You may not have permission to change roles.",
+    "ownerLocked": "The Owner role always has every permission and cannot be changed."
+  },
+  "actions": {
+    "view": "View",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "approve": "Approve",
+    "post": "Post",
+    "cancel": "Cancel",
+    "reverse": "Reverse",
+    "export": "Export"
+  },
+  "special": {
+    "price": {
+      "override_min": "Sell below the minimum price"
+    },
+    "credit": {
+      "override": "Override a customer's credit limit"
+    },
+    "period": {
+      "override_lock": "Post into a locked period"
+    }
+  },
+  "resources": {
+    "tenant": "Account settings",
+    "business": "Businesses",
+    "branch": "Branches",
+    "warehouse": "Warehouses",
+    "membership": "Users",
+    "role": "Roles",
+    "product": "Products",
+    "price_list": "Price lists",
+    "customer": "Customers",
+    "supplier": "Suppliers",
+    "account": "Chart of accounts",
+    "quotation": "Quotations",
+    "sales_order": "Sales orders",
+    "delivery_note": "Delivery notes",
+    "sales_invoice": "Sales invoices",
+    "sales_return": "Sales returns",
+    "purchase_order": "Purchase orders",
+    "goods_receipt": "Goods receipts",
+    "purchase_bill": "Purchase bills",
+    "purchase_return": "Purchase returns",
+    "receipt": "Receipt vouchers",
+    "payment": "Payment vouchers",
+    "contra": "Contra vouchers",
+    "journal": "Journal vouchers",
+    "expense": "Expense vouchers",
+    "credit_note": "Credit notes",
+    "debit_note": "Debit notes",
+    "stock_adjustment": "Stock adjustments",
+    "stock_transfer": "Stock transfers",
+    "item_transfer": "Item transfers",
+    "pdc": "Post-dated cheques",
+    "fiscal_period": "Fiscal periods",
+    "report": "Reports"
+  },
+  "thisPc": {
+    "title": "This PC",
+    "browser": "These settings are available in the desktop app.",
+    "mainRole": "This is the main PC: it keeps the business data for this branch.",
+    "officeRole": "This is an office PC connected to the main PC at {{address}}.",
+    "serverTitle": "Server",
+    "serverName": "Name",
+    "version": "Version",
+    "lanTitle": "Office network access",
+    "lanOn": "On: office PCs can connect to this PC.",
+    "lanOff": "Off: only this PC can use the data.",
+    "lanTurnOn": "Turn on",
+    "lanTurnOff": "Turn off",
+    "adminHint": "Windows will ask for administrator approval.",
+    "pairTitle": "Connect an office PC",
+    "pairNeedsLan": "Turn on office network access first.",
+    "pairShow": "Show pairing code",
+    "pairInstructions": "On the office PC, choose “Office PC” and enter:",
+    "pairAddress": "Address",
+    "pairCode": "Code",
+    "pairExpires": "The code works until {{time}}.",
+    "pairClose": "Stop pairing",
+    "backupsTitle": "Backups",
+    "backupsHint": "A backup is made every day at 3 p.m. Dubai time (or as soon as this PC starts, if it was off) and before every update; the newest {{keep}} are kept.",
+    "backupNow": "Back up now",
+    "backingUp": "Backing up…",
+    "backupDone": "Backup saved: {{name}}",
+    "backupsNone": "No backups yet.",
+    "backupsUnavailable": "This server does not keep local backups.",
+    "backupsForbidden": "You do not have permission to see backups.",
+    "sizeMb": "{{size}} MB",
+    "restore": "Restore",
+    "restoreConfirm": "Replace all current data with the backup from {{date}}? Everything entered after it will be lost.",
+    "disconnect": "Disconnect from the main PC",
+    "disconnectConfirm": "Disconnect this PC? You can pair it again with a new code.",
+    "errors": {
+      "uac_cancelled": "Windows administrator approval was not given.",
+      "lan_off": "Turn on office network access first.",
+      "backup_in_progress": "A backup is already running; try again in a minute.",
+      "failed": "That did not work. Details are in the server log on this PC."
+    },
+    "copyTitle": "Copy to a USB drive or NAS",
+    "copyHint": "Every new backup is also copied to this folder, so the data survives if this PC breaks or is stolen. Anyone who can open the folder can read the backups.",
+    "copyNone": "No folder chosen: backups are kept on this PC only.",
+    "copyChoose": "Choose folder",
+    "copyChange": "Change folder",
+    "copyStop": "Stop copying",
+    "copyLastOk": "Last copy: {{date}}",
+    "copyLastFailed": "The last copy failed ({{date}}): {{error}}",
+    "copyNasHint": "A NAS folder must let this PC write without a user name and password.",
+    "publicNetwork": "Windows treats {{networks}} as a Public network, so office PCs cannot connect. Switch it to Private if this is your shop's own network.",
+    "makePrivate": "Make it Private",
+    "fixedIpHint": "Office PCs find this PC again by themselves if its address changes. With a router, reserving a fixed address for this PC (DHCP reservation) avoids even the short wait."
+  }
+}

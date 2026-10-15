@@ -1,0 +1,33 @@
+{
+  "code": "grocery",
+  "version": 1,
+  "name_en": "Grocery and FMCG",
+  "name_ar": "البقالة والسلع الاستهلاكية",
+  "description": "Food and fast-moving goods with batches and expiry dates, sold by piece, weight or carton.",
+  "description_ar": "مواد غذائية وسلع سريعة الحركة بدفعات وتواريخ صلاحية، تُباع بالقطعة أو الوزن أو الكرتون.",
+  "sections": {
+    "settings": {
+      "catalog.default_sales_unit": "pcs",
+      "inventory.track_batch_default": true,
+      "inventory.track_expiry_default": true
+    },
+    "units": [
+      { "code": "pcs", "family": "count", "name_en": "Piece", "name_ar": "قطعة", "symbol": "pcs", "decimals": 0 },
+      { "code": "pack", "family": "count", "name_en": "Pack", "name_ar": "عبوة", "symbol": "pk", "decimals": 0 },
+      { "code": "carton", "family": "count", "name_en": "Carton", "name_ar": "كرتون", "symbol": "ctn", "decimals": 0 },
+      { "code": "kg", "family": "weight", "name_en": "Kilogram", "name_ar": "كيلوغرام", "symbol": "kg", "decimals": 3 },
+      { "code": "g", "family": "weight", "name_en": "Gram", "name_ar": "غرام", "symbol": "g", "decimals": 0, "factor_to_family_base": 0.001 },
+      { "code": "l", "family": "volume", "name_en": "Litre", "name_ar": "لتر", "symbol": "L", "decimals": 3 },
+      { "code": "ml", "family": "volume", "name_en": "Millilitre", "name_ar": "ملليلتر", "symbol": "mL", "decimals": 0, "factor_to_family_base": 0.001 }
+    ],
+    "attributes": [
+      { "code": "flavour", "name_en": "Flavour", "name_ar": "النكهة", "values": [] },
+      { "code": "pack_size", "name_en": "Pack size", "name_ar": "حجم العبوة", "values": [] }
+    ],
+    "custom_fields": [
+      { "entity_type": "product", "key": "storage_temp", "label_en": "Storage", "label_ar": "التخزين", "data_type": "select",
+        "options": [ { "value": "ambient", "label_en": "Ambient", "label_ar": "حرارة الغرفة" }, { "value": "chilled", "label_en": "Chilled", "label_ar": "مبرد" }, { "value": "frozen", "label_en": "Frozen", "label_ar": "مجمد" } ] },
+      { "entity_type": "product", "key": "halal_certified", "label_en": "Halal certified", "label_ar": "شهادة حلال", "data_type": "bool" }
+    ]
+  }
+}

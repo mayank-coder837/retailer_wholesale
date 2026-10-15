@@ -1,0 +1,33 @@
+{
+  "code": "electronics",
+  "version": 1,
+  "name_en": "Electronics",
+  "name_ar": "الإلكترونيات",
+  "description": "Phones, accessories and devices tracked by serial / IMEI, with warranty.",
+  "description_ar": "هواتف وإكسسوارات وأجهزة تُتابع بالرقم التسلسلي / IMEI مع الضمان.",
+  "sections": {
+    "settings": {
+      "catalog.default_sales_unit": "pcs",
+      "inventory.track_serial_default": true
+    },
+    "units": [
+      { "code": "pcs", "family": "count", "name_en": "Piece", "name_ar": "قطعة", "symbol": "pcs", "decimals": 0 },
+      { "code": "box", "family": "count", "name_en": "Box", "name_ar": "صندوق", "symbol": "box", "decimals": 0 },
+      { "code": "carton", "family": "count", "name_en": "Carton", "name_ar": "كرتون", "symbol": "ctn", "decimals": 0 }
+    ],
+    "attributes": [
+      { "code": "color", "name_en": "Colour", "name_ar": "اللون", "values": [] },
+      { "code": "storage", "name_en": "Storage", "name_ar": "السعة", "values": [
+        { "value_en": "64 GB", "value_ar": "64 غيغابايت" }, { "value_en": "128 GB", "value_ar": "128 غيغابايت" },
+        { "value_en": "256 GB", "value_ar": "256 غيغابايت" }, { "value_en": "512 GB", "value_ar": "512 غيغابايت" }
+      ] },
+      { "code": "region", "name_en": "Region spec", "name_ar": "مواصفات المنطقة", "values": [
+        { "value_en": "UAE", "value_ar": "الإمارات" }, { "value_en": "International", "value_ar": "دولي" }
+      ] }
+    ],
+    "custom_fields": [
+      { "entity_type": "product", "key": "warranty_months", "label_en": "Warranty (months)", "label_ar": "الضمان (أشهر)", "data_type": "number" },
+      { "entity_type": "product", "key": "model_no", "label_en": "Model number", "label_ar": "رقم الموديل", "data_type": "text" }
+    ]
+  }
+}

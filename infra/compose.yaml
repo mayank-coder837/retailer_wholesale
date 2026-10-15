@@ -1,0 +1,69 @@
+# Development stack. Customer PCs never use Docker (ADR 0008).
+# Host port 5440 for PostgreSQL avoids clashing with any other PostgreSQL on the PC (e.g. on 5432).
+name: smartbiz
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: smartbiz
+      POSTGRES_PASSWORD: smartbiz
+      POSTGRES_DB: smartbiz
+    ports:
+      - "5440:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartbiz -d smartbiz"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # No S3 service yet: branch PCs keep files on disk, and the dev S3-compatible service for the cloud adapter is
+  # chosen in M0.4 (the minio/minio image is no longer published on Docker Hub).
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    environment:
+      SMARTBIZ_DATABASE_URL: postgresql+asyncpg://smartbiz:smartbiz@db:5432/smartbiz
+      SMARTBIZ_CORS_ORIGINS: '["http://localhost:5173"]'
+      SMARTBIZ_FILES_DIR: /data/files
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/api/app:/repo/apps/api/app
+      - ../apps/api/migrations:/repo/apps/api/migrations
+      - ../apps/api/seeds:/repo/apps/api/seeds
+      - ../packages/config:/repo/packages/config
+      - files-data:/data/files
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_POLL: "1" # file-change events do not reach containers on Windows; Vite polls instead
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../apps/web/src:/repo/apps/web/src
+      - ../apps/web/public:/repo/apps/web/public
+    depends_on:
+      - api
+
+  # Cloud-only services (ADR 0012). The Celery worker is added with its handlers in M0.4.
+  redis:
+    image: redis:7
+    profiles: ["cloud"]
+    ports:
+      - "6379:6379"
+
+volumes:
+  db-data:
+  files-data:

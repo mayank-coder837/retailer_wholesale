@@ -1,0 +1,38 @@
+{
+  "code": "textile",
+  "version": 1,
+  "name_en": "Textile and garments",
+  "name_ar": "الأقمشة والملابس",
+  "description": "Fabric bought by the roll and sold by the metre or yard; garments by size and colour.",
+  "description_ar": "أقمشة تُشترى بالرول وتُباع بالمتر أو الياردة، وملابس حسب المقاس واللون.",
+  "sections": {
+    "settings": {
+      "catalog.default_sales_unit": "m",
+      "inventory.track_batch_default": true
+    },
+    "units": [
+      { "code": "m", "family": "length", "name_en": "Metre", "name_ar": "متر", "symbol": "m", "decimals": 2 },
+      { "code": "yd", "family": "length", "name_en": "Yard", "name_ar": "ياردة", "symbol": "yd", "decimals": 2, "factor_to_family_base": 0.9144 },
+      { "code": "roll", "family": "count", "name_en": "Roll", "name_ar": "رول", "symbol": "roll", "decimals": 0, "note": "Metres per roll is set per product (e.g. 1 roll = 50 m)" },
+      { "code": "than", "family": "count", "name_en": "Than (bolt)", "name_ar": "ثان", "symbol": "than", "decimals": 0 },
+      { "code": "pcs", "family": "count", "name_en": "Piece", "name_ar": "قطعة", "symbol": "pcs", "decimals": 0 }
+    ],
+    "attributes": [
+      { "code": "color", "name_en": "Colour", "name_ar": "اللون", "values": [] },
+      { "code": "width", "name_en": "Width", "name_ar": "العرض", "values": [
+        { "value_en": "44 in", "value_ar": "44 بوصة" }, { "value_en": "58 in", "value_ar": "58 بوصة" }, { "value_en": "60 in", "value_ar": "60 بوصة" }
+      ] },
+      { "code": "fabric", "name_en": "Fabric", "name_ar": "نوع القماش", "values": [
+        { "value_en": "Cotton", "value_ar": "قطن" }, { "value_en": "Polyester", "value_ar": "بوليستر" },
+        { "value_en": "Silk", "value_ar": "حرير" }, { "value_en": "Linen", "value_ar": "كتان" }
+      ] },
+      { "code": "size", "name_en": "Size", "name_ar": "المقاس", "values": [
+        { "value_en": "S", "value_ar": "S" }, { "value_en": "M", "value_ar": "M" }, { "value_en": "L", "value_ar": "L" }, { "value_en": "XL", "value_ar": "XL" }
+      ] }
+    ],
+    "custom_fields": [
+      { "entity_type": "product", "key": "gsm", "label_en": "GSM (weight)", "label_ar": "الوزن (غم/م²)", "data_type": "decimal" },
+      { "entity_type": "product", "key": "design_no", "label_en": "Design number", "label_ar": "رقم التصميم", "data_type": "text" }
+    ]
+  }
+}

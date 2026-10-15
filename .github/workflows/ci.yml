@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: smartbiz
+          POSTGRES_PASSWORD: smartbiz
+          POSTGRES_DB: smartbiz
+        ports: ["5440:5432"]
+        options: >-
+          --health-cmd "pg_isready -U smartbiz" --health-interval 2s --health-timeout 3s --health-retries 30
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run alembic upgrade head
+      - run: uv run pytest
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm --filter @smartbiz/web test
+      - run: pnpm --filter @smartbiz/desktop test
+      - run: pnpm --filter @smartbiz/web build
+      - run: pnpm --filter @smartbiz/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @smartbiz/web e2e --project=smoke
+
+  # M0.5 acceptance: the onboarding flow in a real browser against the real API and database.
+  e2e-full:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: smartbiz
+          POSTGRES_PASSWORD: smartbiz
+          POSTGRES_DB: smartbiz
+        ports: ["5440:5432"]
+        options: >-
+          --health-cmd "pg_isready -U smartbiz" --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cd apps/api && uv sync --frozen && uv run alembic upgrade head
+      - name: Start the API
+        run: |
+          cd apps/api
+          # The venv's uvicorn directly: a background `uv run` would hold uv's cache lock and fail the job cleanup.
+          nohup .venv/bin/uvicorn app.main:app --port 8000 > ../../api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/health && exit 0; sleep 1; done
+          cat ../../api.log; exit 1
+      - run: pnpm --filter @smartbiz/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @smartbiz/web e2e --project=full
+      - if: failure()
+        run: cat api.log
+
+  # M0.6 acceptance: the bundled runtime (PostgreSQL, Python + API, WinSW) on Windows, as child processes and as
+  # real Windows services (the runner is an administrator).
+  local-runtime:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache pinned runtime downloads
+        uses: actions/cache@v4
+        with:
+          path: apps/desktop/.cache/downloads
+          key: runtime-downloads-${{ hashFiles('apps/desktop/runtime.lock.json') }}
+      - run: pnpm --filter @smartbiz/desktop prepare-runtime
+      - run: pnpm --filter @smartbiz/desktop test:integration
+      - name: Windows services
+        env:
+          SMARTBIZ_SERVICES_TEST: "1"
+        working-directory: apps/desktop
+        run: node --test --test-timeout=300000 test/integration/services.integration.cjs
+      # The real .exe: silent install, set up as main PC, sign-up, backup, install over it, silent uninstall.
+      - name: Build the installer
+        run: pnpm --filter @smartbiz/desktop exec electron-builder --win nsis --config electron-builder.config.cjs
+      - name: Installer smoke test
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem apps/desktop/release -Filter '*-setup-*.exe' | Select-Object -First 1).FullName
+          ./apps/desktop/scripts/installer-smoke.ps1 -Setup $setup
+      - if: failure()
+        name: Runtime logs
+        shell: pwsh
+        run: |
+          Get-ChildItem $env:TEMP -Directory -Filter 'smartbiz-rt-*' | ForEach-Object {
+            Get-ChildItem "$($_.FullName)\install\logs" -File -ErrorAction SilentlyContinue | ForEach-Object { "== $_"; Get-Content $_.FullName -Tail 80 }
+          }
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddHours(-1) } -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProviderName -match 'PostgreSQL|SmartBiz' } | Select-Object -First 30 TimeCreated, Message | Format-List
+
+  api-client-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cd apps/api && uv sync --frozen
+      - run: cd apps/api && uv run python -m app.scripts.export_openapi ../../packages/api-client/openapi.json
+      - run: pnpm --filter @smartbiz/api-client generate
+      - name: Generated client must be committed
+        run: git diff --exit-code -- packages/api-client

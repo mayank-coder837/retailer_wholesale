@@ -1,0 +1,3329 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SmartBiz OS API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "description": "Liveness: the API process is up. Does not touch the database.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/db": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Db",
+        "description": "Readiness: the database answers.",
+        "operationId": "health_db",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatabaseHealthOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (problem+json, code `database_unavailable`)"
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Signup",
+        "operationId": "signup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_credentials`"
+          },
+          "409": {
+            "description": "`tenant_selection_required` — lists the user's accounts"
+          },
+          "423": {
+            "description": "`account_locked`"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh",
+        "parameters": [
+          {
+            "name": "smartbiz_refresh",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Smartbiz Refresh"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session ended"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout",
+        "parameters": [
+          {
+            "name": "smartbiz_refresh",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Smartbiz Refresh"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/switch-tenant": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Switch Tenant",
+        "operationId": "switch_tenant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchTenantIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/businesses": {
+      "get": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "List Businesses",
+        "operationId": "list_businesses",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BusinessOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Businesses"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "Create Business",
+        "operationId": "create_business",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BusinessIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/businesses/{business_id}": {
+      "get": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "Get Business",
+        "operationId": "get_business",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/businesses/{business_id}/branches": {
+      "get": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "List Branches",
+        "operationId": "list_branches",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BranchOut"
+                  },
+                  "title": "Response List Branches"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "Create Branch",
+        "operationId": "create_branch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BranchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/branches/{branch_id}/warehouses": {
+      "get": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "List Warehouses",
+        "operationId": "list_warehouses",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WarehouseOut"
+                  },
+                  "title": "Response List Warehouses"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tenancy"
+        ],
+        "summary": "Create Warehouse",
+        "operationId": "create_warehouse",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehouseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions": {
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "List Permissions",
+        "operationId": "list_permissions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Permissions"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/roles": {
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "List Roles",
+        "operationId": "list_roles",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoleOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Roles"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Create Role",
+        "operationId": "create_role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/roles/{role_id}": {
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Get Role",
+        "operationId": "get_role",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Role Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Update Role",
+        "operationId": "update_role",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Role Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Delete Role",
+        "operationId": "delete_role",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Role Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memberships": {
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "List Members",
+        "operationId": "list_members",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Members"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Add Member",
+        "operationId": "add_member",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/memberships/{membership_id}/roles": {
+      "put": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Set Member Roles",
+        "operationId": "set_member_roles",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "membership_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Membership Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentsIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audit": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "summary": "List Audit",
+        "operationId": "list_audit",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditOut"
+                  },
+                  "title": "Response List Audit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attachments": {
+      "post": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Upload Attachment",
+        "operationId": "upload_attachment",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_attachment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "List Attachments",
+        "operationId": "list_attachments",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentOut"
+                  },
+                  "title": "Response List Attachments"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attachments/{attachment_id}/content": {
+      "get": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Download Attachment",
+        "operationId": "download_attachment",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attachment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attachments/{attachment_id}": {
+      "delete": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Delete Attachment",
+        "operationId": "delete_attachment",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attachment Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "List Settings",
+        "operationId": "list_settings",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "branch_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EffectiveSetting"
+                  },
+                  "title": "Response List Settings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/{key}": {
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Put Setting",
+        "operationId": "put_setting",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveSetting"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/industry-packs": {
+      "get": {
+        "tags": [
+          "industry packs"
+        ],
+        "summary": "List Industry Packs",
+        "description": "Public: the catalogue is product seed data (no tenant data), and the sign-up wizard shows it.",
+        "operationId": "list_industry_packs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PackSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Industry Packs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/businesses/{business_id}/industry-packs": {
+      "get": {
+        "tags": [
+          "industry packs"
+        ],
+        "summary": "List Applied Packs",
+        "operationId": "list_applied_packs",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationOut"
+                  },
+                  "title": "Response List Applied Packs"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "industry packs"
+        ],
+        "summary": "Apply Industry Pack",
+        "operationId": "apply_industry_pack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyPackIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pairing/challenge": {
+      "post": {
+        "tags": [
+          "pairing"
+        ],
+        "summary": "Challenge",
+        "description": "Public: proves this server knows the code shown on the main PC and owns the certificate in use.",
+        "operationId": "pairing_challenge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/backups": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "List Backups Endpoint",
+        "operationId": "list_backups",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupsOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Create Backup Endpoint",
+        "operationId": "create_backup",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApplicationOut": {
+        "properties": {
+          "pack_code": {
+            "type": "string",
+            "title": "Pack Code"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "applied_sections": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Applied Sections"
+          },
+          "pending_sections": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pending Sections"
+          },
+          "changed": {
+            "type": "boolean",
+            "title": "Changed",
+            "description": "False when this exact version was already fully applied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pack_code",
+          "version",
+          "applied_sections",
+          "pending_sections",
+          "changed"
+        ],
+        "title": "ApplicationOut"
+      },
+      "ApplyPackIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ApplyPackIn"
+      },
+      "AssignmentIn": {
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Role Id"
+          },
+          "business_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Id",
+            "description": "Omit for the whole account"
+          },
+          "branch_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Id",
+            "description": "Requires business_id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_id"
+        ],
+        "title": "AssignmentIn"
+      },
+      "AssignmentOut": {
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Role Id"
+          },
+          "role_name_en": {
+            "type": "string",
+            "title": "Role Name En"
+          },
+          "role_name_ar": {
+            "type": "string",
+            "title": "Role Name Ar"
+          },
+          "business_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_id",
+          "role_name_en",
+          "role_name_ar",
+          "business_id",
+          "branch_id"
+        ],
+        "title": "AssignmentOut"
+      },
+      "AssignmentsIn": {
+        "properties": {
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentIn"
+            },
+            "type": "array",
+            "title": "Assignments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignments"
+        ],
+        "title": "AssignmentsIn"
+      },
+      "AttachmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_type",
+          "entity_id",
+          "filename",
+          "content_type",
+          "size",
+          "sha256",
+          "created_at"
+        ],
+        "title": "AttachmentOut"
+      },
+      "AuditOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "actor_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Id"
+          },
+          "via_ai": {
+            "type": "boolean",
+            "title": "Via Ai"
+          },
+          "on_behalf_of_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Behalf Of User Id"
+          },
+          "client": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "changes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changes"
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "at",
+          "actor_user_id",
+          "via_ai",
+          "on_behalf_of_user_id",
+          "client",
+          "request_id",
+          "action",
+          "entity_type",
+          "entity_id",
+          "changes",
+          "snapshot",
+          "reason"
+        ],
+        "title": "AuditOut"
+      },
+      "BackupCopyOut": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "file",
+          "error"
+        ],
+        "title": "BackupCopyOut",
+        "description": "The last copy to the owner's folder: when, which backup, and the error if it failed."
+      },
+      "BackupOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "size_bytes",
+          "created_at"
+        ],
+        "title": "BackupOut"
+      },
+      "BackupsOut": {
+        "properties": {
+          "keep": {
+            "type": "integer",
+            "title": "Keep"
+          },
+          "backups": {
+            "items": {
+              "$ref": "#/components/schemas/BackupOut"
+            },
+            "type": "array",
+            "title": "Backups"
+          },
+          "copy_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copy Dir"
+          },
+          "last_copy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BackupCopyOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "keep",
+          "backups"
+        ],
+        "title": "BackupsOut"
+      },
+      "Body_upload_attachment": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "entity_id",
+          "file"
+        ],
+        "title": "Body_upload_attachment"
+      },
+      "BranchIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "emirate": {
+            "$ref": "#/components/schemas/Emirate",
+            "description": "Decides the VAT 201 Box 1 line for sales this branch makes"
+          },
+          "is_head_office": {
+            "type": "boolean",
+            "title": "Is Head Office",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name_en",
+          "name_ar",
+          "emirate"
+        ],
+        "title": "BranchIn"
+      },
+      "BranchOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "emirate": {
+            "$ref": "#/components/schemas/Emirate"
+          },
+          "is_head_office": {
+            "type": "boolean",
+            "title": "Is Head Office"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "address",
+          "emirate",
+          "is_head_office"
+        ],
+        "title": "BranchOut"
+      },
+      "BusinessIn": {
+        "properties": {
+          "legal_name_en": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Legal Name En"
+          },
+          "legal_name_ar": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Legal Name Ar"
+          },
+          "trade_license_no": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade License No"
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{15}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn",
+            "description": "UAE TRN, 15 digits"
+          },
+          "vat_registered": {
+            "type": "boolean",
+            "title": "Vat Registered",
+            "default": false
+          },
+          "base_currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Base Currency",
+            "default": "AED"
+          },
+          "fiscal_year_start_month": {
+            "type": "integer",
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Fiscal Year Start Month",
+            "default": 1
+          },
+          "time_zone": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Time Zone",
+            "default": "Asia/Dubai"
+          }
+        },
+        "type": "object",
+        "required": [
+          "legal_name_en",
+          "legal_name_ar"
+        ],
+        "title": "BusinessIn"
+      },
+      "BusinessOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "legal_name_en": {
+            "type": "string",
+            "title": "Legal Name En"
+          },
+          "legal_name_ar": {
+            "type": "string",
+            "title": "Legal Name Ar"
+          },
+          "trade_license_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade License No"
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn"
+          },
+          "vat_registered": {
+            "type": "boolean",
+            "title": "Vat Registered"
+          },
+          "base_currency": {
+            "type": "string",
+            "title": "Base Currency"
+          },
+          "fiscal_year_start_month": {
+            "type": "integer",
+            "title": "Fiscal Year Start Month"
+          },
+          "time_zone": {
+            "type": "string",
+            "title": "Time Zone"
+          },
+          "costing_method": {
+            "type": "string",
+            "title": "Costing Method"
+          },
+          "negative_stock_allowed": {
+            "type": "boolean",
+            "title": "Negative Stock Allowed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "legal_name_en",
+          "legal_name_ar",
+          "trade_license_no",
+          "trn",
+          "vat_registered",
+          "base_currency",
+          "fiscal_year_start_month",
+          "time_zone",
+          "costing_method",
+          "negative_stock_allowed"
+        ],
+        "title": "BusinessOut"
+      },
+      "ChallengeIn": {
+        "properties": {
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Nonce",
+            "description": "32 random bytes, hex"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nonce"
+        ],
+        "title": "ChallengeIn"
+      },
+      "ChallengeOut": {
+        "properties": {
+          "product": {
+            "type": "string",
+            "title": "Product"
+          },
+          "server_name": {
+            "type": "string",
+            "title": "Server Name"
+          },
+          "proof": {
+            "type": "string",
+            "title": "Proof"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product",
+          "server_name",
+          "proof"
+        ],
+        "title": "ChallengeOut"
+      },
+      "ClientKind": {
+        "type": "string",
+        "enum": [
+          "web",
+          "desktop"
+        ],
+        "title": "ClientKind"
+      },
+      "DatabaseHealthOut": {
+        "properties": {
+          "database": {
+            "type": "string",
+            "title": "Database"
+          },
+          "server_version": {
+            "type": "string",
+            "title": "Server Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "database",
+          "server_version"
+        ],
+        "title": "DatabaseHealthOut"
+      },
+      "EffectiveSetting": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "default, tenant, business, branch or user"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "source",
+          "scopes",
+          "description"
+        ],
+        "title": "EffectiveSetting"
+      },
+      "Emirate": {
+        "type": "string",
+        "enum": [
+          "abu_dhabi",
+          "dubai",
+          "sharjah",
+          "ajman",
+          "umm_al_quwain",
+          "ras_al_khaimah",
+          "fujairah"
+        ],
+        "title": "Emirate"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "product": {
+            "type": "string",
+            "title": "Product"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "product",
+          "version"
+        ],
+        "title": "HealthOut"
+      },
+      "LoginIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id",
+            "description": "Required when the user belongs to several"
+          },
+          "client": {
+            "$ref": "#/components/schemas/ClientKind",
+            "default": "web"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn"
+      },
+      "MeOut": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/TenantOut"
+          },
+          "membership_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Membership Id"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/MembershipOut"
+            },
+            "type": "array",
+            "title": "Memberships"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "tenant",
+          "membership_id",
+          "node_id",
+          "memberships"
+        ],
+        "title": "MeOut"
+      },
+      "MemberIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Full Name"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 10,
+            "title": "Password"
+          },
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentIn"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Assignments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "full_name",
+          "password",
+          "assignments"
+        ],
+        "title": "MemberIn"
+      },
+      "MemberOut": {
+        "properties": {
+          "membership_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Membership Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentOut"
+            },
+            "type": "array",
+            "title": "Assignments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "membership_id",
+          "user_id",
+          "email",
+          "full_name",
+          "status",
+          "assignments"
+        ],
+        "title": "MemberOut"
+      },
+      "MembershipOut": {
+        "properties": {
+          "membership_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Membership Id"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "tenant_name": {
+            "type": "string",
+            "title": "Tenant Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "membership_id",
+          "tenant_id",
+          "tenant_name",
+          "status"
+        ],
+        "title": "MembershipOut"
+      },
+      "PackSummary": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "description_ar": {
+            "type": "string",
+            "title": "Description Ar"
+          },
+          "sections": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "version",
+          "name_en",
+          "name_ar",
+          "description",
+          "description_ar",
+          "sections"
+        ],
+        "title": "PackSummary"
+      },
+      "PermissionOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "resource": {
+            "type": "string",
+            "title": "Resource"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "resource",
+          "action"
+        ],
+        "title": "PermissionOut"
+      },
+      "RefreshIn": {
+        "properties": {
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token",
+            "description": "Desktop sends it here; web uses the cookie"
+          }
+        },
+        "type": "object",
+        "title": "RefreshIn"
+      },
+      "RoleIn": {
+        "properties": {
+          "name_en": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name_en",
+          "name_ar"
+        ],
+        "title": "RoleIn"
+      },
+      "RoleOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "system_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Key"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "editable": {
+            "type": "boolean",
+            "title": "Editable",
+            "description": "False for the Owner role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "system_key",
+          "name_en",
+          "name_ar",
+          "description",
+          "permissions",
+          "editable"
+        ],
+        "title": "RoleOut"
+      },
+      "RolePatch": {
+        "properties": {
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "permissions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "title": "RolePatch"
+      },
+      "SettingIn": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "pattern": "^(tenant|business|branch|user)$",
+            "title": "Scope"
+          },
+          "scope_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Id",
+            "description": "Business or branch id; omit for tenant/user"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "value"
+        ],
+        "title": "SettingIn"
+      },
+      "SignupIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 10,
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Full Name"
+          },
+          "locale": {
+            "type": "string",
+            "pattern": "^(en|ar)$",
+            "title": "Locale",
+            "default": "en"
+          },
+          "tenant_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Tenant Name",
+            "description": "Account name, usually the trade name"
+          },
+          "business": {
+            "$ref": "#/components/schemas/BusinessIn"
+          },
+          "head_office": {
+            "$ref": "#/components/schemas/BranchIn"
+          },
+          "client": {
+            "$ref": "#/components/schemas/ClientKind",
+            "default": "web"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name",
+          "tenant_name",
+          "business",
+          "head_office"
+        ],
+        "title": "SignupIn"
+      },
+      "SwitchTenantIn": {
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "client": {
+            "$ref": "#/components/schemas/ClientKind",
+            "default": "web"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant_id"
+        ],
+        "title": "SwitchTenantIn"
+      },
+      "TenantOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "default_locale": {
+            "type": "string",
+            "title": "Default Locale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "default_locale"
+        ],
+        "title": "TenantOut"
+      },
+      "TokenOut": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token",
+            "description": "Only for desktop clients"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "membership_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Membership Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in",
+          "tenant_id",
+          "membership_id"
+        ],
+        "title": "TokenOut"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "locale"
+        ],
+        "title": "UserOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WarehouseIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name_en",
+          "name_ar"
+        ],
+        "title": "WarehouseIn"
+      },
+      "WarehouseOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Branch Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "branch_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "is_default"
+        ],
+        "title": "WarehouseOut"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
