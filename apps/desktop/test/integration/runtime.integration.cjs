@@ -16,6 +16,7 @@ const { fingerprintOfFile, get } = require("../../src/runtime/health.cjs");
 const { processHost } = require("../../src/runtime/hosts.cjs");
 const { layout } = require("../../src/runtime/layout.cjs");
 const manager = require("../../src/runtime/manager.cjs");
+const { findMain } = require("../../src/runtime/discovery.cjs");
 const { pairWithMain } = require("../../src/runtime/pairing-client.cjs");
 const { run } = require("../../src/runtime/runner.cjs");
 
@@ -30,7 +31,7 @@ const ctx = {
   healthTimeoutMs: 90_000,
   log: (/** @type {string} */ m) => console.log(`  · ${m}`),
 };
-const PORTS = { apiPort: 18710, dbPort: 15440 };
+const PORTS = { apiPort: 18710, dbPort: 15440, discoveryPort: 18711 };
 let token = "";
 
 /** @param {string} method @param {string} pathname @param {unknown} [body] */
@@ -253,6 +254,17 @@ test("LAN mode serves TLS with the main PC's certificate, and pairing pins it", 
   await assert.rejects(get(`${base}/health`, { fingerprint: "0".repeat(64) }), /fingerprint mismatch/);
   manager.closePairing(l);
   await assert.rejects(pairWithMain({ host: "127.0.0.1", port: config.apiPort, code }), /not open/);
+
+  // After an IP change the office PC asks the network; the real API answers with its real certificate.
+  const found = await findMain({ fingerprint, port: PORTS.discoveryPort, targets: ["127.0.0.1"] });
+  assert.deepEqual(found, { host: "127.0.0.1", port: config.apiPort, serverName: "Deira main PC" });
+  const stranger = await findMain({
+    fingerprint: "0".repeat(64),
+    port: PORTS.discoveryPort,
+    targets: ["127.0.0.1"],
+    timeoutMs: 500,
+  });
+  assert.equal(stranger, null, "an office PC paired with another main PC ignores this one");
 
   await manager.setLan(ctx, false);
 });

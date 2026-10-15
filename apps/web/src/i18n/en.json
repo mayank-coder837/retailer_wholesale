@@ -237,6 +237,9 @@
     "copyStop": "Stop copying",
     "copyLastOk": "Last copy: {{date}}",
     "copyLastFailed": "The last copy failed ({{date}}): {{error}}",
-    "copyNasHint": "A NAS folder must let this PC write without a user name and password."
+    "copyNasHint": "A NAS folder must let this PC write without a user name and password.",
+    "publicNetwork": "Windows treats {{networks}} as a Public network, so office PCs cannot connect. Switch it to Private if this is your shop's own network.",
+    "makePrivate": "Make it Private",
+    "fixedIpHint": "Office PCs find this PC again by themselves if its address changes. With a router, reserving a fixed address for this PC (DHCP reservation) avoids even the short wait."
   }
 }

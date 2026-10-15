@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     tls_cert_file: Path | None = None  # self-signed certificate office PCs pin when pairing
     pairing_file: Path | None = None  # the current pairing code, written by the desktop app on the main PC
     server_name: str | None = None  # shown to office PCs while pairing
+    api_port: int | None = None  # the port office PCs use (sent in discovery answers)
+    discovery_port: int | None = None  # UDP: office PCs find the main PC again after an IP change
     backup_dir: Path | None = None  # nightly pg_dump target; no backups when unset
     # pg_dump login: read-only with BYPASSRLS (the API's own login cannot see past row-level security)
     backup_database_url: str | None = None

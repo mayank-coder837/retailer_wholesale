@@ -13,6 +13,7 @@ const { localApiUrl } = require("./api-service.cjs");
 const { readConfig, writeConfig } = require("./config.cjs");
 const { fingerprintOfFile, waitForHealthy } = require("./health.cjs");
 const { product } = require("./layout.cjs");
+const network = require("./network.cjs");
 const pg = require("./postgres.cjs");
 const { powershell, psQuote } = require("./runner.cjs");
 const { generateSecrets, readSecrets, writeSecrets } = require("./secrets.cjs");
@@ -139,16 +140,19 @@ function pin(config) {
   return config.lan ? (config.certFingerprint ?? undefined) : undefined;
 }
 
-/** @param {Context} ctx @param {boolean} enabled @param {number} port */
-async function firewall(ctx, enabled, port) {
+/** Office PCs' firewall rules: the API (TCP) and discovery (UDP), Private networks only. @param {Context} ctx @param {boolean} enabled */
+async function firewall(ctx, enabled) {
   if (ctx.host.kind !== "services") return;
-  const name = `${product.name} API`;
-  // Get-… | Remove-…: when no rule exists the pipeline is empty and exits 0 (Remove-… alone exits 1).
-  const existing = `Get-NetFirewallRule -DisplayName ${psQuote(name)} -ErrorAction SilentlyContinue`;
-  const script = enabled
-    ? `if (-not (${existing})) { New-NetFirewallRule -DisplayName ${psQuote(name)} -Direction Inbound -Protocol TCP -LocalPort ${port} -Profile Private -Action Allow | Out-Null }; exit 0`
-    : `${existing} | Remove-NetFirewallRule; exit 0`;
-  await powershell(ctx.runner, script);
+  const config = readConfig(ctx.layout.configFile);
+  await powershell(
+    ctx.runner,
+    network.firewallScript(product.name, enabled, config.apiPort, config.discoveryPort),
+  );
+}
+
+/** Switches this PC's real network adapters from Public to Private (needs admin rights). @param {Context} ctx */
+async function makeNetworkPrivate(ctx) {
+  await powershell(ctx.runner, network.makePrivateScript());
 }
 
 /**
@@ -181,10 +185,7 @@ async function freePort(start) {
 
 /** LAN addresses to put in the certificate (informational: office PCs pin the fingerprint). */
 function lanAddresses() {
-  return Object.values(os.networkInterfaces())
-    .flat()
-    .filter((a) => a && a.family === "IPv4" && !a.internal)
-    .map((a) => /** @type {os.NetworkInterfaceInfo} */ (a).address);
+  return network.lanAddresses();
 }
 
 /**
@@ -301,7 +302,7 @@ async function setupMain(ctx, options) {
   writeConfig(l.configFile, config);
   await ctx.host.installApi(version, config);
   await ctx.host.startApi(version, config);
-  await firewall(ctx, config.lan, config.apiPort);
+  await firewall(ctx, config.lan);
   await waitForHealthy(localApiUrl(config), {
     fingerprint: pin(config),
     timeoutMs: ctx.healthTimeoutMs,
@@ -319,7 +320,7 @@ async function setLan(ctx, enabled) {
   await ctx.host.stopApi();
   await ctx.host.installApi(config.runtimeVersion, config);
   await ctx.host.startApi(config.runtimeVersion, config);
-  await firewall(ctx, enabled, config.apiPort);
+  await firewall(ctx, enabled);
   await waitForHealthy(localApiUrl(config), {
     fingerprint: pin(config),
     timeoutMs: ctx.healthTimeoutMs,
@@ -546,7 +547,7 @@ async function uninstallMain(ctx, options = {}) {
     ? fs.readdirSync(l.runtimes).filter((d) => !d.endsWith(".partial"))
     : [];
   await ctx.host.uninstall(config.runtimeVersion ?? installed.sort().at(-1) ?? null);
-  await firewall(ctx, false, config.apiPort);
+  await firewall(ctx, false);
   fs.rmSync(l.runtimes, { recursive: true, force: true });
   fs.rmSync(l.services, { recursive: true, force: true });
   if (options.removeData) {
@@ -583,6 +584,7 @@ module.exports = {
   uninstallMain,
   setLan,
   setBackupCopy,
+  makeNetworkPrivate,
   backupNow,
   listBackups,
   restore,

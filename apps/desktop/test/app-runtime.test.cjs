@@ -67,7 +67,8 @@ function fakeMainPc() {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, "x"), "x");
   }
-  writeConfig(l.configFile, { ...defaults(), mode: "main", runtimeVersion: "0.1.0" });
+  // Port 1: nothing answers there, even on a PC that runs a real installation on the default port.
+  writeConfig(l.configFile, { ...defaults(), mode: "main", runtimeVersion: "0.1.0", apiPort: 1 });
   /** @type {(string | null)[]} */
   const uninstalled = [];
   const host = /** @type {any} */ ({

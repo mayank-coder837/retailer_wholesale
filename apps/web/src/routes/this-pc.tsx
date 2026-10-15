@@ -68,10 +68,18 @@ function MainPc() {
     mutationFn: () => runtime!.closePairing(),
     onSuccess: () => setPairing(null),
   });
+  const makePrivate = useMutation({
+    mutationFn: () => runtime!.makeNetworkPrivate(),
+    onSuccess: (result) => {
+      report(result);
+      void info.refetch();
+    },
+  });
 
   if (!runtime || info.isPending) return <p>{t("common.loading")}</p>;
   if (info.isError) return <Problem code="failed" />;
   const server = info.data;
+  const publicNetworks = server.networks.filter((n) => n.category === "Public");
 
   return (
     <>
@@ -100,6 +108,27 @@ function MainPc() {
           </Button>
           <span className="text-xs text-muted-foreground">{t("thisPc.adminHint")}</span>
         </div>
+        {server.lan && publicNetworks.length > 0 && (
+          <div
+            role="alert"
+            className="flex flex-col gap-2 rounded-md border border-destructive/40 p-3 text-sm"
+          >
+            <p>
+              {t("thisPc.publicNetwork", {
+                networks: publicNetworks.map((n) => n.network || n.adapter).join(", "),
+              })}
+            </p>
+            <Button
+              variant="outline"
+              className="self-start"
+              disabled={makePrivate.isPending}
+              onClick={() => makePrivate.mutate()}
+            >
+              {t("thisPc.makePrivate")}
+            </Button>
+          </div>
+        )}
+        {server.lan && <p className="text-xs text-muted-foreground">{t("thisPc.fixedIpHint")}</p>}
       </Section>
 
       <Section title={t("thisPc.pairTitle")}>
@@ -138,7 +167,7 @@ function PairingCode({
       <dl className="grid grid-cols-[max-content_1fr] items-baseline gap-x-6 gap-y-1">
         <dt className="text-sm text-muted-foreground">{t("thisPc.pairAddress")}</dt>
         <dd dir="ltr" className="text-start font-mono">
-          {pairing.addresses.map((a) => `${a}:${pairing.port}`).join("  ·  ") || `—:${pairing.port}`}
+          {[pairing.computerName, ...pairing.addresses].map((a) => `${a}:${pairing.port}`).join("  ·  ")}
         </dd>
         <dt className="text-sm text-muted-foreground">{t("thisPc.pairCode")}</dt>
         <dd dir="ltr" className="text-start font-mono text-3xl tracking-[0.3em]" data-testid="pairing-code">

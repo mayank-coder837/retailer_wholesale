@@ -18,12 +18,16 @@ export interface RuntimeInfo {
   version: string | null;
   previousVersion: string | null;
   addresses: string[];
+  /** Windows computer name: office PCs can pair by name, which survives IP changes on most networks. */
+  computerName: string;
+  /** Windows network type of each real adapter; office PCs cannot connect over a "Public" one. */
+  networks: { adapter: string; network: string; category: "Public" | "Private" | "Domain" }[];
   fingerprint: string | null;
   backupCopyDir: string | null;
 }
 
 export type PairingResult =
-  | { ok: true; code: string; expiresAt: string; addresses: string[]; port: number }
+  | { ok: true; code: string; expiresAt: string; addresses: string[]; computerName: string; port: number }
   | { ok: false; code: string };
 
 export interface DesktopBridge {
@@ -47,6 +51,8 @@ export interface DesktopBridge {
     /** Founder decision F1: asks for a folder (USB drive, NAS); every new backup is also copied there. */
     chooseBackupCopy(): Promise<RuntimeResult>;
     stopBackupCopy(): Promise<RuntimeResult>;
+    /** Switches this PC's network from Public to Private so office PCs can connect (admin). */
+    makeNetworkPrivate(): Promise<RuntimeResult>;
   };
   /** Office PC only: forget the main PC and show the first-run screen. */
   disconnect?: () => Promise<RuntimeResult>;

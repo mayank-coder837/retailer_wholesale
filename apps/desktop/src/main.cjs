@@ -2,11 +2,13 @@
 "use strict";
 
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { app, BrowserWindow, dialog, ipcMain, safeStorage, session, shell } = require("electron");
 
 const {
+  moveOffice,
   parseAddress,
   readOfficeConnection,
   resolveConnection,
@@ -17,7 +19,9 @@ const { messages } = require("./first-run/messages.cjs");
 const { readConfig } = require("./runtime/config.cjs");
 const { parseCli, runCli, backupPath, EXIT } = require("./runtime/cli.cjs");
 const { runElevated, UAC_CANCELLED } = require("./runtime/elevate.cjs");
+const { findMain } = require("./runtime/discovery.cjs");
 const { fingerprintOfPem } = require("./runtime/health.cjs");
+const { networkProfiles } = require("./runtime/network.cjs");
 const { serviceHost, processHost } = require("./runtime/hosts.cjs");
 const { DEFAULT_ROOT, layout, product } = require("./runtime/layout.cjs");
 const manager = require("./runtime/manager.cjs");
@@ -202,13 +206,28 @@ function startApp() {
       void next.loadURL(target.url);
     } else {
       // The server may still be starting (boot) or the main PC may be off: show a waiting page and keep retrying.
+      let failures = 0;
       next.webContents.on("did-fail-load", (_event, code, _description, _url, isMainFrame) => {
         if (!isMainFrame || code === -3 /* aborted by a navigation */) return;
+        failures += 1;
         void next.loadFile(waitingPage);
+        // An office PC asks the network where the main PC is now (its IP may have changed), every other try.
+        if (target.role === "office" && failures % 2 === 1) void refindMain();
         retryTimer = setTimeout(() => !next.isDestroyed() && void next.loadURL(target.url), 3000);
       });
       void next.loadURL(target.url);
     }
+  }
+
+  /** The main PC answered discovery from a new address: save it and reconnect there. */
+  async function refindMain() {
+    const office = readOfficeConnection(officeFile());
+    if (!office) return;
+    const found = await findMain({ fingerprint: office.fingerprint, port: product.localDiscoveryPort });
+    const moved = moveOffice(office, found);
+    if (!moved) return;
+    writeOfficeConnection(officeFile(), moved);
+    openForCurrentRole();
   }
 
   /** Decides what this PC shows, from the machine config and this user's pairing. */
@@ -284,7 +303,7 @@ function startApp() {
     });
 
     // Main PC: this PC's server.
-    ipcMain.handle("smartbiz:runtime:info", (event) => {
+    ipcMain.handle("smartbiz:runtime:info", async (event) => {
       fromTrustedPage(event);
       const config = readConfig(l.configFile);
       return {
@@ -294,9 +313,18 @@ function startApp() {
         version: config.runtimeVersion,
         previousVersion: config.previousVersion,
         addresses: manager.lanAddresses(),
+        computerName: os.hostname(),
+        networks: await networkProfiles(run),
         fingerprint: config.certFingerprint,
         backupCopyDir: config.backupCopyDir,
       };
+    });
+    ipcMain.handle("smartbiz:runtime:network-private", async (event) => {
+      fromTrustedPage(event);
+      const code = await elevated({ command: "network-private" });
+      return code === EXIT.ok
+        ? { ok: true }
+        : { ok: false, code: code === UAC_CANCELLED ? "uac_cancelled" : "failed" };
     });
     ipcMain.handle("smartbiz:runtime:lan", async (event, enabled) => {
       fromTrustedPage(event);
@@ -316,6 +344,7 @@ function startApp() {
         code,
         expiresAt: expiresAt.toISOString(),
         addresses: manager.lanAddresses(),
+        computerName: os.hostname(),
         port: config.apiPort,
       };
     });

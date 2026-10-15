@@ -78,6 +78,16 @@ function writeOfficeConnection(file, connection) {
 }
 
 /**
+ * The office connection after discovery found the main PC at a new address; null when nothing changed.
+ * @param {OfficeConnection} office @param {{ host: string, port: number } | null} found
+ * @returns {OfficeConnection | null}
+ */
+function moveOffice(office, found) {
+  if (!found || (found.host === office.host && found.port === office.port)) return null;
+  return { ...office, host: found.host, port: found.port };
+}
+
+/**
  * Electron's certificate check: a pinned host:port is trusted only with exactly the pinned certificate; every other
  * host keeps Chromium's normal verification.
  * @param {{ host: string, port: number, fingerprint: string } | null} pin
@@ -95,4 +105,5 @@ module.exports = {
   readOfficeConnection,
   writeOfficeConnection,
   verifyCertificate,
+  moveOffice,
 };

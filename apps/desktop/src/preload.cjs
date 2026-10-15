@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld("smartbiz", {
           /** Asks for a folder (USB drive, NAS) and copies every new backup there too. */
           chooseBackupCopy: () => ipcRenderer.invoke("smartbiz:runtime:backup-copy", true),
           stopBackupCopy: () => ipcRenderer.invoke("smartbiz:runtime:backup-copy", false),
+          /** Switches this PC's network from Public to Private, so office PCs can connect (admin). */
+          makeNetworkPrivate: () => ipcRenderer.invoke("smartbiz:runtime:network-private"),
         }
       : undefined,
   // Office PC only: forget the main PC and show the first-run screen again.

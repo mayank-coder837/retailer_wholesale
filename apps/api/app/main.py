@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
-from app.core import backup, health, pairing
+from app.core import backup, discovery, health, pairing
 from app.core.config import JobsBackend, Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import register_error_handlers
@@ -44,7 +44,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if settings.backup_dir and settings.pg_bin_dir
             else None
         )
+        finder = await discovery.start(settings)
         yield
+        if finder is not None:
+            finder.close()
         if backups is not None:
             backups.cancel()
             with contextlib.suppress(asyncio.CancelledError):

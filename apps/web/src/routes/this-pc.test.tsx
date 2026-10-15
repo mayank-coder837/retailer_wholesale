@@ -16,6 +16,8 @@ const INFO: RuntimeInfo = {
   addresses: ["192.168.1.20"],
   fingerprint: "ab".repeat(32),
   backupCopyDir: null,
+  computerName: "DEIRA-MAIN",
+  networks: [{ adapter: "Wi-Fi", network: "Shop Wi-Fi", category: "Private" }],
 };
 
 const BACKUPS = {
@@ -34,12 +36,14 @@ function bridge(role: "main" | "office", info: RuntimeInfo = INFO) {
       code: "K7PQ2MXA",
       expiresAt: "2026-10-11T10:10:00Z",
       addresses: ["192.168.1.20"],
+      computerName: "DEIRA-MAIN",
       port: 8710,
     })),
     closePairing: vi.fn(async () => ({ ok: true as const })),
     restore: vi.fn(async () => ({ ok: true as const })),
     chooseBackupCopy: vi.fn(async () => ({ ok: true as const })),
     stopBackupCopy: vi.fn(async () => ({ ok: true as const })),
+    makeNetworkPrivate: vi.fn(async () => ({ ok: true as const })),
   };
   const disconnect = vi.fn(async () => ({ ok: true as const }));
   const session = {
@@ -85,7 +89,9 @@ describe("Settings → This PC", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Show pairing code" }));
     expect(await screen.findByTestId("pairing-code")).toHaveTextContent("K7PQ2MXA");
-    expect(screen.getByText("192.168.1.20:8710")).toBeInTheDocument();
+    expect(
+      screen.getByText("DEIRA-MAIN:8710  ·  192.168.1.20:8710", { normalizer: (s) => s }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Stop pairing" }));
     expect(runtime.closePairing).toHaveBeenCalled();
 
@@ -181,6 +187,19 @@ describe("Settings → This PC", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Choose folder" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Stop copying" })).toBeNull();
+  });
+
+  it("warns when Windows calls the network Public and can switch it to Private", async () => {
+    const { runtime } = bridge("main", {
+      ...INFO,
+      networks: [{ adapter: "Wi-Fi", network: "iPhone hotspot", category: "Public" }],
+    });
+    const { api } = shopApi({ signedIn: true, "GET /system/backups": { status: 200, body: BACKUPS } });
+    render(<App api={api} />);
+
+    expect(await screen.findByText(/Windows treats iPhone hotspot as a Public network/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Make it Private" }));
+    expect(runtime.makeNetworkPrivate).toHaveBeenCalled();
   });
 
   it("lets an office PC disconnect from the main PC", async () => {

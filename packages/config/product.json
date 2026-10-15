@@ -4,5 +4,6 @@
   "appId": "ae.smartbiz.os",
   "servicePrefix": "SmartBizOS",
   "localDbPort": 5440,
-  "localApiPort": 8710
+  "localApiPort": 8710,
+  "localDiscoveryPort": 8711
 }

@@ -32,6 +32,8 @@ function apiEnvironment(l, config, version) {
   };
   if (config.backupCopyDir) env.SMARTBIZ_BACKUP_COPY_DIR = config.backupCopyDir;
   if (config.lan) {
+    env.SMARTBIZ_API_PORT = String(config.apiPort);
+    env.SMARTBIZ_DISCOVERY_PORT = String(config.discoveryPort); // office PCs find this PC after an IP change
     env.SMARTBIZ_TLS_CERT_FILE = l.certFile;
     env.SMARTBIZ_REFRESH_COOKIE_SECURE = "true";
   }
