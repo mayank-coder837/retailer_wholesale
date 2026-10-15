@@ -1,0 +1,72 @@
+{
+  "$comment": "Standard unit families and units copied into every tenant at sign-up (M1.1, ADR 0013). Factors point to the family base and are exact as written. Packaging units whose size depends on the product (carton, box, roll, bag, than) are count units with factor 1; their real size is set per product (1 carton = 24 pcs).",
+  "families": [
+    {
+      "code": "count",
+      "name_en": "Count",
+      "name_ar": "العدد",
+      "units": [
+        { "code": "pcs", "name_en": "Piece", "name_ar": "قطعة", "symbol": "pcs", "decimals": 0, "factor": "1", "base": true },
+        { "code": "dozen", "name_en": "Dozen", "name_ar": "دزينة", "symbol": "dz", "decimals": 0, "factor": "12" },
+        { "code": "pair", "name_en": "Pair", "name_ar": "زوج", "symbol": "pr", "decimals": 0, "factor": "2" },
+        { "code": "carton", "name_en": "Carton", "name_ar": "كرتون", "symbol": "ctn", "decimals": 0, "factor": "1" },
+        { "code": "box", "name_en": "Box", "name_ar": "علبة", "symbol": "box", "decimals": 0, "factor": "1" },
+        { "code": "bag", "name_en": "Bag", "name_ar": "كيس", "symbol": "bag", "decimals": 0, "factor": "1" },
+        { "code": "roll", "name_en": "Roll", "name_ar": "رول", "symbol": "roll", "decimals": 0, "factor": "1" }
+      ]
+    },
+    {
+      "code": "length",
+      "name_en": "Length",
+      "name_ar": "الطول",
+      "units": [
+        { "code": "m", "name_en": "Metre", "name_ar": "متر", "symbol": "m", "decimals": 2, "factor": "1", "base": true },
+        { "code": "cm", "name_en": "Centimetre", "name_ar": "سنتيمتر", "symbol": "cm", "decimals": 1, "factor": "0.01" },
+        { "code": "mm", "name_en": "Millimetre", "name_ar": "مليمتر", "symbol": "mm", "decimals": 0, "factor": "0.001" },
+        { "code": "km", "name_en": "Kilometre", "name_ar": "كيلومتر", "symbol": "km", "decimals": 3, "factor": "1000" },
+        { "code": "in", "name_en": "Inch", "name_ar": "بوصة", "symbol": "in", "decimals": 2, "factor": "0.0254" },
+        { "code": "ft", "name_en": "Foot", "name_ar": "قدم", "symbol": "ft", "decimals": 2, "factor": "0.3048" },
+        { "code": "yd", "name_en": "Yard", "name_ar": "ياردة", "symbol": "yd", "decimals": 2, "factor": "0.9144" }
+      ]
+    },
+    {
+      "code": "weight",
+      "name_en": "Weight",
+      "name_ar": "الوزن",
+      "units": [
+        { "code": "kg", "name_en": "Kilogram", "name_ar": "كيلوغرام", "symbol": "kg", "decimals": 3, "factor": "1", "base": true },
+        { "code": "g", "name_en": "Gram", "name_ar": "غرام", "symbol": "g", "decimals": 0, "factor": "0.001" },
+        { "code": "ton", "name_en": "Tonne", "name_ar": "طن", "symbol": "t", "decimals": 3, "factor": "1000" },
+        { "code": "lb", "name_en": "Pound", "name_ar": "رطل", "symbol": "lb", "decimals": 2, "factor": "0.453592" }
+      ]
+    },
+    {
+      "code": "volume",
+      "name_en": "Volume",
+      "name_ar": "الحجم",
+      "units": [
+        { "code": "l", "name_en": "Litre", "name_ar": "لتر", "symbol": "L", "decimals": 3, "factor": "1", "base": true },
+        { "code": "ml", "name_en": "Millilitre", "name_ar": "مليلتر", "symbol": "mL", "decimals": 0, "factor": "0.001" },
+        { "code": "gal", "name_en": "Gallon (US)", "name_ar": "غالون", "symbol": "gal", "decimals": 2, "factor": "3.785412" }
+      ]
+    },
+    {
+      "code": "area",
+      "name_en": "Area",
+      "name_ar": "المساحة",
+      "units": [
+        { "code": "m2", "name_en": "Square metre", "name_ar": "متر مربع", "symbol": "m²", "decimals": 2, "factor": "1", "base": true },
+        { "code": "ft2", "name_en": "Square foot", "name_ar": "قدم مربع", "symbol": "ft²", "decimals": 2, "factor": "0.092903" }
+      ]
+    },
+    {
+      "code": "time",
+      "name_en": "Time",
+      "name_ar": "الوقت",
+      "units": [
+        { "code": "hr", "name_en": "Hour", "name_ar": "ساعة", "symbol": "h", "decimals": 2, "factor": "1", "base": true },
+        { "code": "day", "name_en": "Day", "name_ar": "يوم", "symbol": "d", "decimals": 2, "factor": "24" }
+      ]
+    }
+  ]
+}

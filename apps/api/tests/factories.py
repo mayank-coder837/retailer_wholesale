@@ -8,6 +8,7 @@ tenant context; every tenant table must have an entry (tests/test_tenant_isolati
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import text
@@ -17,6 +18,9 @@ from app.core import jobs, numbering
 from app.core.ids import new_id
 from app.core.platform_models import Attachment, AuditLog, IdempotencyKey, IndustryPackApplication, Setting
 from app.core.security import hash_password
+from app.modules.catalog import service as catalog
+from app.modules.catalog.models import UnitFamily
+from app.modules.catalog.schemas import UnitIn
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Emirate, Node, NodeKind
@@ -243,6 +247,26 @@ async def _industry_pack_application(session: AsyncSession, seed: TenantSeed) ->
     return row.id
 
 
+async def _unit_family(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = UnitFamily(id=new_id(), tenant_id=seed.tenant_id, code="energy", name_en="Energy", name_ar="الطاقة")
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
+async def _unit(session: AsyncSession, seed: TenantSeed) -> Any:
+    data = UnitIn(
+        family="count",
+        code="gross",
+        name_en="Gross",
+        name_ar="قروس",
+        symbol="gr",
+        decimals=0,
+        factor_to_family_base=Decimal(144),
+    )
+    return (await catalog.create_unit(session, seed.tenant_id, data)).id
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "audit_log": _audit_log,
     "numbering_series": _numbering_series,
@@ -262,6 +286,8 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "role": _role,
     "role_permission": _role_permission,
     "role_assignment": _role_assignment,
+    "unit_family": _unit_family,
+    "unit": _unit,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.

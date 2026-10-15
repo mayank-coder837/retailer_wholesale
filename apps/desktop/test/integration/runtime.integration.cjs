@@ -68,15 +68,34 @@ function variant(version, migration) {
   return dir;
 }
 
+/** The newest migration in the bundled API: a test migration must build on it, or Alembic sees two heads. */
+function currentHead() {
+  const dir = path.join(SOURCE, "api", "migrations", "versions");
+  /** @type {Set<string>} */
+  const revisions = new Set();
+  /** @type {Set<string>} */
+  const parents = new Set();
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".py"))) {
+    const text = fs.readFileSync(path.join(dir, file), "utf8");
+    const revision = /^revision(?::\s*str)?\s*=\s*["']([^"']+)["']/m.exec(text);
+    const parent = /^down_revision(?::[^=]*)?=\s*["']([^"']+)["']/m.exec(text);
+    if (revision) revisions.add(revision[1]);
+    if (parent) parents.add(parent[1]);
+  }
+  const heads = [...revisions].filter((r) => !parents.has(r));
+  if (heads.length !== 1) throw new Error(`expected one migration head, found ${heads.join(", ")}`);
+  return heads[0];
+}
+
 const MIGRATION = (/** @type {string} */ body) => `"""test
 
 Revision ID: 9999
-Revises: 0004
+Revises: ${currentHead()}
 """
 from alembic import op
 
 revision = "9999"
-down_revision = "0004"
+down_revision = "${currentHead()}"
 branch_labels = None
 depends_on = None
 
@@ -276,7 +295,12 @@ test("an upgrade whose migration fails is rolled back to the previous version", 
     MIGRATION('    op.execute("CREATE TABLE t9999 (id int)")\n    raise RuntimeError("migration bug")'),
   );
 
-  await assert.rejects(manager.upgrade(ctx, { sourceDir: broken }), manager.UpgradeRolledBackError);
+  await assert.rejects(manager.upgrade(ctx, { sourceDir: broken }), (error) => {
+    assert.ok(error instanceof manager.UpgradeRolledBackError);
+    // It must roll back because of the deliberate bug, not for some other reason (it once did: two heads).
+    assert.match(String(/** @type {Error} */ (error).cause), /migration bug/);
+    return true;
+  });
 
   const config = readConfig(l.configFile);
   assert.equal(config.runtimeVersion, before);

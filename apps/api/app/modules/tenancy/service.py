@@ -157,4 +157,7 @@ async def create_tenant(
         )
     )
     await session.flush()
+    from app.modules.catalog import service as catalog
+
+    await catalog.create_standard_units(session, ids.tenant_id)
     return ids
