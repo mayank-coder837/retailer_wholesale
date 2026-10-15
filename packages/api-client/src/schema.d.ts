@@ -500,6 +500,305 @@ export interface paths {
         patch: operations["update_unit"];
         trace?: never;
     };
+    "/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Categories */
+        get: operations["list_categories"];
+        put?: never;
+        /** Create Category */
+        post: operations["create_category"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Category */
+        patch: operations["update_category"];
+        trace?: never;
+    };
+    "/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Brands */
+        get: operations["list_brands"];
+        put?: never;
+        /** Create Brand */
+        post: operations["create_brand"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/brands/{brand_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Brand */
+        patch: operations["update_brand"];
+        trace?: never;
+    };
+    "/attributes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Attributes */
+        get: operations["list_attributes"];
+        put?: never;
+        /** Create Attribute */
+        post: operations["create_attribute"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attributes/{attribute_id}/values": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Attribute Value */
+        post: operations["add_attribute_value"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/custom-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Custom Fields */
+        get: operations["list_custom_fields"];
+        put?: never;
+        /** Create Custom Field */
+        post: operations["create_custom_field"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/custom-fields/{field_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Custom Field */
+        patch: operations["update_custom_field"];
+        trace?: never;
+    };
+    "/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Products */
+        get: operations["list_products"];
+        put?: never;
+        /** Create Product */
+        post: operations["create_product"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{product_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Product */
+        get: operations["get_product"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Product */
+        patch: operations["update_product"];
+        trace?: never;
+    };
+    "/products/{product_id}/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Product Unit */
+        post: operations["add_product_unit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{product_id}/units/{unit_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Product Unit */
+        delete: operations["remove_product_unit"];
+        options?: never;
+        head?: never;
+        /** Update Product Unit */
+        patch: operations["update_product_unit"];
+        trace?: never;
+    };
+    "/products/{product_id}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Variant */
+        post: operations["add_variant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/variants/{variant_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Variant */
+        patch: operations["update_variant"];
+        trace?: never;
+    };
+    "/products/{product_id}/barcodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Barcode */
+        post: operations["add_barcode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/barcodes/{barcode_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Barcode */
+        delete: operations["remove_barcode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/barcodes/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lookup Barcode
+         * @description What a scan finds: product, variant, unit and how many base units one scanned item is.
+         */
+        get: operations["lookup_barcode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -630,6 +929,54 @@ export interface components {
              */
             created_at: string;
         };
+        /** AttributeIn */
+        AttributeIn: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Code */
+            code: string;
+            /** Values */
+            values?: components["schemas"]["AttributeValueIn"][];
+        };
+        /** AttributeOut */
+        AttributeOut: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Values */
+            values: components["schemas"]["AttributeValueOut"][];
+        };
+        /** AttributeValueIn */
+        AttributeValueIn: {
+            /** Value En */
+            value_en: string;
+            /** Value Ar */
+            value_ar: string;
+        };
+        /** AttributeValueOut */
+        AttributeValueOut: {
+            /** Value En */
+            value_en: string;
+            /** Value Ar */
+            value_ar: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sort */
+            sort: number;
+        };
         /** AuditOut */
         AuditOut: {
             /**
@@ -709,6 +1056,84 @@ export interface components {
             copy_dir?: string | null;
             last_copy?: components["schemas"]["BackupCopyOut"] | null;
         };
+        /** BarcodeIn */
+        BarcodeIn: {
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /**
+             * Unit
+             * @description One of the product's units
+             */
+            unit: string;
+            /**
+             * Code
+             * @description Omit to generate one
+             */
+            code?: string | null;
+            /** @default ean13 */
+            kind: components["schemas"]["BarcodeKind"];
+        };
+        /**
+         * BarcodeKind
+         * @enum {string}
+         */
+        BarcodeKind: "ean13" | "code128" | "internal" | "scale";
+        /**
+         * BarcodeLookupOut
+         * @description What a scan finds: the exact variant and unit, and how many base units one scan is.
+         */
+        BarcodeLookupOut: {
+            /** Code */
+            code: string;
+            kind: components["schemas"]["BarcodeKind"];
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Product Sku */
+            product_sku: string;
+            /** Product Name En */
+            product_name_en: string;
+            /** Product Name Ar */
+            product_name_ar: string;
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /** Variant Sku */
+            variant_sku: string;
+            /** Values */
+            values: components["schemas"]["VariantValueOut"][];
+            /** Unit */
+            unit: string;
+            /** Factor To Base */
+            factor_to_base: string;
+            /** Base Unit */
+            base_unit: string;
+        };
+        /** BarcodeOut */
+        BarcodeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            kind: components["schemas"]["BarcodeKind"];
+            /** Unit */
+            unit: string;
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+        };
         /** Body_upload_attachment */
         Body_upload_attachment: {
             /** Entity Type */
@@ -762,6 +1187,36 @@ export interface components {
             emirate: components["schemas"]["Emirate"];
             /** Is Head Office */
             is_head_office: boolean;
+        };
+        /** BrandIn */
+        BrandIn: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+        };
+        /** BrandOut */
+        BrandOut: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /** BrandPatch */
+        BrandPatch: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Archived */
+            archived?: boolean | null;
         };
         /** BusinessIn */
         BusinessIn: {
@@ -825,6 +1280,49 @@ export interface components {
             /** Negative Stock Allowed */
             negative_stock_allowed: boolean;
         };
+        /** CategoryIn */
+        CategoryIn: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Parent Id */
+            parent_id?: string | null;
+        };
+        /** CategoryOut */
+        CategoryOut: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Parent Id */
+            parent_id: string | null;
+            /** Path En */
+            path_en: string;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /** CategoryPatch */
+        CategoryPatch: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            /**
+             * Move To Top
+             * @default false
+             */
+            move_to_top: boolean;
+            /** Archived */
+            archived?: boolean | null;
+        };
         /** ChallengeIn */
         ChallengeIn: {
             /**
@@ -860,6 +1358,84 @@ export interface components {
             /** Result */
             result: string;
         };
+        /**
+         * CustomFieldEntity
+         * @enum {string}
+         */
+        CustomFieldEntity: "product" | "variant" | "party" | "document";
+        /** CustomFieldIn */
+        CustomFieldIn: {
+            entity_type: components["schemas"]["CustomFieldEntity"];
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            data_type: components["schemas"]["CustomFieldType"];
+            /** Options */
+            options?: components["schemas"]["CustomFieldOption"][] | null;
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+        };
+        /** CustomFieldOption */
+        CustomFieldOption: {
+            /** Value */
+            value: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+        };
+        /** CustomFieldOut */
+        CustomFieldOut: {
+            entity_type: components["schemas"]["CustomFieldEntity"];
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            data_type: components["schemas"]["CustomFieldType"];
+            /** Options */
+            options?: components["schemas"]["CustomFieldOption"][] | null;
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /**
+         * CustomFieldPatch
+         * @description Key, entity and type are fixed: values already saved must keep their meaning.
+         */
+        CustomFieldPatch: {
+            /** Label En */
+            label_en?: string | null;
+            /** Label Ar */
+            label_ar?: string | null;
+            /** Options */
+            options?: components["schemas"]["CustomFieldOption"][] | null;
+            /** Required */
+            required?: boolean | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /**
+         * CustomFieldType
+         * @enum {string}
+         */
+        CustomFieldType: "text" | "number" | "decimal" | "date" | "bool" | "select" | "multiselect";
         /** DatabaseHealthOut */
         DatabaseHealthOut: {
             /** Database */
@@ -1010,6 +1586,212 @@ export interface components {
             resource: string;
             /** Action */
             action: string;
+        };
+        /** ProductIn */
+        ProductIn: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Sku */
+            sku: string;
+            /** Description */
+            description?: string | null;
+            /** @default stock */
+            product_type: components["schemas"]["ProductType"];
+            /** Category Id */
+            category_id?: string | null;
+            /** Brand Id */
+            brand_id?: string | null;
+            /**
+             * Base Unit
+             * @description Unit code stock is kept in, e.g. m
+             */
+            base_unit: string;
+            /**
+             * Units
+             * @description Other units, e.g. roll = 50 m
+             */
+            units?: components["schemas"]["ProductUnitIn"][];
+            /**
+             * Attributes
+             * @description Every combination becomes a variant (colour x width)
+             */
+            attributes?: components["schemas"]["VariantChoice"][];
+            /**
+             * Track Batch
+             * @default false
+             */
+            track_batch: boolean;
+            /**
+             * Track Expiry
+             * @default false
+             */
+            track_expiry: boolean;
+            /**
+             * Track Serial
+             * @default false
+             */
+            track_serial: boolean;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: unknown;
+            };
+        };
+        /** ProductOut */
+        ProductOut: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sku */
+            sku: string;
+            /** Description */
+            description: string | null;
+            product_type: components["schemas"]["ProductType"];
+            /** Category Id */
+            category_id: string | null;
+            /** Brand Id */
+            brand_id: string | null;
+            /** Base Unit */
+            base_unit: string;
+            /** Track Batch */
+            track_batch: boolean;
+            /** Track Expiry */
+            track_expiry: boolean;
+            /** Track Serial */
+            track_serial: boolean;
+            /** Custom Fields */
+            custom_fields: {
+                [key: string]: unknown;
+            };
+            /** Archived At */
+            archived_at: string | null;
+            /** Units */
+            units: components["schemas"]["ProductUnitOut"][];
+            /** Attributes */
+            attributes: string[];
+            /** Variants */
+            variants: components["schemas"]["VariantOut"][];
+            /** Barcodes */
+            barcodes: components["schemas"]["BarcodeOut"][];
+        };
+        /**
+         * ProductPatch
+         * @description Base unit and SKU are fixed: stock is kept in the base unit, documents print the SKU.
+         */
+        ProductPatch: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Category Id */
+            category_id?: string | null;
+            /** Brand Id */
+            brand_id?: string | null;
+            /** Track Batch */
+            track_batch?: boolean | null;
+            /** Track Expiry */
+            track_expiry?: boolean | null;
+            /** Track Serial */
+            track_serial?: boolean | null;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: unknown;
+            } | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /** ProductSummary */
+        ProductSummary: {
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sku */
+            sku: string;
+            product_type: components["schemas"]["ProductType"];
+            /** Base Unit */
+            base_unit: string;
+            /** Category Id */
+            category_id: string | null;
+            /** Brand Id */
+            brand_id: string | null;
+            /** Variant Count */
+            variant_count: number;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /**
+         * ProductType
+         * @enum {string}
+         */
+        ProductType: "stock" | "service" | "non_stock";
+        /** ProductUnitIn */
+        ProductUnitIn: {
+            /**
+             * Unit
+             * @description Unit code, e.g. roll
+             */
+            unit: string;
+            /**
+             * Factor To Base
+             * @description How many base units one of this unit is (1 roll = 50 m → 50). Omit to use the standard factor when the unit is of the base unit's family.
+             */
+            factor_to_base?: number | string | null;
+            /**
+             * Is Purchase Default
+             * @default false
+             */
+            is_purchase_default: boolean;
+            /**
+             * Is Sales Default
+             * @default false
+             */
+            is_sales_default: boolean;
+        };
+        /** ProductUnitOut */
+        ProductUnitOut: {
+            /** Unit */
+            unit: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Symbol */
+            symbol: string;
+            /** Decimals */
+            decimals: number;
+            /** Factor To Base */
+            factor_to_base: string;
+            /** Is Base */
+            is_base: boolean;
+            /** Is Purchase Default */
+            is_purchase_default: boolean;
+            /** Is Sales Default */
+            is_sales_default: boolean;
+        };
+        /**
+         * ProductUnitPatch
+         * @description The factor is fixed once a unit is added (L3: lines converted with it keep their meaning).
+         */
+        ProductUnitPatch: {
+            /** Is Purchase Default */
+            is_purchase_default?: boolean | null;
+            /** Is Sales Default */
+            is_sales_default?: boolean | null;
         };
         /** RefreshIn */
         RefreshIn: {
@@ -1249,6 +2031,76 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * VariantChoice
+         * @description Which attribute a product varies by, and the values to generate variants for.
+         */
+        VariantChoice: {
+            /**
+             * Attribute
+             * @description Attribute code, e.g. color
+             */
+            attribute: string;
+            /**
+             * Values
+             * @description Values by English name; new values are added
+             */
+            values: string[];
+        };
+        /** VariantIn */
+        VariantIn: {
+            /**
+             * Values
+             * @description Attribute code → value (English); one per product attribute
+             */
+            values: {
+                [key: string]: string;
+            };
+            /** Sku */
+            sku?: string | null;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: unknown;
+            };
+        };
+        /** VariantOut */
+        VariantOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sku */
+            sku: string;
+            /** Values */
+            values: components["schemas"]["VariantValueOut"][];
+            /** Custom Fields */
+            custom_fields: {
+                [key: string]: unknown;
+            };
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /** VariantPatch */
+        VariantPatch: {
+            /** Sku */
+            sku?: string | null;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: unknown;
+            } | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /** VariantValueOut */
+        VariantValueOut: {
+            /** Attribute */
+            attribute: string;
+            /** Value En */
+            value_en: string;
+            /** Value Ar */
+            value_ar: string;
         };
         /** WarehouseIn */
         WarehouseIn: {
@@ -2492,6 +3344,797 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_categories: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_brands: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_brand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_brand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                brand_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_attributes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeOut"][];
+                };
+            };
+        };
+    };
+    create_attribute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttributeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_attribute_value: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attribute_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttributeValueIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeValueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_custom_fields: {
+        parameters: {
+            query?: {
+                entity_type?: components["schemas"]["CustomFieldEntity"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomFieldOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_custom_field: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomFieldOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_custom_field: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                field_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomFieldOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_products: {
+        parameters: {
+            query?: {
+                /** @description SKU, name, variant SKU or barcode */
+                q?: string | null;
+                category_id?: string | null;
+                brand_id?: string | null;
+                include_archived?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_product: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_product: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_product: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_product_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductUnitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_product_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+                unit_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_product_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+                unit_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductUnitPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_variant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariantIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_variant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                variant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariantPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_barcode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BarcodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_barcode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barcode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_barcode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BarcodeLookupOut"];
                 };
             };
             /** @description Validation Error */
