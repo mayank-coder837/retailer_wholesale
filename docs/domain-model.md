@@ -61,7 +61,9 @@ tenant ─┬─ business (TRN, base currency, fiscal start, costing method)
 | product_unit | product_id, unit_id, factor_to_base, is_purchase_default, is_sales_default, sale_price, min_price | Product-level, may cross families: 1 roll = 50 m, 1 carton = 24 pcs |
 | product.base_unit_id | the inventory unit | Stock and costing are always in the base unit |
 
-Rules: conversion happens once, at entry: `qty_base = round(qty_entered × factor_to_base, base_unit.decimals)`.
+Rules: conversion happens once, at entry, and is **exact** (founder, 15 Oct 2026): `qty_base = qty_entered ×
+factor_to_base`, never rounded (1 yd = 0.9144 m). A unit's `decimals` limits only what may be typed in it; a
+conversion whose exact result needs more than 6 decimal places is refused, not rounded.
 Lines store `qty_entered, uom_entered, factor_to_base, qty_base`, so history survives later factor changes.
 Factors are stored in the direction unit → base, so they are exact for the common cases (24, 50, 0.001).
 Standard conversions within a family go through the family base (no table of unit pairs, ADR 0013).

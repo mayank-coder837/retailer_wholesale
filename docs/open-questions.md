@@ -20,6 +20,7 @@ with a credit note, never cancelled ([A7](decisions-round-1.md#rules-to-build)).
 | # | Question | Decision |
 | --- | --- | --- |
 | F1 | Copy backups automatically to a folder the owner chooses (USB drive, NAS)? | **Yes.** Settings → This PC → Backups → "Copy to a USB drive or NAS": every new backup (nightly, before updates, "back up now") is also copied there with the same rotation; a failed copy never fails the backup and shows on the page. A NAS share must accept the PC without a user name and password (shares with credentials: later). |
+| F3 | Round converted quantities to the base unit's decimals (1 yd → 0.91 m)? | **No — exact** (15 Oct 2026). 1 yd = 0.9144 m; a unit's decimals limit only what is typed; a conversion that would need rounding is refused. |
 | F2 | Should uninstalling offer "remove all data"? | **Yes.** An interactive uninstall of a main PC asks, in English and Arabic, with "Keep data" as the default. Silent uninstalls and updates never delete data. |
 
 ## Answered — round 1

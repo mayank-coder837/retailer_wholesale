@@ -40,7 +40,7 @@ async def test_every_new_tenant_gets_the_standard_units(client: AsyncClient) -> 
     assert sorted(bases) == ["hr", "kg", "l", "m", "m2", "pcs"], "exactly one base unit per family"
 
 
-async def test_conversions_within_a_family(client: AsyncClient) -> None:
+async def test_conversions_within_a_family_are_exact(client: AsyncClient) -> None:
     owner = await signup(client, "convert@shop.ae")
 
     def convert(qty: str, src: str, dst: str) -> Any:
@@ -50,18 +50,20 @@ async def test_conversions_within_a_family(client: AsyncClient) -> None:
 
     cm = await convert("250", "cm", "m")
     yards = await convert("1", "yd", "m")
+    to_yards = await convert("1", "m", "yd")
     across = await convert("1", "m", "kg")
-    half_piece = await convert("1.5", "pcs", "dozen")
+    half_piece = await convert("1.5", "pcs", "pair")  # factor 0.5 is exact; 1.5 pcs is not allowed
 
-    assert cm.json() | {} == {
+    assert cm.json() == {
         "qty": "250",
         "from_unit": "cm",
         "to_unit": "m",
         "factor": "0.010000",
-        "result": "2.50",
-        "rounded": False,
+        "result": "2.500000",
     }
-    assert (yards.json()["result"], yards.json()["rounded"]) == ("0.91", True)
+    assert yards.json()["result"] == "0.914400", "exact, never rounded to 0.91"
+    assert to_yards.status_code == 422, "1 m = 1.0936132… yd has no exact value: refused, not rounded"
+    assert to_yards.json()["code"] == "uom_inexact"
     assert across.status_code == 422
     assert across.json()["code"] == "uom_not_convertible"
     assert half_piece.status_code == 422

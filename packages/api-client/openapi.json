@@ -2742,10 +2742,6 @@
           "result": {
             "type": "string",
             "title": "Result"
-          },
-          "rounded": {
-            "type": "boolean",
-            "title": "Rounded"
           }
         },
         "type": "object",
@@ -2754,8 +2750,7 @@
           "from_unit",
           "to_unit",
           "factor",
-          "result",
-          "rounded"
+          "result"
         ],
         "title": "ConversionOut"
       },
@@ -3518,7 +3513,7 @@
             "maximum": 6.0,
             "minimum": 0.0,
             "title": "Decimals",
-            "description": "Decimal places a quantity in this unit may have"
+            "description": "Decimal places a quantity typed in this unit may have; conversions stay exact"
           },
           "factor_to_family_base": {
             "anyOf": [

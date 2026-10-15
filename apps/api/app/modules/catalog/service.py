@@ -193,21 +193,12 @@ async def convert(session: AsyncSession, qty: Decimal, from_code: str, to_code: 
             _ref(source, families[source.family_id]), _ref(target, families[target.family_id])
         )
         line = uom.to_base(
-            qty,
-            uom_entered=source.code,
-            entered_decimals=source.decimals,
-            factor_to_base=factor,
-            base_decimals=target.decimals,
+            qty, uom_entered=source.code, entered_decimals=source.decimals, factor_to_base=factor
         )
     except uom.UomError as exc:
         raise ConversionError(exc) from exc
     return ConversionOut(
-        qty=qty,
-        from_unit=source.code,
-        to_unit=target.code,
-        factor=factor,
-        result=line.qty_base,
-        rounded=line.rounded,
+        qty=qty, from_unit=source.code, to_unit=target.code, factor=factor, result=line.qty_base
     )
 
 

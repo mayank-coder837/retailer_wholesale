@@ -17,7 +17,11 @@ class UnitIn(BaseModel):
     name_en: str = Name
     name_ar: str = Name
     symbol: str = Field(min_length=1, max_length=20)
-    decimals: int = Field(ge=0, le=6, description="Decimal places a quantity in this unit may have")
+    decimals: int = Field(
+        ge=0,
+        le=6,
+        description="Decimal places a quantity typed in this unit may have; conversions stay exact",
+    )
     factor_to_family_base: Decimal = Field(
         gt=0, max_digits=19, decimal_places=6, description="How many family base units one of this unit is"
     )
@@ -54,5 +58,4 @@ class ConversionOut(BaseModel):
     from_unit: str
     to_unit: str
     factor: Decimal
-    result: Decimal
-    rounded: bool
+    result: Decimal  # exact: a conversion that would need rounding is refused (uom_inexact)

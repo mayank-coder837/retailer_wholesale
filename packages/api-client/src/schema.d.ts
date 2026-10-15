@@ -859,8 +859,6 @@ export interface components {
             factor: string;
             /** Result */
             result: string;
-            /** Rounded */
-            rounded: boolean;
         };
         /** DatabaseHealthOut */
         DatabaseHealthOut: {
@@ -1172,7 +1170,7 @@ export interface components {
             symbol: string;
             /**
              * Decimals
-             * @description Decimal places a quantity in this unit may have
+             * @description Decimal places a quantity typed in this unit may have; conversions stay exact
              */
             decimals: number;
             /**
