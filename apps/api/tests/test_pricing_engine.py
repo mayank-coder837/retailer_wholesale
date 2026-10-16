@@ -3,6 +3,7 @@
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
+from fractions import Fraction
 
 import pytest
 from hypothesis import given
@@ -142,7 +143,7 @@ def test_a_converted_last_price_is_the_same_price_per_base_unit(
         )
     )
     assert result.price is not None
-    per_base_sold = price / sold_factor
-    per_base_quoted = result.price / wanted_factor
-    # Rounded once, to money precision (4 dp) per requested unit: never more than half a ten-thousandth off.
-    assert abs(per_base_quoted - per_base_sold) * wanted_factor <= D("0.00005")
+    # Exact arithmetic (fractions), so a recurring decimal in the check itself can never blur the result:
+    # rounded once, to money precision (4 dp) per requested unit: never more than half a ten-thousandth off.
+    exact = Fraction(price) / Fraction(sold_factor) * Fraction(wanted_factor)
+    assert abs(Fraction(result.price) - exact) <= Fraction(1, 20000)
