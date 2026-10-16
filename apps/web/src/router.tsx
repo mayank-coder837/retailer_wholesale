@@ -11,6 +11,7 @@ import { NewProductPage } from "@/routes/catalog/new-product";
 import { ProductPage } from "@/routes/catalog/product";
 import { ProductsPage } from "@/routes/catalog/products";
 import { ComingSoon } from "@/routes/coming-soon";
+import { PricingSettingsPage } from "@/routes/pricing/pricing-settings";
 import { DashboardPage } from "@/routes/dashboard";
 import { IndexRedirect } from "@/routes/index-redirect";
 import { LoginPage } from "@/routes/login";
@@ -62,6 +63,11 @@ const catalogSettingsRoute = createRoute({
   path: "/settings/catalog",
   component: CatalogSettingsPage,
 });
+const pricingSettingsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/settings/pricing",
+  component: PricingSettingsPage,
+});
 const thisPcRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/settings/this-pc",
@@ -88,6 +94,7 @@ const routeTree = rootRoute.addChildren([
     newProductRoute,
     productRoute,
     catalogSettingsRoute,
+    pricingSettingsRoute,
     voucherRoute,
     page("/sales", "nav.sales"),
     page("/purchases", "nav.purchases"),

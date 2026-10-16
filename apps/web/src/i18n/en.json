@@ -94,7 +94,8 @@
     "settings": "Settings",
     "roles": "Roles and permissions",
     "thisPc": "This PC",
-    "catalog": "Catalog"
+    "catalog": "Catalog",
+    "pricing": "Pricing"
   },
   "shell": {
     "business": "Business",
@@ -363,6 +364,66 @@
       "unknown_unit_family": "Unknown kind of unit.",
       "product_not_found": "This product does not exist.",
       "validation_error": "Some values are missing or not valid."
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "unitPrices": "Price per unit",
+    "vatExclusive": "Prices without VAT. A price below the minimum needs permission to sell below the minimum.",
+    "salePrice": "Price per {{unit}}",
+    "minPrice": "Minimum per {{unit}}",
+    "save": "Save",
+    "saved": "Saved.",
+    "addListPrice": "Put in a price list",
+    "noLists": "No price lists yet: add one in Settings → Pricing.",
+    "list": "Price list",
+    "standard": "standard",
+    "fromQty": "From quantity",
+    "fromQtyHint": "0 for any quantity; 100 for a price from 100 up.",
+    "price": "Price",
+    "addPromotion": "Add a promotion",
+    "kind": "Kind",
+    "kinds": {
+      "percent": "Percent off",
+      "amount": "Amount off",
+      "fixed_price": "Fixed price"
+    },
+    "value": "Value",
+    "appliesTo": "Applies to",
+    "wholeProduct": "The whole product",
+    "validFrom": "From",
+    "validTo": "Until",
+    "check": "Price check",
+    "checkButton": "Check",
+    "qty": "Quantity",
+    "noPrice": "No price set: the salesperson types it.",
+    "converted": "converted from another unit",
+    "belowMin": "Below the minimum of {{min}}: needs a manager.",
+    "belowMinAllowed": "Below the minimum of {{min}}: you may allow it.",
+    "sources": {
+      "last_price": "Last price to this customer ({{name}})",
+      "customer_list": "Customer's price list: {{name}}",
+      "group_list": "Customer group's price list: {{name}}",
+      "quantity_break": "Price list: {{name}}",
+      "promotion": "Promotion: {{name}}",
+      "base": "Base price",
+      "none": "No price found"
+    },
+    "settingsTitle": "Pricing",
+    "settingsHint": "Price lists and promotions for this business. Prices are set on each product's page.",
+    "lists": "Price lists",
+    "addList": "Add a price list",
+    "isStandard": "Standard list of this business (used when no customer list has the item)",
+    "promotions": "Promotions",
+    "promotionsHint": "Add promotions from a product's page. Only one applies to a line; they never stack.",
+    "noPromotions": "No active promotions.",
+    "noEnd": "no end date",
+    "end": "End",
+    "errors": {
+      "invalid_pricing": "Check the price, unit and dates.",
+      "duplicate_price_list": "A list with this name, or a standard list, already exists.",
+      "price_list_not_found": "This price list does not exist.",
+      "promotion_not_found": "This promotion does not exist."
     }
   }
 }
