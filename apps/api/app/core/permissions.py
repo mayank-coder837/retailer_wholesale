@@ -72,6 +72,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
 VOUCHERS = ("receipt", "payment", "contra", "journal", "expense", "credit_note", "debit_note")
 
 SPECIAL: tuple[str, ...] = (
+    "credit.limit",  # set a customer's credit limit, credit days and warn/block policy (M1.4)
     "price.override_min",  # sell below the minimum price
     "credit.override",  # post past a customer's credit limit
     "period.override_lock",  # post into a locked period

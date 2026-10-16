@@ -36,7 +36,8 @@ class AuditLog(Base):
     __table_args__ = (
         Index("ix_audit_log_entity", "entity_type", "entity_id", "at"),
         CheckConstraint(
-            "action IN ('create', 'update', 'delete', 'post', 'cancel', 'reverse', 'login', 'apply')",
+            "action IN ('create', 'update', 'delete', 'post', 'cancel', 'reverse', 'login', 'apply', "
+            "'override')",  # override: a permission let a blocked action through
             name="action",
         ),
     )

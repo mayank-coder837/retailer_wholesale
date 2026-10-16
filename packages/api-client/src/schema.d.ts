@@ -941,6 +941,200 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/parties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Parties */
+        get: operations["list_parties"];
+        put?: never;
+        /** Create Party */
+        post: operations["create_party"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Party */
+        get: operations["get_party"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Party */
+        patch: operations["update_party"];
+        trace?: never;
+    };
+    "/parties/{party_id}/addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Address */
+        post: operations["add_party_address"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/addresses/{address_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Address */
+        put: operations["update_party_address"];
+        post?: never;
+        /** Remove Address */
+        delete: operations["remove_party_address"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Contact */
+        post: operations["add_party_contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/contacts/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Contact */
+        delete: operations["remove_party_contact"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/customer-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Customer Profile */
+        put: operations["put_customer_profile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/supplier-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Supplier Profile */
+        put: operations["put_supplier_profile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Customer Groups */
+        get: operations["list_customer_groups"];
+        put?: never;
+        /** Create Customer Group */
+        post: operations["create_customer_group"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer-groups/{group_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Customer Group */
+        patch: operations["update_customer_group"];
+        trace?: never;
+    };
+    "/parties/{party_id}/credit-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Credit Check
+         * @description Whether a sale of this amount may go ahead: ok, warn or block, the reasons and the figures.
+         */
+        post: operations["credit_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -983,6 +1177,60 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AddressIn */
+        AddressIn: {
+            /** @default billing */
+            type: components["schemas"]["AddressType"];
+            /** Line1 */
+            line1: string;
+            /** Line2 */
+            line2?: string | null;
+            /** City */
+            city?: string | null;
+            emirate?: components["schemas"]["Emirate"] | null;
+            /**
+             * Country
+             * @default AE
+             */
+            country: string;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+        };
+        /** AddressOut */
+        AddressOut: {
+            /** @default billing */
+            type: components["schemas"]["AddressType"];
+            /** Line1 */
+            line1: string;
+            /** Line2 */
+            line2?: string | null;
+            /** City */
+            city?: string | null;
+            emirate?: components["schemas"]["Emirate"] | null;
+            /**
+             * Country
+             * @default AE
+             */
+            country: string;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /**
+         * AddressType
+         * @enum {string}
+         */
+        AddressType: "billing" | "shipping";
         /** ApplicationOut */
         ApplicationOut: {
             /** Pack Code */
@@ -1487,6 +1735,33 @@ export interface components {
          * @enum {string}
          */
         ClientKind: "web" | "desktop";
+        /** ContactIn */
+        ContactIn: {
+            /** Name */
+            name: string;
+            /** Role */
+            role?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+        };
+        /** ContactOut */
+        ContactOut: {
+            /** Name */
+            name: string;
+            /** Role */
+            role?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
         /** ConversionOut */
         ConversionOut: {
             /** Qty */
@@ -1500,6 +1775,59 @@ export interface components {
             /** Result */
             result: string;
         };
+        /** CreditCheckIn */
+        CreditCheckIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Amount
+             * @description This document's total
+             */
+            amount: number | string;
+        };
+        /** CreditCheckOut */
+        CreditCheckOut: {
+            decision: components["schemas"]["CreditDecision"];
+            /** Reasons */
+            reasons: components["schemas"]["CreditReason"][];
+            /** Credit Limit */
+            credit_limit: string | null;
+            /** Credit Days */
+            credit_days: number | null;
+            policy: components["schemas"]["CreditPolicy"];
+            /** Ledger Balance */
+            ledger_balance: string;
+            /** Open Orders */
+            open_orders: string;
+            /** Exposure */
+            exposure: string;
+            /** Available */
+            available: string | null;
+            /** Pdc In Hand */
+            pdc_in_hand: string;
+            /** Exposure After Pdc */
+            exposure_after_pdc: string;
+            /** May Override */
+            may_override: boolean;
+        };
+        /**
+         * CreditDecision
+         * @enum {string}
+         */
+        CreditDecision: "ok" | "warn" | "block";
+        /**
+         * CreditPolicy
+         * @enum {string}
+         */
+        CreditPolicy: "warn" | "block";
+        /**
+         * CreditReason
+         * @enum {string}
+         */
+        CreditReason: "over_limit" | "overdue";
         /**
          * CustomFieldEntity
          * @enum {string}
@@ -1578,6 +1906,97 @@ export interface components {
          * @enum {string}
          */
         CustomFieldType: "text" | "number" | "decimal" | "date" | "bool" | "select" | "multiselect";
+        /** CustomerGroupIn */
+        CustomerGroupIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Price List Id */
+            price_list_id?: string | null;
+        };
+        /** CustomerGroupOut */
+        CustomerGroupOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Price List Id */
+            price_list_id?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Archived At */
+            archived_at: string | null;
+        };
+        /** CustomerGroupPatch */
+        CustomerGroupPatch: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Price List Id */
+            price_list_id?: string | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /** CustomerProfileIn */
+        CustomerProfileIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Customer Group Id */
+            customer_group_id?: string | null;
+            /** Price List Id */
+            price_list_id?: string | null;
+            /** Credit Limit */
+            credit_limit?: number | string | null;
+            /** Credit Days */
+            credit_days?: number | null;
+            /** @default warn */
+            credit_policy: components["schemas"]["CreditPolicy"];
+            /** Salesperson User Id */
+            salesperson_user_id?: string | null;
+        };
+        /** CustomerProfileOut */
+        CustomerProfileOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Customer Group Id */
+            customer_group_id?: string | null;
+            /** Price List Id */
+            price_list_id?: string | null;
+            /** Credit Limit */
+            credit_limit?: string | null;
+            /** Credit Days */
+            credit_days?: number | null;
+            /** @default warn */
+            credit_policy: components["schemas"]["CreditPolicy"];
+            /** Salesperson User Id */
+            salesperson_user_id?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
         /** DatabaseHealthOut */
         DatabaseHealthOut: {
             /** Database */
@@ -1719,6 +2138,144 @@ export interface components {
             description_ar: string;
             /** Sections */
             sections: string[];
+        };
+        /** PartyIn */
+        PartyIn: {
+            /**
+             * Code
+             * @description Omit to number it: C0001 customers, S0001 suppliers, P0001 both
+             */
+            code?: string | null;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** @default company */
+            kind: components["schemas"]["PartyKind"];
+            /**
+             * Trn
+             * @description UAE tax registration number, 15 digits
+             */
+            trn?: string | null;
+            /**
+             * Is Customer
+             * @default false
+             */
+            is_customer: boolean;
+            /**
+             * Is Supplier
+             * @default false
+             */
+            is_supplier: boolean;
+            /** Phone */
+            phone?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
+            /** Email */
+            email?: string | null;
+            /**
+             * Default Currency
+             * @default AED
+             */
+            default_currency: string;
+            /** Addresses */
+            addresses?: components["schemas"]["AddressIn"][];
+            /** Contacts */
+            contacts?: components["schemas"]["ContactIn"][];
+        };
+        /**
+         * PartyKind
+         * @enum {string}
+         */
+        PartyKind: "company" | "individual";
+        /** PartyOut */
+        PartyOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            kind: components["schemas"]["PartyKind"];
+            /** Trn */
+            trn: string | null;
+            /** Is Customer */
+            is_customer: boolean;
+            /** Is Supplier */
+            is_supplier: boolean;
+            /** Phone */
+            phone: string | null;
+            /** Archived At */
+            archived_at: string | null;
+            /** Whatsapp */
+            whatsapp: string | null;
+            /** Email */
+            email: string | null;
+            /** Default Currency */
+            default_currency: string;
+            /** Addresses */
+            addresses: components["schemas"]["AddressOut"][];
+            /** Contacts */
+            contacts: components["schemas"]["ContactOut"][];
+            /** Customer Profiles */
+            customer_profiles: components["schemas"]["CustomerProfileOut"][];
+            /** Supplier Profiles */
+            supplier_profiles: components["schemas"]["SupplierProfileOut"][];
+        };
+        /** PartyPatch */
+        PartyPatch: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            kind?: components["schemas"]["PartyKind"] | null;
+            /**
+             * Trn
+             * @description UAE tax registration number, 15 digits
+             */
+            trn?: string | null;
+            /** Is Customer */
+            is_customer?: boolean | null;
+            /** Is Supplier */
+            is_supplier?: boolean | null;
+            /** Phone */
+            phone?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /** PartySummary */
+        PartySummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            kind: components["schemas"]["PartyKind"];
+            /** Trn */
+            trn: string | null;
+            /** Is Customer */
+            is_customer: boolean;
+            /** Is Supplier */
+            is_supplier: boolean;
+            /** Phone */
+            phone: string | null;
+            /** Archived At */
+            archived_at: string | null;
         };
         /** PermissionOut */
         PermissionOut: {
@@ -2156,10 +2713,11 @@ export interface components {
              * @description Defaults to today (Asia/Dubai)
              */
             date?: string | null;
-            /** Customer Price List Id */
-            customer_price_list_id?: string | null;
-            /** Group Price List Id */
-            group_price_list_id?: string | null;
+            /**
+             * Party Id
+             * @description The customer: their price list (step 2) and group's list (step 3)
+             */
+            party_id?: string | null;
         };
         /** QuoteOut */
         QuoteOut: {
@@ -2269,6 +2827,31 @@ export interface components {
             head_office: components["schemas"]["BranchIn"];
             /** @default web */
             client: components["schemas"]["ClientKind"];
+        };
+        /** SupplierProfileIn */
+        SupplierProfileIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Payment Terms Days */
+            payment_terms_days?: number | null;
+        };
+        /** SupplierProfileOut */
+        SupplierProfileOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Payment Terms Days */
+            payment_terms_days?: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
         };
         /** SwitchTenantIn */
         SwitchTenantIn: {
@@ -4893,6 +5476,515 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_parties: {
+        parameters: {
+            query?: {
+                /** @description Code, name, TRN or phone */
+                q?: string | null;
+                role?: string | null;
+                include_archived?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartySummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_party: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_party: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_party: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartyPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_party_address: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_party_address: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+                address_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_party_address: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+                address_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_party_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_party_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_customer_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerProfileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_supplier_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplierProfileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_customer_groups: {
+        parameters: {
+            query?: {
+                business_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerGroupOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_customer_group: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerGroupIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerGroupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_customer_group: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerGroupPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerGroupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    credit_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditCheckOut"];
                 };
             };
             /** @description Validation Error */

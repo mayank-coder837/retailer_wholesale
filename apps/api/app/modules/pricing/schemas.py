@@ -126,9 +126,9 @@ class QuoteIn(BaseModel):
     qty: Decimal = Field(gt=0, max_digits=19, decimal_places=6)
     # dt.date: a field named "date" would hide the type inside this class
     date: dt.date | None = Field(default=None, description="Defaults to today (Asia/Dubai)")
-    # Until parties (M1.4) assign lists to customers, the caller names the customer's and group's lists.
-    customer_price_list_id: uuid.UUID | None = None
-    group_price_list_id: uuid.UUID | None = None
+    party_id: uuid.UUID | None = Field(
+        default=None, description="The customer: their price list (step 2) and group's list (step 3)"
+    )
 
 
 class QuoteOut(BaseModel):

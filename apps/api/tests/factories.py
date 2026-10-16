@@ -43,6 +43,16 @@ from app.modules.catalog.schemas import (
     VariantChoice,
 )
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
+from app.modules.parties import service as parties
+from app.modules.parties.models import PartyAddress, PartyContact
+from app.modules.parties.schemas import (
+    AddressIn,
+    ContactIn,
+    CustomerGroupIn,
+    CustomerProfileIn,
+    PartyIn,
+    SupplierProfileIn,
+)
 from app.modules.pricing import service as pricing
 from app.modules.pricing.engine import PromotionKind
 from app.modules.pricing.models import PriceListItem, PromotionScope
@@ -426,6 +436,42 @@ async def _promotion(session: AsyncSession, seed: TenantSeed) -> Any:
     return (await pricing.create_promotion(session, seed.tenant_id, data)).id
 
 
+async def _new_party(session: AsyncSession, seed: TenantSeed, **extra: Any) -> Any:
+    data = PartyIn(name_en=f"Party {_tag()}", name_ar="طرف", is_customer=True, is_supplier=True, **extra)
+    return await parties.create_party(session, seed.tenant_id, data)
+
+
+async def _party(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _new_party(session, seed)).id
+
+
+async def _party_address(session: AsyncSession, seed: TenantSeed) -> Any:
+    party = await _new_party(session, seed, addresses=[AddressIn(line1="Deira", emirate="dubai")])
+    return await session.scalar(select(PartyAddress.id).where(PartyAddress.party_id == party.id))
+
+
+async def _party_contact(session: AsyncSession, seed: TenantSeed) -> Any:
+    party = await _new_party(session, seed, contacts=[ContactIn(name="Rashid")])
+    return await session.scalar(select(PartyContact.id).where(PartyContact.party_id == party.id))
+
+
+async def _customer_group(session: AsyncSession, seed: TenantSeed) -> Any:
+    data = CustomerGroupIn(business_id=seed.business_id, name_en=f"Group {_tag()}", name_ar="مجموعة")
+    return (await parties.create_group(session, seed.tenant_id, data)).id
+
+
+async def _customer_profile(session: AsyncSession, seed: TenantSeed) -> Any:
+    party = await _new_party(session, seed)
+    data = CustomerProfileIn(business_id=seed.business_id, credit_limit=Decimal("5000.0000"))
+    return (await parties.put_customer_profile(session, party.id, data)).customer_profiles[0].id
+
+
+async def _supplier_profile(session: AsyncSession, seed: TenantSeed) -> Any:
+    party = await _new_party(session, seed)
+    data = SupplierProfileIn(business_id=seed.business_id, payment_terms_days=30)
+    return (await parties.put_supplier_profile(session, party.id, data)).supplier_profiles[0].id
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "audit_log": _audit_log,
     "numbering_series": _numbering_series,
@@ -461,6 +507,12 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "price_list": _price_list,
     "price_list_item": _price_list_item,
     "promotion": _promotion,
+    "party": _party,
+    "party_address": _party_address,
+    "party_contact": _party_contact,
+    "customer_group": _customer_group,
+    "customer_profile": _customer_profile,
+    "supplier_profile": _supplier_profile,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.

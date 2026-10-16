@@ -59,7 +59,7 @@
         "customer.*", "supplier.*", "account.*",
         "receipt.*", "payment.*", "contra.*", "journal.*", "expense.*", "credit_note.*", "debit_note.*",
         "sales_invoice.*", "sales_return.*", "purchase_bill.*", "purchase_return.*",
-        "pdc.*", "fiscal_period.*", "report.*", "period.override_lock", "audit.view"
+        "pdc.*", "fiscal_period.*", "report.*", "period.override_lock", "credit.limit", "audit.view"
       ]
     },
     {
