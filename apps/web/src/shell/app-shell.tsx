@@ -18,6 +18,7 @@ const NAV = [
   { to: "/dashboard", key: "dashboard" },
   { to: "/sales", key: "sales" },
   { to: "/purchases", key: "purchases" },
+  { to: "/parties", key: "parties" },
   { to: "/inventory", key: "inventory" },
   { to: "/accounts", key: "accounts" },
   { to: "/reports", key: "reports" },

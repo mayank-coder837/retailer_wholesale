@@ -11,6 +11,9 @@ import { NewProductPage } from "@/routes/catalog/new-product";
 import { ProductPage } from "@/routes/catalog/product";
 import { ProductsPage } from "@/routes/catalog/products";
 import { ComingSoon } from "@/routes/coming-soon";
+import { NewPartyPage } from "@/routes/parties/new-party";
+import { PartiesPage } from "@/routes/parties/parties";
+import { PartyPage } from "@/routes/parties/party";
 import { PricingSettingsPage } from "@/routes/pricing/pricing-settings";
 import { DashboardPage } from "@/routes/dashboard";
 import { IndexRedirect } from "@/routes/index-redirect";
@@ -58,6 +61,21 @@ const productRoute = createRoute({
   path: "/inventory/products/$productId",
   component: ProductPage,
 });
+const partiesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/parties",
+  component: PartiesPage,
+});
+const newPartyRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/parties/new",
+  component: NewPartyPage,
+});
+const partyRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/parties/$partyId",
+  component: PartyPage,
+});
 const catalogSettingsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/settings/catalog",
@@ -93,6 +111,9 @@ const routeTree = rootRoute.addChildren([
     inventoryRoute,
     newProductRoute,
     productRoute,
+    partiesRoute,
+    newPartyRoute,
+    partyRoute,
     catalogSettingsRoute,
     pricingSettingsRoute,
     voucherRoute,

@@ -6,6 +6,7 @@ import { useApi } from "@/api/use-api";
 import { Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
+import { CustomerGroups } from "@/routes/parties/customer-groups";
 import { showMoney, usePriceLists, usePromotions } from "@/routes/pricing/queries";
 import { useBusiness } from "@/shell/use-business";
 
@@ -20,6 +21,7 @@ export function PricingSettingsPage() {
       <p className="text-sm text-muted-foreground">{t("pricing.settingsHint")}</p>
       <PriceLists businessId={current.id} currency={current.base_currency} />
       <Promotions businessId={current.id} />
+      <CustomerGroups businessId={current.id} />
     </div>
   );
 }
