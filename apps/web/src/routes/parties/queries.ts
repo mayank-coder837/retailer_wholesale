@@ -8,6 +8,7 @@ import { unwrap } from "@/routes/catalog/queries";
 export type Party = components["schemas"]["PartyOut"];
 export type PartySummary = components["schemas"]["PartySummary"];
 export type PartyIn = components["schemas"]["PartyIn"];
+export type PartyPatch = components["schemas"]["PartyPatch"];
 export type AddressIn = components["schemas"]["AddressIn"];
 export type CustomerGroup = components["schemas"]["CustomerGroupOut"];
 export type CreditCheck = components["schemas"]["CreditCheckOut"];

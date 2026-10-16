@@ -45,6 +45,7 @@ export function NewPartyPage() {
         phone: form.phone.trim() || null,
         whatsapp: form.whatsapp.trim() || null,
         email: form.email.trim() || null,
+        default_currency: "AED",
         addresses,
       };
       return unwrap(await api.POST("/parties", { body }));

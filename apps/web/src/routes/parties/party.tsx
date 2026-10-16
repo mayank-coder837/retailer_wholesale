@@ -16,6 +16,7 @@ import {
   useParty,
   type CreditCheck,
   type Party,
+  type PartyPatch,
 } from "@/routes/parties/queries";
 import { showMoney, usePriceLists } from "@/routes/pricing/queries";
 import { useBusiness } from "@/shell/use-business";
@@ -118,7 +119,7 @@ function Details({ party }: { party: Party }) {
   const [editing, setEditing] = useState(false);
   const set = (patch: Partial<typeof initial>) => setForm((f) => ({ ...f, ...patch }));
   const save = useMutation({
-    mutationFn: async (body: Parameters<typeof api.PATCH<"/parties/{party_id}">>[1]["body"]) =>
+    mutationFn: async (body: PartyPatch) =>
       unwrap(await api.PATCH("/parties/{party_id}", { params: { path: { party_id: party.id } }, body })),
     onSuccess: async (updated) => {
       setEditing(false);

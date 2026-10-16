@@ -108,6 +108,7 @@ describe("Customers & suppliers screens", () => {
         phone: null,
         whatsapp: null,
         email: null,
+        default_currency: "AED",
         addresses: [
           {
             type: "billing",
