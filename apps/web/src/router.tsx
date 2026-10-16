@@ -6,6 +6,10 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 
+import { CatalogSettingsPage } from "@/routes/catalog/catalog-settings";
+import { NewProductPage } from "@/routes/catalog/new-product";
+import { ProductPage } from "@/routes/catalog/product";
+import { ProductsPage } from "@/routes/catalog/products";
 import { ComingSoon } from "@/routes/coming-soon";
 import { DashboardPage } from "@/routes/dashboard";
 import { IndexRedirect } from "@/routes/index-redirect";
@@ -38,6 +42,26 @@ const rolesRoute = createRoute({
   path: "/settings/roles",
   component: RolesPage,
 });
+const inventoryRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory",
+  component: ProductsPage,
+});
+const newProductRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/products/new",
+  component: NewProductPage,
+});
+const productRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/products/$productId",
+  component: ProductPage,
+});
+const catalogSettingsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/settings/catalog",
+  component: CatalogSettingsPage,
+});
 const thisPcRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/settings/this-pc",
@@ -60,10 +84,13 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute,
     rolesRoute,
     thisPcRoute,
+    inventoryRoute,
+    newProductRoute,
+    productRoute,
+    catalogSettingsRoute,
     voucherRoute,
     page("/sales", "nav.sales"),
     page("/purchases", "nav.purchases"),
-    page("/inventory", "nav.inventory"),
     page("/accounts", "nav.accounts"),
     page("/reports", "nav.reports"),
   ]),

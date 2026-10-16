@@ -3,6 +3,7 @@ import { createApiClient } from "@smartbiz/api-client";
 export interface Recorded {
   method: string;
   path: string;
+  query: string;
   body: unknown;
   authorization: string | null;
 }
@@ -22,6 +23,7 @@ export function fakeApi(routes: Record<string, Handler | { status: number; body:
     calls.push({
       method: input.method,
       path: url.pathname,
+      query: url.search,
       body,
       authorization: input.headers.get("Authorization"),
     });
