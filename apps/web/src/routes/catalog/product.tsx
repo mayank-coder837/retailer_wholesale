@@ -8,6 +8,7 @@ import { Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { localName } from "@/routes/catalog/product-form";
 import { errorCode, unwrap, useProduct, type Product } from "@/routes/catalog/queries";
+import { ProductPricing } from "@/routes/pricing/product-pricing";
 
 /** Inventory → product (M1.2): units, variants and barcodes. */
 export function ProductPage() {
@@ -75,6 +76,7 @@ export function ProductPage() {
       </section>
 
       <Barcodes product={p} variantLabel={variantLabel} />
+      <ProductPricing product={p} variantLabel={variantLabel} />
     </div>
   );
 }

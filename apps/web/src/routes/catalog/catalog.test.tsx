@@ -233,8 +233,10 @@ describe("Catalog screens", () => {
     const units = await screen.findByRole("region", { name: "Units" });
     expect(within(units).getByText(/1 roll = 50 m/)).toBeInTheDocument();
     expect(screen.getByText("FAB-001-RED-44IN")).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByLabelText("Unit"), "roll");
-    await userEvent.click(screen.getByRole("button", { name: "Generate barcode" }));
+    // The page has several unit pickers (barcodes, list price, price check): use the barcodes one.
+    const barcodes = screen.getByRole("region", { name: "Barcodes" });
+    await userEvent.selectOptions(within(barcodes).getByLabelText("Unit"), "roll");
+    await userEvent.click(within(barcodes).getByRole("button", { name: "Generate barcode" }));
 
     expect(await screen.findByText("2123456789012")).toBeInTheDocument();
     expect(calls.find((c) => c.path === "/products/p1/barcodes")?.body).toMatchObject({
