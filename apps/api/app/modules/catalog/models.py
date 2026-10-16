@@ -231,6 +231,8 @@ class ProductUnit(TenantScoped, Base):
         _tenant_fk("product_id", "product"),
         _tenant_fk("unit_id", "unit"),
         CheckConstraint("factor_to_base > 0", name="factor_positive"),
+        CheckConstraint("sale_price IS NULL OR sale_price >= 0", name="sale_price_not_negative"),
+        CheckConstraint("min_price IS NULL OR min_price >= 0", name="min_price_not_negative"),
         Index(
             "uq_product_unit_purchase_default",
             "product_id",
@@ -250,6 +252,9 @@ class ProductUnit(TenantScoped, Base):
     factor_to_base: Mapped[Decimal] = mapped_column(Numeric(19, 6))
     is_purchase_default: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     is_sales_default: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    # M1.3: base price (pricing step 6) and minimum price guard, VAT-exclusive, NUMERIC(19,4)
+    sale_price: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
+    min_price: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
 
 
 class ProductAttribute(TenantScoped, Base):

@@ -4,14 +4,14 @@
     {
       "system_key": "owner",
       "name_en": "Owner",
-      "name_ar": "المالك",
+      "name_ar": "Ø§Ù„Ù…Ø§Ù„Ùƒ",
       "description": "Full access, including users, roles and settings.",
       "include": ["*"]
     },
     {
       "system_key": "manager",
       "name_en": "Manager",
-      "name_ar": "المدير",
+      "name_ar": "Ø§Ù„Ù…Ø¯ÙŠØ±",
       "description": "Runs the business day to day; cannot change roles, delete users, change account settings or post into locked periods.",
       "include": ["*"],
       "exclude": ["role.create", "role.edit", "role.delete", "membership.delete", "tenant.edit", "period.override_lock"]
@@ -19,11 +19,11 @@
     {
       "system_key": "salesperson",
       "name_en": "Salesperson",
-      "name_ar": "مندوب مبيعات",
+      "name_ar": "Ù…Ù†Ø¯ÙˆØ¨ Ù…Ø¨ÙŠØ¹Ø§Øª",
       "description": "Quotes, orders and invoices for customers; sees stock and prices; no vouchers.",
       "include": [
         "business.view", "branch.view", "warehouse.view",
-        "unit.view", "product.view", "price_list.view",
+        "unit.view", "product.view", "price_list.view", "promotion.view",
         "customer.view", "customer.create", "customer.edit",
         "quotation.view", "quotation.create", "quotation.edit", "quotation.delete", "quotation.post", "quotation.export",
         "sales_order.view", "sales_order.create", "sales_order.edit", "sales_order.delete", "sales_order.post",
@@ -36,7 +36,7 @@
     {
       "system_key": "warehouse",
       "name_en": "Warehouse",
-      "name_ar": "أمين المستودع",
+      "name_ar": "Ø£Ù…ÙŠÙ† Ø§Ù„Ù…Ø³ØªÙˆØ¯Ø¹",
       "description": "Receives and delivers goods, counts and moves stock.",
       "include": [
         "business.view", "branch.view", "warehouse.view", "unit.view", "product.view",
@@ -52,10 +52,10 @@
     {
       "system_key": "accountant",
       "name_en": "Accountant",
-      "name_ar": "المحاسب",
+      "name_ar": "Ø§Ù„Ù…Ø­Ø§Ø³Ø¨",
       "description": "Vouchers, cheques, invoices and bills, periods and reports.",
       "include": [
-        "business.view", "branch.view", "warehouse.view", "unit.view", "product.view", "price_list.view",
+        "business.view", "branch.view", "warehouse.view", "unit.view", "product.view", "price_list.view", "promotion.view",
         "customer.*", "supplier.*", "account.*",
         "receipt.*", "payment.*", "contra.*", "journal.*", "expense.*", "credit_note.*", "debit_note.*",
         "sales_invoice.*", "sales_return.*", "purchase_bill.*", "purchase_return.*",
@@ -65,11 +65,11 @@
     {
       "system_key": "cashier",
       "name_en": "Cashier",
-      "name_ar": "أمين الصندوق",
+      "name_ar": "Ø£Ù…ÙŠÙ† Ø§Ù„ØµÙ†Ø¯ÙˆÙ‚",
       "description": "Counter sales and cash received.",
       "include": [
         "business.view", "branch.view", "warehouse.view",
-        "unit.view", "product.view", "price_list.view", "customer.view", "customer.create",
+        "unit.view", "product.view", "price_list.view", "promotion.view", "customer.view", "customer.create",
         "sales_invoice.view", "sales_invoice.create", "sales_invoice.post",
         "receipt.view", "receipt.create", "receipt.post",
         "pdc.view", "pdc.create"

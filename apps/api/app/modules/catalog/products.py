@@ -13,6 +13,7 @@ import re
 import secrets
 import uuid
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -29,6 +30,8 @@ from app.modules.catalog.models import (
     AttributeValue,
     Barcode,
     BarcodeKind,
+    Brand,
+    Category,
     CustomFieldEntity,
     Product,
     ProductAttribute,
@@ -247,6 +250,8 @@ async def get_product(session: AsyncSession, product_id: uuid.UUID) -> ProductOu
                 is_base=unit.id == product.base_unit_id,
                 is_purchase_default=pu.is_purchase_default,
                 is_sales_default=pu.is_sales_default,
+                sale_price=pu.sale_price,
+                min_price=pu.min_price,
             )
             for pu, unit in units
         ],
@@ -708,3 +713,69 @@ async def lookup_barcode(session: AsyncSession, code: str) -> BarcodeLookupOut:
         factor_to_base=product_unit.factor_to_base,
         base_unit=base.code,
     )
+
+
+# --- for the pricing module (M1.3): read the item, set unit prices ----------------------------------------
+
+
+@dataclass(frozen=True)
+class PricedUnit:
+    unit_id: uuid.UUID
+    factor_to_base: Decimal
+    sale_price: Decimal | None
+    min_price: Decimal | None
+
+
+@dataclass(frozen=True)
+class VariantContext:
+    """What the pricing engine needs to know about a variant: its product, groupings and units."""
+
+    variant_id: uuid.UUID
+    product_id: uuid.UUID
+    category_id: uuid.UUID | None
+    brand_id: uuid.UUID | None
+    units: dict[str, PricedUnit]  # unit code → factor and prices
+
+
+async def variant_context(session: AsyncSession, variant_id: uuid.UUID) -> VariantContext:
+    variant = await session.get(Variant, variant_id)
+    if variant is None:
+        raise ProductNotFoundError("There is no such variant.")
+    product = await get_product_row(session, variant.product_id)
+    rows = await session.execute(
+        select(ProductUnit, Unit.code)
+        .join(Unit, Unit.id == ProductUnit.unit_id)
+        .where(ProductUnit.product_id == product.id)
+    )
+    return VariantContext(
+        variant_id=variant.id,
+        product_id=product.id,
+        category_id=product.category_id,
+        brand_id=product.brand_id,
+        units={
+            code: PricedUnit(pu.unit_id, pu.factor_to_base, pu.sale_price, pu.min_price) for pu, code in rows
+        },
+    )
+
+
+async def set_unit_prices(
+    session: AsyncSession,
+    product_id: uuid.UUID,
+    code: str,
+    *,
+    sale_price: Decimal | None,
+    min_price: Decimal | None,
+) -> ProductOut:
+    """Base price and minimum price of one unit of a product (audited like every product change)."""
+    product = await get_product_row(session, product_id)
+    row = await _product_unit(session, product, code)
+    row.sale_price = sale_price
+    row.min_price = min_price
+    await session.flush()
+    return await get_product(session, product.id)
+
+
+async def exists(session: AsyncSession, kind: str, item_id: uuid.UUID) -> bool:
+    """Whether a variant, product, category or brand of this tenant exists (promotion scopes)."""
+    model = {"variant": Variant, "product": Product, "category": Category, "brand": Brand}[kind]
+    return await session.get(model, item_id) is not None
