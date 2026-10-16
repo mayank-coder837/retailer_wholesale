@@ -201,6 +201,8 @@ class ProductUnitOut(BaseModel):
     is_base: bool
     is_purchase_default: bool
     is_sales_default: bool
+    sale_price: Decimal | None = None
+    min_price: Decimal | None = None
 
 
 class VariantChoice(BaseModel):

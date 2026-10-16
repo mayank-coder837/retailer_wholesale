@@ -87,11 +87,11 @@ The engine is `app/modules/catalog/uom.py` (M1.1).
 | Entity | Key fields | Relationships / rules |
 | --- | --- | --- |
 | customer_group | name, default_price_list_id | |
-| price_list | business_id, name, currency, tax_inclusive, valid_from, valid_to | |
-| price_list_item | price_list_id, variant_id, unit_id, min_qty (quantity break), price | Highest `min_qty` ≤ line qty wins inside a list |
-| price_list_assignment | price_list_id, party_id **or** customer_group_id | |
-| promotion | name, kind (`percent, amount, fixed_price, buy_x_get_y`), scope (variant/category/brand), conditions (JSON), valid_from, valid_to, stackable | |
-| min price | `product_unit.min_price` | Guard: price below it needs `price.override_min` |
+| price_list | business_id, name_en/_ar, currency, is_standard, valid_from, valid_to, archived_at | One standard list per business (pricing step 4). VAT-inclusive lists arrive with tax (M1.10) |
+| price_list_item | price_list_id, variant_id, unit_id, min_qty (quantity break), price | Highest `min_qty` ≤ line qty wins inside a list; the unit must be one of the product's units |
+| price_list_assignment | price_list_id, party_id **or** customer_group_id | Arrives with parties (M1.4); until then a quote names the lists |
+| promotion | business_id, name_en/_ar, kind (`percent, amount, fixed_price`), value, scope (`variant, product, category, brand`), scope_id, min_qty, valid_from, valid_to, archived_at | Never stacked; newest matching wins. Buy-x-get-y needs whole documents: with sales (M1.8) |
+| base / min price | `product_unit.sale_price`, `product_unit.min_price` (NUMERIC(19,4), VAT-exclusive) | Step 6 base price; guard: a price below the minimum needs `price.override_min`. Engine: `app/modules/pricing/engine.py` |
 
 Resolution order (decisions-round-1 A9): **1. last price sold to this customer for this item** (same unit; if the
 last sale was in another unit, converted by the unit factors and flagged `converted`) **> 2. customer price list

@@ -43,6 +43,10 @@ from app.modules.catalog.schemas import (
     VariantChoice,
 )
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
+from app.modules.pricing import service as pricing
+from app.modules.pricing.engine import PromotionKind
+from app.modules.pricing.models import PriceListItem, PromotionScope
+from app.modules.pricing.schemas import PriceListIn, PriceListItemIn, PromotionIn
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Emirate, Node, NodeKind
 from app.modules.tenancy.schemas import BranchIn, BusinessIn, WarehouseIn
@@ -391,6 +395,37 @@ async def _barcode(session: AsyncSession, seed: TenantSeed) -> Any:
     return await session.scalar(select(Barcode.id).where(Barcode.variant_id == product.variants[0].id))
 
 
+async def _new_price_list(session: AsyncSession, seed: TenantSeed) -> Any:
+    data = PriceListIn(business_id=seed.business_id, name_en=f"List {_tag()}", name_ar="قائمة")
+    return await pricing.create_price_list(session, seed.tenant_id, data)
+
+
+async def _price_list(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _new_price_list(session, seed)).id
+
+
+async def _price_list_item(session: AsyncSession, seed: TenantSeed) -> Any:
+    price_list = await _new_price_list(session, seed)
+    product = await _new_product(session, seed)
+    data = PriceListItemIn(variant_id=product.variants[0].id, unit="pcs", price=Decimal("2.5000"))
+    await pricing.put_item(session, seed.tenant_id, price_list.id, data)
+    return await session.scalar(select(PriceListItem.id).where(PriceListItem.price_list_id == price_list.id))
+
+
+async def _promotion(session: AsyncSession, seed: TenantSeed) -> Any:
+    product = await _new_product(session, seed)
+    data = PromotionIn(
+        business_id=seed.business_id,
+        name_en="Eid",
+        name_ar="العيد",
+        kind=PromotionKind.PERCENT,
+        value=Decimal(10),
+        scope=PromotionScope.PRODUCT,
+        scope_id=product.id,
+    )
+    return (await pricing.create_promotion(session, seed.tenant_id, data)).id
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "audit_log": _audit_log,
     "numbering_series": _numbering_series,
@@ -423,6 +458,9 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "variant": _variant,
     "variant_attribute_value": _variant_attribute_value,
     "barcode": _barcode,
+    "price_list": _price_list,
+    "price_list_item": _price_list_item,
+    "promotion": _promotion,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.

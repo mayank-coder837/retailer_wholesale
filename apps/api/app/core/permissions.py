@@ -37,6 +37,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "unit": _MASTER,
     "product": _MASTER,
     "price_list": _MASTER,
+    "promotion": _MASTER,
     "customer": _MASTER,
     "supplier": _MASTER,
     "account": _MASTER,
