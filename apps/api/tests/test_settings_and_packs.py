@@ -98,8 +98,9 @@ async def test_applying_a_pack_is_idempotent(client: AsyncClient) -> None:
     assert first.json() == {
         "pack_code": "textile",
         "version": 1,
-        "applied_sections": ["settings", "units"],  # units apply from M1.1
-        "pending_sections": ["attributes", "custom_fields"],
+        # units apply from M1.1, attributes and custom fields from M1.2: nothing is pending any more
+        "applied_sections": ["attributes", "custom_fields", "settings", "units"],
+        "pending_sections": [],
         "changed": True,
     }
     assert second.json()["changed"] is False

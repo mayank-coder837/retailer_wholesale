@@ -58,7 +58,7 @@ tenant ─┬─ business (TRN, base currency, fiscal start, costing method)
 | --- | --- | --- |
 | unit_family | code (`count, length, weight, volume, area, time`), name_en/_ar | Per tenant: standard families copied in at sign-up (ADR 0013) |
 | unit | family_id, code (`pcs, m, kg, roll, carton`), name_en/_ar, symbol, decimals (allowed decimal places), factor_to_family_base (> 0), is_family_base (one per family, factor 1), is_standard, archived_at | Per tenant: standard units + the tenant's own. Factor and family are fixed once created |
-| product_unit | product_id, unit_id, factor_to_base, is_purchase_default, is_sales_default, sale_price, min_price | Product-level, may cross families: 1 roll = 50 m, 1 carton = 24 pcs |
+| product_unit | product_id, unit_id, factor_to_base, is_purchase_default, is_sales_default (+ sale_price, min_price in M1.3) | Product-level, may cross families: 1 roll = 50 m, 1 carton = 24 pcs. The base unit is a row with factor 1; factors exact (L3) and fixed once added; one purchase and one sales default |
 | product.base_unit_id | the inventory unit | Stock and costing are always in the base unit |
 
 Rules: conversion happens once, at entry, and is **exact** (founder, 15 Oct 2026): `qty_base = qty_entered ×
@@ -73,9 +73,9 @@ The engine is `app/modules/catalog/uom.py` (M1.1).
 
 | Entity | Key fields | Relationships / rules |
 | --- | --- | --- |
-| category | parent_id, name_en/_ar, path | Tree |
-| brand | name_en/_ar | |
-| product | sku, name_en/_ar, description, product_type (`stock, service, non_stock`), category_id, brand_id, base_unit_id, default_tax_code_id, track_batch, track_expiry, track_serial, has_variants, custom_fields (JSONB) | product 1—n variant; 1—n product_unit |
+| category | parent_id, name_en/_ar, archived_at | Tree, no cycles; names unique among siblings (path computed on read) |
+| brand | name_en/_ar, archived_at | Name unique per tenant |
+| product | sku, name_en/_ar, description, product_type (`stock, service, non_stock`), category_id, brand_id, base_unit_id, track_batch, track_expiry, track_serial, custom_fields (JSONB), archived_at | product 1—n variant; 1—n product_unit. SKU and base unit fixed once created. `default_tax_code_id` arrives with tax codes (M1.10) |
 | attribute | name_en/_ar, values (attribute_value: value_en/_ar, sort) | Color, Size, Width… from industry packs |
 | product_attribute | product_id, attribute_id | Which attributes a product varies by |
 | variant | product_id, sku, attribute_values (variant_attribute_value join), custom_fields (JSONB), archived_at | Every product has ≥ 1 variant (a default one if no variants); stock, prices and lines reference **variant** |

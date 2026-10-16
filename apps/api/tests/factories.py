@@ -11,16 +11,37 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import jobs, numbering
 from app.core.ids import new_id
 from app.core.platform_models import Attachment, AuditLog, IdempotencyKey, IndustryPackApplication, Setting
 from app.core.security import hash_password
+from app.modules.catalog import products as catalog_products
 from app.modules.catalog import service as catalog
-from app.modules.catalog.models import UnitFamily
-from app.modules.catalog.schemas import UnitIn
+from app.modules.catalog import setup as catalog_setup
+from app.modules.catalog.models import (
+    Barcode,
+    CustomFieldEntity,
+    CustomFieldType,
+    ProductAttribute,
+    ProductUnit,
+    UnitFamily,
+    VariantAttributeValue,
+)
+from app.modules.catalog.schemas import (
+    AttributeIn,
+    AttributeValueIn,
+    BarcodeIn,
+    BrandIn,
+    CategoryIn,
+    CustomFieldIn,
+    ProductIn,
+    ProductUnitIn,
+    UnitIn,
+    VariantChoice,
+)
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Emirate, Node, NodeKind
@@ -267,6 +288,109 @@ async def _unit(session: AsyncSession, seed: TenantSeed) -> Any:
     return (await catalog.create_unit(session, seed.tenant_id, data)).id
 
 
+def _tag() -> str:
+    return new_id().hex[-8:]
+
+
+async def _category(session: AsyncSession, seed: TenantSeed) -> Any:
+    out = await catalog_setup.create_category(
+        session, seed.tenant_id, CategoryIn(name_en=f"Fabrics {_tag()}", name_ar="أقمشة")
+    )
+    return out.id
+
+
+async def _brand(session: AsyncSession, seed: TenantSeed) -> Any:
+    out = await catalog_setup.create_brand(
+        session, seed.tenant_id, BrandIn(name_en=f"Brand {_tag()}", name_ar="علامة")
+    )
+    return out.id
+
+
+async def _coloured_attribute(session: AsyncSession, seed: TenantSeed) -> Any:
+    return await catalog_setup.create_attribute(
+        session,
+        seed.tenant_id,
+        AttributeIn(
+            code=f"color_{_tag()}",
+            name_en="Colour",
+            name_ar="اللون",
+            values=[AttributeValueIn(value_en="Red", value_ar="أحمر")],
+        ),
+    )
+
+
+async def _attribute(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _coloured_attribute(session, seed)).id
+
+
+async def _attribute_value(session: AsyncSession, seed: TenantSeed) -> Any:
+    attribute = await _coloured_attribute(session, seed)
+    added = await catalog_setup.add_value(
+        session, seed.tenant_id, attribute.id, AttributeValueIn(value_en="Blue", value_ar="أزرق")
+    )
+    return added.id
+
+
+async def _custom_field_def(session: AsyncSession, seed: TenantSeed) -> Any:
+    data = CustomFieldIn(
+        entity_type=CustomFieldEntity.PRODUCT,
+        key=f"note_{_tag()}",
+        label_en="Note",
+        label_ar="ملاحظة",
+        data_type=CustomFieldType.TEXT,
+    )
+    return (await catalog_setup.create_custom_field(session, seed.tenant_id, data)).id
+
+
+async def _new_product(session: AsyncSession, seed: TenantSeed, *, coloured: bool = False) -> Any:
+    attributes = []
+    if coloured:
+        attribute = await _coloured_attribute(session, seed)
+        attributes = [VariantChoice(attribute=attribute.code, values=["Red"])]
+    data = ProductIn(
+        sku=f"ISO-{_tag()}",
+        name_en="Isolation product",
+        name_ar="منتج",
+        base_unit="pcs",
+        units=[ProductUnitIn(unit="dozen")],
+        attributes=attributes,
+    )
+    return await catalog_products.create_product(session, seed.tenant_id, data)
+
+
+async def _product(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _new_product(session, seed)).id
+
+
+async def _product_unit(session: AsyncSession, seed: TenantSeed) -> Any:
+    product = await _new_product(session, seed)
+    return await session.scalar(select(ProductUnit.id).where(ProductUnit.product_id == product.id).limit(1))
+
+
+async def _product_attribute(session: AsyncSession, seed: TenantSeed) -> Any:
+    product = await _new_product(session, seed, coloured=True)
+    return await session.scalar(select(ProductAttribute.id).where(ProductAttribute.product_id == product.id))
+
+
+async def _variant(session: AsyncSession, seed: TenantSeed) -> Any:
+    return (await _new_product(session, seed)).variants[0].id
+
+
+async def _variant_attribute_value(session: AsyncSession, seed: TenantSeed) -> Any:
+    product = await _new_product(session, seed, coloured=True)
+    return await session.scalar(
+        select(VariantAttributeValue.id).where(VariantAttributeValue.variant_id == product.variants[0].id)
+    )
+
+
+async def _barcode(session: AsyncSession, seed: TenantSeed) -> Any:
+    product = await _new_product(session, seed)
+    await catalog_products.add_barcode(
+        session, product.id, BarcodeIn(variant_id=product.variants[0].id, unit="pcs")
+    )
+    return await session.scalar(select(Barcode.id).where(Barcode.variant_id == product.variants[0].id))
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "audit_log": _audit_log,
     "numbering_series": _numbering_series,
@@ -288,6 +412,17 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "role_assignment": _role_assignment,
     "unit_family": _unit_family,
     "unit": _unit,
+    "category": _category,
+    "brand": _brand,
+    "attribute": _attribute,
+    "attribute_value": _attribute_value,
+    "custom_field_def": _custom_field_def,
+    "product": _product,
+    "product_unit": _product_unit,
+    "product_attribute": _product_attribute,
+    "variant": _variant,
+    "variant_attribute_value": _variant_attribute_value,
+    "barcode": _barcode,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.
