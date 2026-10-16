@@ -40,6 +40,29 @@ async def shop_with_fabric(client: AsyncClient, email: str = "prices@shop.ae") -
     }
 
 
+async def customer_on(
+    client: AsyncClient, shop: dict[str, Any], price_list_id: str, code: str = "C-1"
+) -> str:
+    """A customer whose terms in the shop's business use this price list (pricing step 2)."""
+    party = await ok(
+        await client.post(
+            "/parties",
+            json={"code": code, "name_en": "Al Noor", "name_ar": "النور", "is_customer": True},
+            headers=shop["h"],
+        ),
+        201,
+    )
+    await ok(
+        await client.put(
+            f"/parties/{party['id']}/customer-profile",
+            json={"business_id": shop["business_id"], "price_list_id": price_list_id},
+            headers=shop["h"],
+        )
+    )
+    party_id: str = party["id"]
+    return party_id
+
+
 async def quote(client: AsyncClient, shop: dict[str, Any], **extra: Any) -> dict[str, Any]:
     body = {
         "business_id": shop["business_id"],
@@ -126,7 +149,7 @@ async def test_quote_walks_the_levels_base_promotion_break_customer_list(client:
             headers=h,
         )
     )
-    customer = await quote(client, shop, customer_price_list_id=special["id"])
+    customer = await quote(client, shop, party_id=await customer_on(client, shop, special["id"]))
     assert (customer["price"], customer["price_source"]) == ("1.5000", "customer_list:Al Noor special")
     assert customer["below_min"] is True, "1.50 is below the 2.00 minimum"
     assert customer["may_go_below_min"] is True, "the owner may override"
@@ -306,15 +329,17 @@ async def test_price_lists_belong_to_one_business_and_one_tenant(client: AsyncCl
     )
 
     seen = await client.get("/price-lists", headers=second["h"])
-    used = await client.post(
-        "/pricing/quote",
-        json={
-            "business_id": second["business_id"],
-            "variant_id": second["variant"],
-            "unit": "m",
-            "qty": "1",
-            "customer_price_list_id": plist["id"],
-        },
+    party = await ok(
+        await client.post(
+            "/parties",
+            json={"name_en": "Buyer", "name_ar": "مشتري", "is_customer": True},
+            headers=second["h"],
+        ),
+        201,
+    )
+    used = await client.put(
+        f"/parties/{party['id']}/customer-profile",
+        json={"business_id": second["business_id"], "price_list_id": plist["id"]},
         headers=second["h"],
     )
 

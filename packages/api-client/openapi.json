@@ -3797,6 +3797,899 @@
         ]
       }
     },
+    "/parties": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "List Parties",
+        "operationId": "list_parties",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Code, name, TRN or phone",
+              "title": "Q"
+            },
+            "description": "Code, name, TRN or phone"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(customer|supplier)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PartySummary"
+                  },
+                  "title": "Response List Parties"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Create Party",
+        "operationId": "create_party",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Get Party",
+        "operationId": "get_party",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update Party",
+        "operationId": "update_party",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartyPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/addresses": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Add Address",
+        "operationId": "add_party_address",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/addresses/{address_id}": {
+      "put": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update Address",
+        "operationId": "update_party_address",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "address_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Address Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Remove Address",
+        "operationId": "remove_party_address",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "address_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Address Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/contacts": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Add Contact",
+        "operationId": "add_party_contact",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/contacts/{contact_id}": {
+      "delete": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Remove Contact",
+        "operationId": "remove_party_contact",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/customer-profile": {
+      "put": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Put Customer Profile",
+        "operationId": "put_customer_profile",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerProfileIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/supplier-profile": {
+      "put": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Put Supplier Profile",
+        "operationId": "put_supplier_profile",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierProfileIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer-groups": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "List Customer Groups",
+        "operationId": "list_customer_groups",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerGroupOut"
+                  },
+                  "title": "Response List Customer Groups"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Create Customer Group",
+        "operationId": "create_customer_group",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerGroupIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer-groups/{group_id}": {
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update Customer Group",
+        "operationId": "update_customer_group",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerGroupPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/credit-check": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Credit Check",
+        "description": "Whether a sale of this amount may go ahead: ok, warn or block, the reasons and the figures.",
+        "operationId": "credit_check",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditCheckIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditCheckOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pairing/challenge": {
       "post": {
         "tags": [
@@ -3892,6 +4785,148 @@
   },
   "components": {
     "schemas": {
+      "AddressIn": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AddressType",
+            "default": "billing"
+          },
+          "line1": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Line1"
+          },
+          "line2": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line2"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "emirate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Emirate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "title": "Country",
+            "default": "AE"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "line1"
+        ],
+        "title": "AddressIn"
+      },
+      "AddressOut": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AddressType",
+            "default": "billing"
+          },
+          "line1": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Line1"
+          },
+          "line2": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line2"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "emirate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Emirate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "title": "Country",
+            "default": "AE"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "line1",
+          "id"
+        ],
+        "title": "AddressOut"
+      },
+      "AddressType": {
+        "type": "string",
+        "enum": [
+          "billing",
+          "shipping"
+        ],
+        "title": "AddressType"
+      },
       "ApplicationOut": {
         "properties": {
           "pack_code": {
@@ -5204,6 +6239,114 @@
         ],
         "title": "ClientKind"
       },
+      "ContactIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ContactIn"
+      },
+      "ContactOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id"
+        ],
+        "title": "ContactOut"
+      },
       "ConversionOut": {
         "properties": {
           "qty": {
@@ -5236,6 +6379,149 @@
           "result"
         ],
         "title": "ConversionOut"
+      },
+      "CreditCheckIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount",
+            "description": "This document's total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "amount"
+        ],
+        "title": "CreditCheckIn"
+      },
+      "CreditCheckOut": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/CreditDecision"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/CreditReason"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "credit_limit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          },
+          "credit_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Days"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/CreditPolicy"
+          },
+          "ledger_balance": {
+            "type": "string",
+            "title": "Ledger Balance"
+          },
+          "open_orders": {
+            "type": "string",
+            "title": "Open Orders"
+          },
+          "exposure": {
+            "type": "string",
+            "title": "Exposure"
+          },
+          "available": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "pdc_in_hand": {
+            "type": "string",
+            "title": "Pdc In Hand"
+          },
+          "exposure_after_pdc": {
+            "type": "string",
+            "title": "Exposure After Pdc"
+          },
+          "may_override": {
+            "type": "boolean",
+            "title": "May Override"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision",
+          "reasons",
+          "credit_limit",
+          "credit_days",
+          "policy",
+          "ledger_balance",
+          "open_orders",
+          "exposure",
+          "available",
+          "pdc_in_hand",
+          "exposure_after_pdc",
+          "may_override"
+        ],
+        "title": "CreditCheckOut"
+      },
+      "CreditDecision": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "warn",
+          "block"
+        ],
+        "title": "CreditDecision"
+      },
+      "CreditPolicy": {
+        "type": "string",
+        "enum": [
+          "warn",
+          "block"
+        ],
+        "title": "CreditPolicy"
+      },
+      "CreditReason": {
+        "type": "string",
+        "enum": [
+          "over_limit",
+          "overdue"
+        ],
+        "title": "CreditReason"
       },
       "CustomFieldEntity": {
         "type": "string",
@@ -5488,6 +6774,326 @@
           "multiselect"
         ],
         "title": "CustomFieldType"
+      },
+      "CustomerGroupIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "price_list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "name_en",
+          "name_ar"
+        ],
+        "title": "CustomerGroupIn"
+      },
+      "CustomerGroupOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "price_list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Id"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "name_en",
+          "name_ar",
+          "id",
+          "archived_at"
+        ],
+        "title": "CustomerGroupOut"
+      },
+      "CustomerGroupPatch": {
+        "properties": {
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          },
+          "price_list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Id"
+          },
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          }
+        },
+        "type": "object",
+        "title": "CustomerGroupPatch"
+      },
+      "CustomerProfileIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "customer_group_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Group Id"
+          },
+          "price_list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Id"
+          },
+          "credit_limit": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          },
+          "credit_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Days"
+          },
+          "credit_policy": {
+            "$ref": "#/components/schemas/CreditPolicy",
+            "default": "warn"
+          },
+          "salesperson_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salesperson User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id"
+        ],
+        "title": "CustomerProfileIn"
+      },
+      "CustomerProfileOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "customer_group_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Group Id"
+          },
+          "price_list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price List Id"
+          },
+          "credit_limit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Limit"
+          },
+          "credit_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Days"
+          },
+          "credit_policy": {
+            "$ref": "#/components/schemas/CreditPolicy",
+            "default": "warn"
+          },
+          "salesperson_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salesperson User Id"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "id"
+        ],
+        "title": "CustomerProfileOut"
       },
       "DatabaseHealthOut": {
         "properties": {
@@ -5828,6 +7434,479 @@
           "sections"
         ],
         "title": "PackSummary"
+      },
+      "PartyIn": {
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code",
+            "description": "Omit to number it: C0001 customers, S0001 suppliers, P0001 both"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PartyKind",
+            "default": "company"
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{15}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn",
+            "description": "UAE tax registration number, 15 digits"
+          },
+          "is_customer": {
+            "type": "boolean",
+            "title": "Is Customer",
+            "default": false
+          },
+          "is_supplier": {
+            "type": "boolean",
+            "title": "Is Supplier",
+            "default": false
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "default_currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Default Currency",
+            "default": "AED"
+          },
+          "addresses": {
+            "items": {
+              "$ref": "#/components/schemas/AddressIn"
+            },
+            "type": "array",
+            "title": "Addresses"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactIn"
+            },
+            "type": "array",
+            "title": "Contacts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name_en",
+          "name_ar"
+        ],
+        "title": "PartyIn"
+      },
+      "PartyKind": {
+        "type": "string",
+        "enum": [
+          "company",
+          "individual"
+        ],
+        "title": "PartyKind"
+      },
+      "PartyOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PartyKind"
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn"
+          },
+          "is_customer": {
+            "type": "boolean",
+            "title": "Is Customer"
+          },
+          "is_supplier": {
+            "type": "boolean",
+            "title": "Is Supplier"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "default_currency": {
+            "type": "string",
+            "title": "Default Currency"
+          },
+          "addresses": {
+            "items": {
+              "$ref": "#/components/schemas/AddressOut"
+            },
+            "type": "array",
+            "title": "Addresses"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactOut"
+            },
+            "type": "array",
+            "title": "Contacts"
+          },
+          "customer_profiles": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerProfileOut"
+            },
+            "type": "array",
+            "title": "Customer Profiles"
+          },
+          "supplier_profiles": {
+            "items": {
+              "$ref": "#/components/schemas/SupplierProfileOut"
+            },
+            "type": "array",
+            "title": "Supplier Profiles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name_en",
+          "name_ar",
+          "kind",
+          "trn",
+          "is_customer",
+          "is_supplier",
+          "phone",
+          "archived_at",
+          "whatsapp",
+          "email",
+          "default_currency",
+          "addresses",
+          "contacts",
+          "customer_profiles",
+          "supplier_profiles"
+        ],
+        "title": "PartyOut"
+      },
+      "PartyPatch": {
+        "properties": {
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PartyKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{15}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn",
+            "description": "UAE tax registration number, 15 digits"
+          },
+          "is_customer": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Customer"
+          },
+          "is_supplier": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Supplier"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          }
+        },
+        "type": "object",
+        "title": "PartyPatch"
+      },
+      "PartySummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PartyKind"
+          },
+          "trn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trn"
+          },
+          "is_customer": {
+            "type": "boolean",
+            "title": "Is Customer"
+          },
+          "is_supplier": {
+            "type": "boolean",
+            "title": "Is Supplier"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name_en",
+          "name_ar",
+          "kind",
+          "trn",
+          "is_customer",
+          "is_supplier",
+          "phone",
+          "archived_at"
+        ],
+        "title": "PartySummary"
       },
       "PermissionOut": {
         "properties": {
@@ -7103,7 +9182,7 @@
             "title": "Date",
             "description": "Defaults to today (Asia/Dubai)"
           },
-          "customer_price_list_id": {
+          "party_id": {
             "anyOf": [
               {
                 "type": "string",
@@ -7113,19 +9192,8 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Price List Id"
-          },
-          "group_price_list_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Group Price List Id"
+            "title": "Party Id",
+            "description": "The customer: their price list (step 2) and group's list (step 3)"
           }
         },
         "type": "object",
@@ -7461,6 +9529,66 @@
           "head_office"
         ],
         "title": "SignupIn"
+      },
+      "SupplierProfileIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "payment_terms_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Terms Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id"
+        ],
+        "title": "SupplierProfileIn"
+      },
+      "SupplierProfileOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "payment_terms_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Terms Days"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "id"
+        ],
+        "title": "SupplierProfileOut"
       },
       "SwitchTenantIn": {
         "properties": {

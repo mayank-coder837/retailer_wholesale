@@ -278,22 +278,19 @@ async def _list_prices(
     return engine.ListPrices(price_list.name_en, breaks) if breaks else None
 
 
-async def _named_list(
-    session: AsyncSession, price_list_id: uuid.UUID | None, business_id: uuid.UUID
-) -> PriceList | None:
-    if price_list_id is None:
-        return None
-    row = await get_price_list(session, price_list_id)
-    if row.business_id != business_id:
-        raise InvalidPricingError("The price list belongs to another business.", field="price_list_id")
-    return row
-
-
 async def quote(session: AsyncSession, data: QuoteIn, *, may_override_min: bool) -> QuoteOut:
     await tenancy.get_business(session, data.business_id)
     context, unit_id = await _unit_of(session, data.variant_id, data.unit)
     unit = context.units[data.unit]
     day = data.date or datetime.now(DUBAI).date()
+    customer_list = group_list = None
+    if data.party_id is not None:
+        # Imported here: the parties service checks price lists through this module (each calls the other).
+        from app.modules.parties import service as parties
+
+        customer_id, group_id = await parties.price_lists_for(session, data.party_id, data.business_id)
+        customer_list = await session.get(PriceList, customer_id) if customer_id else None
+        group_list = await session.get(PriceList, group_id) if group_id else None
 
     standard = (
         await session.scalars(
@@ -328,20 +325,8 @@ async def quote(session: AsyncSession, data: QuoteIn, *, may_override_min: bool)
             min_price=unit.min_price,
             # Step 1, the last price sold to this customer, reads posted sales invoices: connected in M1.8.
             last_sale=None,
-            customer_list=await _list_prices(
-                session,
-                await _named_list(session, data.customer_price_list_id, data.business_id),
-                context.variant_id,
-                unit_id,
-                day,
-            ),
-            group_list=await _list_prices(
-                session,
-                await _named_list(session, data.group_price_list_id, data.business_id),
-                context.variant_id,
-                unit_id,
-                day,
-            ),
+            customer_list=await _list_prices(session, customer_list, context.variant_id, unit_id, day),
+            group_list=await _list_prices(session, group_list, context.variant_id, unit_id, day),
             standard_list=await _list_prices(session, standard, context.variant_id, unit_id, day),
             promotions=[
                 engine.Promotion(p.name_en, engine.PromotionKind(p.kind), p.value, p.min_qty)
