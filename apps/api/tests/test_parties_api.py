@@ -229,8 +229,8 @@ async def test_credit_check_blocks_over_the_limit_and_only_some_may_override(cli
         False,
     )
     assert owner_view["may_override"] is True
-    assert (blocked["ledger_balance"], blocked["pdc_in_hand"]) == ("0", "0"), (
-        "plug-in figures until M1.5/M1.9"
+    assert (blocked["ledger_balance"], blocked["pdc_in_hand"]) == ("0.0000", "0"), (
+        "nothing posted yet (ledger, M1.5); PDCs are a plug-in until M1.9"
     )
 
 
@@ -266,5 +266,5 @@ async def test_a_credit_override_is_audited(app_sessionmaker: async_sessionmaker
     assert (entry.changes["override"], entry.changes["document"], entry.changes["exposure"]) == (
         "credit",
         "SI-0001",
-        "500",
+        "500.0000",
     )

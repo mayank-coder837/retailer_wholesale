@@ -3,9 +3,9 @@
 - One party per real-world company or person, with customer and/or supplier roles (ADR 0005).
 - Terms live per business: a customer profile (price list, group, credit limit, days, policy) and a supplier
   profile (payment terms).
-- The credit check runs the pure ``credit.check`` over the customer's figures. Ledger balance and overdue
-  bills come from accounting (M1.5), open orders from sales (M1.8), PDCs in hand from the PDC register
-  (M1.9): until then they are zero.
+- The credit check runs the pure ``credit.check`` over the customer's figures. Ledger balance and the oldest
+  unpaid invoice come from accounting (M1.5); open orders from sales (M1.8) and PDCs in hand from the PDC
+  register (M1.9) are zero until those exist.
 """
 
 import re
@@ -352,6 +352,23 @@ async def current_customer_profile(
     return await _customer_profile(session, party_id, business_id)
 
 
+async def terms_days(
+    session: AsyncSession, party_id: uuid.UUID, business_id: uuid.UUID, *, customer: bool
+) -> int | None:
+    """Days until a new bill is due: the customer's credit days or the supplier's payment terms."""
+    if customer:
+        profile = await _customer_profile(session, party_id, business_id)
+        return profile.credit_days if profile else None
+    supplier = (
+        await session.scalars(
+            select(SupplierProfile).where(
+                SupplierProfile.party_id == party_id, SupplierProfile.business_id == business_id
+            )
+        )
+    ).first()
+    return supplier.payment_terms_days if supplier else None
+
+
 async def put_customer_profile(
     session: AsyncSession, party_id: uuid.UUID, data: CustomerProfileIn
 ) -> PartyOut:
@@ -439,8 +456,12 @@ async def price_lists_for(
 async def credit_figures(
     session: AsyncSession, party_id: uuid.UUID, business_id: uuid.UUID
 ) -> credit.CreditFigures:
-    """Ledger balance and overdue bills (M1.5), open orders (M1.8), PDCs in hand (M1.9): zero for now."""
-    return credit.CreditFigures()
+    """Ledger balance and the oldest unpaid invoice from accounting (M1.5); open orders (M1.8) and PDCs in
+    hand (M1.9) are zero until those modules exist."""
+    from app.modules.accounting import service as accounting  # accounting builds on parties
+
+    balance, oldest_days = await accounting.receivable_figures(session, business_id, party_id)
+    return credit.CreditFigures(ledger_balance=balance, oldest_overdue_days=oldest_days)
 
 
 async def credit_check(

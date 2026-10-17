@@ -18,6 +18,7 @@ from app.core.idempotency import IdempotencyMiddleware
 from app.core.jobs import Worker
 from app.core.request_id import RequestIdMiddleware
 from app.core.storage import LocalStorage
+from app.modules.accounting import router as accounting_router
 from app.modules.catalog import router as catalog_router
 from app.modules.identity import roles_router
 from app.modules.identity import router as identity_router
@@ -85,6 +86,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(catalog_router.router)
     app.include_router(pricing_router.router)
     app.include_router(parties_router.router)
+    app.include_router(accounting_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)
     if settings.web_dir is not None:

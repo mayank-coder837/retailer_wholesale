@@ -17,6 +17,7 @@ from app.models_registry import GLOBAL_TABLES
 from app.modules.tenancy.models import Branch
 from tests.factories import (
     APPEND_ONLY,
+    GUARDED,
     ISOLATION_FACTORIES,
     NOT_SYNCED,
     TENANT_COLUMN,
@@ -86,6 +87,15 @@ async def test_every_table_is_either_global_or_a_fully_protected_tenant_table(
             assert table in synced, f"{table}: missing sync_outbox_capture trigger"
 
 
+def _claim_by_copy(table: str, col: str) -> str:
+    """Insert a copy of one of our rows that claims to belong to another tenant."""
+    return (
+        f"INSERT INTO {table} SELECT (jsonb_populate_record(NULL::{table}, to_jsonb(t) || "
+        f"jsonb_build_object('id', CAST(:id AS uuid), '{col}', CAST(:a AS uuid)))).* "
+        f"FROM {table} t WHERE id = :b"
+    )
+
+
 async def _make_tenant_with_row(
     sm: async_sessionmaker[AsyncSession], table: str, name: str
 ) -> tuple[TenantSeed, Any]:
@@ -114,14 +124,28 @@ async def test_tenant_cannot_read_change_or_claim_another_tenants_rows(
                 with pytest.raises(DBAPIError, match="permission denied"):
                     async with s.begin_nested():
                         await s.execute(text(statement))
+            if table == "audit_log":
+                claim = (
+                    f"INSERT INTO {table} (id, tenant_id, action, entity_type, entity_id) "
+                    "VALUES (:id, :a, 'create', 'business', :b)"
+                )
+                params = {"id": new_id(), "a": seed_a.tenant_id, "b": seed_a.business_id}
+            else:
+                claim = _claim_by_copy(table, col)
+                params = {"id": new_id(), "a": seed_a.tenant_id, "b": row_b}
+            with pytest.raises(DBAPIError, match="row-level security"):
+                async with s.begin_nested():
+                    await s.execute(text(claim), params)
+        elif table in GUARDED:
+            # Other tenants' rows are invisible (nothing changes); a copy claiming them is refused.
+            updated = await s.execute(text(f"UPDATE {table} SET {col} = {col} WHERE id = :id"), {"id": row_a})
+            assert updated.rowcount == 0  # type: ignore[attr-defined]
+            deleted = await s.execute(text(f"DELETE FROM {table} WHERE id = :id"), {"id": row_a})
+            assert deleted.rowcount == 0  # type: ignore[attr-defined]
             with pytest.raises(DBAPIError, match="row-level security"):
                 async with s.begin_nested():
                     await s.execute(
-                        text(
-                            f"INSERT INTO {table} (id, tenant_id, action, entity_type, entity_id) "
-                            "VALUES (:id, :a, 'create', 'business', :e)"
-                        ),
-                        {"id": new_id(), "a": seed_a.tenant_id, "e": seed_a.business_id},
+                        text(_claim_by_copy(table, col)), {"id": new_id(), "a": seed_a.tenant_id, "b": row_b}
                     )
         else:
             updated = await s.execute(text(f"UPDATE {table} SET {col} = {col} WHERE id = :id"), {"id": row_a})

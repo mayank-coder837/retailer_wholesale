@@ -2,7 +2,9 @@
 
 from app.core import platform_models, sync  # noqa: F401
 from app.core.models import Base
+from app.modules.accounting import models as accounting_models  # noqa: F401
 from app.modules.catalog import models as catalog_models  # noqa: F401
+from app.modules.documents import models as documents_models  # noqa: F401
 from app.modules.identity import models as identity_models  # noqa: F401
 from app.modules.parties import models as parties_models  # noqa: F401
 from app.modules.pricing import models as pricing_models  # noqa: F401

@@ -4690,6 +4690,1265 @@
         }
       }
     },
+    "/accounts": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "List Accounts",
+        "operationId": "list_accounts",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountOut"
+                  },
+                  "title": "Response List Accounts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Create Account",
+        "operationId": "create_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Get Account",
+        "operationId": "get_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Update Account",
+        "operationId": "update_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/ledger": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Account Ledger",
+        "operationId": "account_ledger",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account-roles": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "List Account Roles",
+        "operationId": "list_account_roles",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountRoleOut"
+                  },
+                  "title": "Response List Account Roles"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account-roles/{role}": {
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Set Account Role",
+        "operationId": "set_account_role",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Role"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRoleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountRoleOut"
+                  },
+                  "title": "Response Set Account Role"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fiscal-years": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "List Fiscal Years",
+        "operationId": "list_fiscal_years",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FiscalYearOut"
+                  },
+                  "title": "Response List Fiscal Years"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Create Fiscal Year",
+        "operationId": "create_fiscal_year",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FiscalYearIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fiscal-periods/{period_id}/lock": {
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Lock Period",
+        "operationId": "lock_fiscal_period",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Period Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fiscal-periods/{period_id}/unlock": {
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Unlock Period",
+        "operationId": "unlock_fiscal_period",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "period_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Period Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "List Vouchers",
+        "operationId": "list_vouchers",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "doc_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VoucherType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doc Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DocumentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "party_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VoucherSummary"
+                  },
+                  "title": "Response List Vouchers"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Create Voucher",
+        "operationId": "create_voucher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Save and post in one step",
+              "default": false,
+              "title": "Post"
+            },
+            "description": "Save and post in one step"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoucherIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/{doc_id}": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Get Voucher",
+        "operationId": "get_voucher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Update Voucher",
+        "operationId": "update_voucher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoucherIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Delete Voucher",
+        "operationId": "delete_voucher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/{doc_id}/post": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Post Voucher",
+        "operationId": "post_voucher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bills": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "List Bills",
+        "operationId": "list_bills",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "party_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "include_settled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Settled"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BillOut"
+                  },
+                  "title": "Response List Bills"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/{party_id}/ledger": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Party Ledger",
+        "operationId": "party_ledger",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "party_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyLedgerOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trial-balance": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Trial Balance",
+        "operationId": "trial_balance",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialBalanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pairing/challenge": {
       "post": {
         "tags": [
@@ -4785,6 +6044,323 @@
   },
   "components": {
     "schemas": {
+      "AccountIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[0-9A-Za-z][0-9A-Za-z.-]*$",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name Ar"
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Parent Id",
+            "description": "The group it sits in; its nature comes from the group"
+          },
+          "is_group": {
+            "type": "boolean",
+            "title": "Is Group",
+            "default": false
+          },
+          "account_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required for ledgers, none for groups"
+          },
+          "allow_manual_posting": {
+            "type": "boolean",
+            "title": "Allow Manual Posting",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "parent_id"
+        ],
+        "title": "AccountIn"
+      },
+      "AccountOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "is_group": {
+            "type": "boolean",
+            "title": "Is Group"
+          },
+          "nature": {
+            "$ref": "#/components/schemas/Nature"
+          },
+          "account_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allow_manual_posting": {
+            "type": "boolean",
+            "title": "Allow Manual Posting"
+          },
+          "is_system": {
+            "type": "boolean",
+            "title": "Is System"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "balance": {
+            "type": "string",
+            "title": "Balance",
+            "description": "Debit positive, credit negative; groups: total",
+            "default": "0"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "parent_id",
+          "is_group",
+          "nature",
+          "account_type",
+          "allow_manual_posting",
+          "is_system",
+          "archived_at"
+        ],
+        "title": "AccountOut"
+      },
+      "AccountPatch": {
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20,
+                "minLength": 1,
+                "pattern": "^[0-9A-Za-z][0-9A-Za-z.-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "name_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name En"
+          },
+          "name_ar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Ar"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "account_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allow_manual_posting": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Manual Posting"
+          },
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          }
+        },
+        "type": "object",
+        "title": "AccountPatch"
+      },
+      "AccountRoleIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "account_id"
+        ],
+        "title": "AccountRoleIn"
+      },
+      "AccountRoleOut": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "account_id"
+        ],
+        "title": "AccountRoleOut"
+      },
+      "AccountType": {
+        "type": "string",
+        "enum": [
+          "cash",
+          "bank",
+          "receivable",
+          "payable",
+          "stock",
+          "tax",
+          "current_asset",
+          "fixed_asset",
+          "current_liability",
+          "non_current_liability",
+          "equity",
+          "sales",
+          "other_income",
+          "cogs",
+          "expense"
+        ],
+        "title": "AccountType"
+      },
       "AddressIn": {
         "properties": {
           "type": {
@@ -4926,6 +6502,137 @@
           "shipping"
         ],
         "title": "AddressType"
+      },
+      "AllocationIn": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AllocationType"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "bill_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill Id",
+            "description": "The bill settled (against_ref)"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference",
+            "description": "Name of a new bill (new_ref; advance: optional)"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "amount"
+        ],
+        "title": "AllocationIn"
+      },
+      "AllocationOut": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AllocationType"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "bill_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill Id",
+            "description": "The bill settled (against_ref)"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference",
+            "description": "Name of a new bill (new_ref; advance: optional)"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "amount"
+        ],
+        "title": "AllocationOut"
+      },
+      "AllocationType": {
+        "type": "string",
+        "enum": [
+          "against_ref",
+          "new_ref",
+          "advance",
+          "on_account"
+        ],
+        "title": "AllocationType",
+        "description": "Tally's bill-wise choices for a party line."
       },
       "ApplicationOut": {
         "properties": {
@@ -5651,6 +7358,88 @@
           "variant_id"
         ],
         "title": "BarcodeOut"
+      },
+      "BillOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "party_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Party Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "bill_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Bill Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/Direction"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "amount_open": {
+            "type": "string",
+            "title": "Amount Open"
+          },
+          "is_advance": {
+            "type": "boolean",
+            "title": "Is Advance"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "party_id",
+          "account_id",
+          "reference",
+          "bill_date",
+          "due_date",
+          "direction",
+          "amount",
+          "amount_open",
+          "is_advance",
+          "document_id"
+        ],
+        "title": "BillOut"
       },
       "Body_upload_attachment": {
         "properties": {
@@ -7113,6 +8902,24 @@
         ],
         "title": "DatabaseHealthOut"
       },
+      "Direction": {
+        "type": "string",
+        "enum": [
+          "debit",
+          "credit"
+        ],
+        "title": "Direction"
+      },
+      "DocumentStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "posted",
+          "cancelled",
+          "reversed"
+        ],
+        "title": "DocumentStatus"
+      },
       "EffectiveSetting": {
         "properties": {
           "key": {
@@ -7162,6 +8969,138 @@
         ],
         "title": "Emirate"
       },
+      "FiscalPeriodOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "period_no": {
+            "type": "integer",
+            "title": "Period No"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PeriodStatus"
+          },
+          "locked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked At"
+          },
+          "locked_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "period_no",
+          "start_date",
+          "end_date",
+          "status",
+          "locked_at",
+          "locked_by"
+        ],
+        "title": "FiscalPeriodOut"
+      },
+      "FiscalYearIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day",
+            "description": "Any day of the year to create; months follow the business's start month"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "day"
+        ],
+        "title": "FiscalYearIn"
+      },
+      "FiscalYearOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/FiscalPeriodOut"
+            },
+            "type": "array",
+            "title": "Periods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "code",
+          "start_date",
+          "end_date",
+          "status",
+          "periods"
+        ],
+        "title": "FiscalYearOut"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -7197,6 +9136,221 @@
           "version"
         ],
         "title": "HealthOut"
+      },
+      "JournalLineOut": {
+        "properties": {
+          "line_no": {
+            "type": "integer",
+            "title": "Line No"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "account_code": {
+            "type": "string",
+            "title": "Account Code"
+          },
+          "account_name_en": {
+            "type": "string",
+            "title": "Account Name En"
+          },
+          "account_name_ar": {
+            "type": "string",
+            "title": "Account Name Ar"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "debit": {
+            "type": "string",
+            "title": "Debit"
+          },
+          "credit": {
+            "type": "string",
+            "title": "Credit"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "line_no",
+          "account_id",
+          "account_code",
+          "account_name_en",
+          "account_name_ar",
+          "party_id",
+          "debit",
+          "credit",
+          "description"
+        ],
+        "title": "JournalLineOut"
+      },
+      "LedgerLineOut": {
+        "properties": {
+          "entry_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Entry Date"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narration"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "debit": {
+            "type": "string",
+            "title": "Debit"
+          },
+          "credit": {
+            "type": "string",
+            "title": "Credit"
+          },
+          "balance": {
+            "type": "string",
+            "title": "Balance",
+            "description": "Running balance after this line, debit positive"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entry_date",
+          "document_id",
+          "doc_type",
+          "number",
+          "narration",
+          "account_id",
+          "party_id",
+          "description",
+          "debit",
+          "credit",
+          "balance"
+        ],
+        "title": "LedgerLineOut"
+      },
+      "LedgerOut": {
+        "properties": {
+          "opening": {
+            "type": "string",
+            "title": "Opening"
+          },
+          "debit_total": {
+            "type": "string",
+            "title": "Debit Total"
+          },
+          "credit_total": {
+            "type": "string",
+            "title": "Credit Total"
+          },
+          "closing": {
+            "type": "string",
+            "title": "Closing"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "opening",
+          "debit_total",
+          "credit_total",
+          "closing",
+          "lines"
+        ],
+        "title": "LedgerOut"
       },
       "LoginIn": {
         "properties": {
@@ -7389,6 +9543,17 @@
         ],
         "title": "MembershipOut"
       },
+      "Nature": {
+        "type": "string",
+        "enum": [
+          "asset",
+          "liability",
+          "equity",
+          "income",
+          "expense"
+        ],
+        "title": "Nature"
+      },
       "PackSummary": {
         "properties": {
           "code": {
@@ -7562,6 +9727,56 @@
           "individual"
         ],
         "title": "PartyKind"
+      },
+      "PartyLedgerOut": {
+        "properties": {
+          "opening": {
+            "type": "string",
+            "title": "Opening"
+          },
+          "debit_total": {
+            "type": "string",
+            "title": "Debit Total"
+          },
+          "credit_total": {
+            "type": "string",
+            "title": "Credit Total"
+          },
+          "closing": {
+            "type": "string",
+            "title": "Closing"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "open_bills": {
+            "items": {
+              "$ref": "#/components/schemas/BillOut"
+            },
+            "type": "array",
+            "title": "Open Bills"
+          },
+          "on_account": {
+            "type": "string",
+            "title": "On Account",
+            "description": "Balance not tied to any bill (debit positive)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "opening",
+          "debit_total",
+          "credit_total",
+          "closing",
+          "lines",
+          "open_bills",
+          "on_account"
+        ],
+        "title": "PartyLedgerOut"
       },
       "PartyOut": {
         "properties": {
@@ -7908,6 +10123,14 @@
         ],
         "title": "PartySummary"
       },
+      "PeriodStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "locked"
+        ],
+        "title": "PeriodStatus"
+      },
       "PermissionOut": {
         "properties": {
           "code": {
@@ -7930,6 +10153,25 @@
           "action"
         ],
         "title": "PermissionOut"
+      },
+      "PostIn": {
+        "properties": {
+          "override_lock_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Lock Reason",
+            "description": "Needed to post into a locked period (period.override_lock)"
+          }
+        },
+        "type": "object",
+        "title": "PostIn"
       },
       "PriceListIn": {
         "properties": {
@@ -9284,6 +11526,30 @@
         "type": "object",
         "title": "RefreshIn"
       },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "ar_control",
+          "ap_control",
+          "inventory",
+          "cogs",
+          "goods_delivered_not_invoiced",
+          "stock_cost_adjustment",
+          "sales",
+          "sales_returns",
+          "purchase_price_variance",
+          "grni",
+          "vat_output",
+          "vat_input",
+          "stock_adjustment",
+          "bank_charges",
+          "rounding",
+          "fx_gain_loss",
+          "opening_balance_equity"
+        ],
+        "title": "Role",
+        "description": "Posting rules name roles, never account codes (posting-rules.md)."
+      },
       "RoleIn": {
         "properties": {
           "name_en": {
@@ -9683,6 +11949,87 @@
           "membership_id"
         ],
         "title": "TokenOut"
+      },
+      "TrialBalanceOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TrialBalanceRowOut"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "total_debit": {
+            "type": "string",
+            "title": "Total Debit"
+          },
+          "total_credit": {
+            "type": "string",
+            "title": "Total Credit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "as_of",
+          "rows",
+          "total_debit",
+          "total_credit"
+        ],
+        "title": "TrialBalanceOut"
+      },
+      "TrialBalanceRowOut": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "nature": {
+            "$ref": "#/components/schemas/Nature"
+          },
+          "debit": {
+            "type": "string",
+            "title": "Debit"
+          },
+          "credit": {
+            "type": "string",
+            "title": "Credit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "nature",
+          "debit",
+          "credit"
+        ],
+        "title": "TrialBalanceRowOut"
       },
       "UnitIn": {
         "properties": {
@@ -10168,6 +12515,578 @@
           "value_ar"
         ],
         "title": "VariantValueOut"
+      },
+      "VoucherIn": {
+        "properties": {
+          "doc_type": {
+            "$ref": "#/components/schemas/VoucherType"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Branch Id"
+          },
+          "doc_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Doc Date"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narration"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id",
+            "description": "Receipt, payment, expense: the cash or bank account money moves through"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id",
+            "description": "Credit note: the customer; debit note: supplier"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationIn"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Allocations",
+            "description": "Credit / debit note: bill-wise for the party"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/VoucherLineIn"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_type",
+          "business_id",
+          "branch_id",
+          "doc_date",
+          "lines"
+        ],
+        "title": "VoucherIn"
+      },
+      "VoucherLineIn": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id",
+            "description": "Omit with a party on a receipt (receivable) or payment (payable); credit note default: sales returns; debit note default: purchase price variance"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount",
+            "description": "Receipt, payment, expense, credit and debit notes"
+          },
+          "debit": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debit",
+            "description": "Journal and contra"
+          },
+          "credit": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit",
+            "description": "Journal and contra"
+          },
+          "vat_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Vat Rate",
+            "description": "0 or 5 (%), expense and credit / debit notes",
+            "default": "0"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationIn"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Allocations"
+          }
+        },
+        "type": "object",
+        "title": "VoucherLineIn"
+      },
+      "VoucherLineOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "line_no": {
+            "type": "integer",
+            "title": "Line No"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "debit": {
+            "type": "string",
+            "title": "Debit"
+          },
+          "credit": {
+            "type": "string",
+            "title": "Credit"
+          },
+          "vat_rate": {
+            "type": "string",
+            "title": "Vat Rate"
+          },
+          "vat_amount": {
+            "type": "string",
+            "title": "Vat Amount"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationOut"
+            },
+            "type": "array",
+            "title": "Allocations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "line_no",
+          "account_id",
+          "party_id",
+          "debit",
+          "credit",
+          "vat_rate",
+          "vat_amount",
+          "description",
+          "allocations"
+        ],
+        "title": "VoucherLineOut"
+      },
+      "VoucherOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "doc_type": {
+            "$ref": "#/components/schemas/VoucherType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "doc_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Doc Date"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Branch Id"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narration"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          },
+          "posted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posted At"
+          },
+          "vat_total": {
+            "type": "string",
+            "title": "Vat Total"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationOut"
+            },
+            "type": "array",
+            "title": "Allocations"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/VoucherLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "journal": {
+            "items": {
+              "$ref": "#/components/schemas/JournalLineOut"
+            },
+            "type": "array",
+            "title": "Journal",
+            "description": "What it posted (empty while a draft)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "doc_type",
+          "status",
+          "number",
+          "doc_date",
+          "business_id",
+          "branch_id",
+          "reference",
+          "narration",
+          "account_id",
+          "party_id",
+          "total",
+          "posted_at",
+          "vat_total",
+          "allocations",
+          "lines",
+          "journal"
+        ],
+        "title": "VoucherOut"
+      },
+      "VoucherSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "doc_type": {
+            "$ref": "#/components/schemas/VoucherType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "doc_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Doc Date"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Branch Id"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narration"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          },
+          "posted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "doc_type",
+          "status",
+          "number",
+          "doc_date",
+          "business_id",
+          "branch_id",
+          "reference",
+          "narration",
+          "account_id",
+          "party_id",
+          "total",
+          "posted_at"
+        ],
+        "title": "VoucherSummary"
+      },
+      "VoucherType": {
+        "type": "string",
+        "enum": [
+          "receipt",
+          "payment",
+          "contra",
+          "journal",
+          "expense",
+          "credit_note",
+          "debit_note"
+        ],
+        "title": "VoucherType"
       },
       "WarehouseIn": {
         "properties": {

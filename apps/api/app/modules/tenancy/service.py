@@ -47,6 +47,9 @@ async def list_businesses(session: AsyncSession) -> Sequence[Business]:
 async def create_business(session: AsyncSession, tenant_id: uuid.UUID, data: BusinessIn) -> Business:
     business = Business(id=new_id(), tenant_id=tenant_id, **data.model_dump())
     await _insert(session, business)
+    from app.modules.accounting import service as accounting  # accounting builds on tenancy
+
+    await accounting.install_for_business(session, tenant_id, business.id)
     return business
 
 
@@ -157,7 +160,9 @@ async def create_tenant(
         )
     )
     await session.flush()
+    from app.modules.accounting import service as accounting
     from app.modules.catalog import service as catalog
 
     await catalog.create_standard_units(session, ids.tenant_id)
+    await accounting.install_for_business(session, ids.tenant_id, ids.business_id)
     return ids
