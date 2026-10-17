@@ -8,7 +8,7 @@ accountant reviews remain open.
 
 | # | Review | Default in use meanwhile |
 | --- | --- | --- |
-| R1 | Every rule in [`posting-rules.md`](posting-rules.md) (all marked "default — to be confirmed by accountant") | As written |
+| R1 | Every rule in [`posting-rules.md`](posting-rules.md) (all marked "default — to be confirmed by accountant"), and the default chart of accounts ([`uae_trading.json`](../apps/api/seeds/chart_of_accounts/uae_trading.json), M1.5) | As written |
 | R2 | Negative-stock cost adjustment: revaluing negative quantities at the incoming cost, difference to "stock cost adjustment" under cost of sales ([A6](decisions-round-1.md#rules-to-build); posting rule 27) | As written |
 | R4 | VAT round-off (L4): may a business round line VAT or total VAT beyond fils (e.g. to 0.05 or 1.00 AED)? This loosens A3 ("VAT per line to the fils, total = sum of lines, fixed for every business"), and rounding the total VAT breaks "total = sum of lines". Is it acceptable on a UAE tax invoice and in the VAT return, and if so, which account takes the difference? | Option built but off; A3 applies |
 | R3 | VAT 201 box mapping per tax code, and the Box 1 labels on the current EmaraTax form, before Phase 2 ([VAT 201 table](decisions-round-1.md#vat-201-box-mapping-a10)) | Mapping in `domain-model.md` → Tax |

@@ -1135,6 +1135,250 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts"];
+        put?: never;
+        /** Create Account */
+        post: operations["create_account"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account */
+        get: operations["get_account"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Account */
+        patch: operations["update_account"];
+        trace?: never;
+    };
+    "/accounts/{account_id}/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account Ledger */
+        get: operations["account_ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account-roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Account Roles */
+        get: operations["list_account_roles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account-roles/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Account Role */
+        put: operations["set_account_role"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/fiscal-years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Fiscal Years */
+        get: operations["list_fiscal_years"];
+        put?: never;
+        /** Create Fiscal Year */
+        post: operations["create_fiscal_year"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/fiscal-periods/{period_id}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Lock Period */
+        put: operations["lock_fiscal_period"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/fiscal-periods/{period_id}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Unlock Period */
+        put: operations["unlock_fiscal_period"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vouchers */
+        get: operations["list_vouchers"];
+        put?: never;
+        /** Create Voucher */
+        post: operations["create_voucher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Voucher */
+        get: operations["get_voucher"];
+        /** Update Voucher */
+        put: operations["update_voucher"];
+        post?: never;
+        /** Delete Voucher */
+        delete: operations["delete_voucher"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers/{doc_id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Voucher */
+        post: operations["post_voucher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bills */
+        get: operations["list_bills"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Party Ledger */
+        get: operations["party_ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trial Balance */
+        get: operations["trial_balance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -1177,6 +1421,120 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountIn */
+        AccountIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Parent Id
+             * Format: uuid
+             * @description The group it sits in; its nature comes from the group
+             */
+            parent_id: string;
+            /**
+             * Is Group
+             * @default false
+             */
+            is_group: boolean;
+            /** @description Required for ledgers, none for groups */
+            account_type?: components["schemas"]["AccountType"] | null;
+            /**
+             * Allow Manual Posting
+             * @default true
+             */
+            allow_manual_posting: boolean;
+        };
+        /** AccountOut */
+        AccountOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Parent Id */
+            parent_id: string | null;
+            /** Is Group */
+            is_group: boolean;
+            nature: components["schemas"]["Nature"];
+            account_type: components["schemas"]["AccountType"] | null;
+            /** Allow Manual Posting */
+            allow_manual_posting: boolean;
+            /** Is System */
+            is_system: boolean;
+            /** Archived At */
+            archived_at: string | null;
+            /** Roles */
+            roles?: components["schemas"]["Role"][];
+            /**
+             * Balance
+             * @description Debit positive, credit negative; groups: total
+             * @default 0
+             */
+            balance: string;
+        };
+        /** AccountPatch */
+        AccountPatch: {
+            /** Code */
+            code?: string | null;
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            account_type?: components["schemas"]["AccountType"] | null;
+            /** Allow Manual Posting */
+            allow_manual_posting?: boolean | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /** AccountRoleIn */
+        AccountRoleIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+        };
+        /** AccountRoleOut */
+        AccountRoleOut: {
+            role: components["schemas"]["Role"];
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+        };
+        /**
+         * AccountType
+         * @enum {string}
+         */
+        AccountType: "cash" | "bank" | "receivable" | "payable" | "stock" | "tax" | "current_asset" | "fixed_asset" | "current_liability" | "non_current_liability" | "equity" | "sales" | "other_income" | "cogs" | "expense";
         /** AddressIn */
         AddressIn: {
             /** @default billing */
@@ -1231,6 +1589,48 @@ export interface components {
          * @enum {string}
          */
         AddressType: "billing" | "shipping";
+        /** AllocationIn */
+        AllocationIn: {
+            type: components["schemas"]["AllocationType"];
+            /** Amount */
+            amount: number | string;
+            /**
+             * Bill Id
+             * @description The bill settled (against_ref)
+             */
+            bill_id?: string | null;
+            /**
+             * Reference
+             * @description Name of a new bill (new_ref; advance: optional)
+             */
+            reference?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+        };
+        /** AllocationOut */
+        AllocationOut: {
+            type: components["schemas"]["AllocationType"];
+            /** Amount */
+            amount: string;
+            /**
+             * Bill Id
+             * @description The bill settled (against_ref)
+             */
+            bill_id?: string | null;
+            /**
+             * Reference
+             * @description Name of a new bill (new_ref; advance: optional)
+             */
+            reference?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+        };
+        /**
+         * AllocationType
+         * @description Tally's bill-wise choices for a party line.
+         * @enum {string}
+         */
+        AllocationType: "against_ref" | "new_ref" | "advance" | "on_account";
         /** ApplicationOut */
         ApplicationOut: {
             /** Pack Code */
@@ -1523,6 +1923,42 @@ export interface components {
              * Format: uuid
              */
             variant_id: string;
+        };
+        /** BillOut */
+        BillOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Party Id
+             * Format: uuid
+             */
+            party_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Reference */
+            reference: string;
+            /**
+             * Bill Date
+             * Format: date
+             */
+            bill_date: string;
+            /** Due Date */
+            due_date: string | null;
+            direction: components["schemas"]["Direction"];
+            /** Amount */
+            amount: string;
+            /** Amount Open */
+            amount_open: string;
+            /** Is Advance */
+            is_advance: boolean;
+            /** Document Id */
+            document_id: string | null;
         };
         /** Body_upload_attachment */
         Body_upload_attachment: {
@@ -2004,6 +2440,16 @@ export interface components {
             /** Server Version */
             server_version: string;
         };
+        /**
+         * Direction
+         * @enum {string}
+         */
+        Direction: "debit" | "credit";
+        /**
+         * DocumentStatus
+         * @enum {string}
+         */
+        DocumentStatus: "draft" | "posted" | "cancelled" | "reversed";
         /** EffectiveSetting */
         EffectiveSetting: {
             /** Key */
@@ -2025,6 +2471,74 @@ export interface components {
          * @enum {string}
          */
         Emirate: "abu_dhabi" | "dubai" | "sharjah" | "ajman" | "umm_al_quwain" | "ras_al_khaimah" | "fujairah";
+        /** FiscalPeriodOut */
+        FiscalPeriodOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Period No */
+            period_no: number;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            status: components["schemas"]["PeriodStatus"];
+            /** Locked At */
+            locked_at: string | null;
+            /** Locked By */
+            locked_by: string | null;
+        };
+        /** FiscalYearIn */
+        FiscalYearIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Day
+             * Format: date
+             * @description Any day of the year to create; months follow the business's start month
+             */
+            day: string;
+        };
+        /** FiscalYearOut */
+        FiscalYearOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Code */
+            code: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Status */
+            status: string;
+            /** Periods */
+            periods: components["schemas"]["FiscalPeriodOut"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2038,6 +2552,77 @@ export interface components {
             product: string;
             /** Version */
             version: string;
+        };
+        /** JournalLineOut */
+        JournalLineOut: {
+            /** Line No */
+            line_no: number;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Code */
+            account_code: string;
+            /** Account Name En */
+            account_name_en: string;
+            /** Account Name Ar */
+            account_name_ar: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Debit */
+            debit: string;
+            /** Credit */
+            credit: string;
+            /** Description */
+            description: string | null;
+        };
+        /** LedgerLineOut */
+        LedgerLineOut: {
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Document Id */
+            document_id: string | null;
+            /** Doc Type */
+            doc_type: string | null;
+            /** Number */
+            number: string | null;
+            /** Narration */
+            narration: string | null;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Description */
+            description: string | null;
+            /** Debit */
+            debit: string;
+            /** Credit */
+            credit: string;
+            /**
+             * Balance
+             * @description Running balance after this line, debit positive
+             */
+            balance: string;
+        };
+        /** LedgerOut */
+        LedgerOut: {
+            /** Opening */
+            opening: string;
+            /** Debit Total */
+            debit_total: string;
+            /** Credit Total */
+            credit_total: string;
+            /** Closing */
+            closing: string;
+            /** Lines */
+            lines: components["schemas"]["LedgerLineOut"][];
         };
         /** LoginIn */
         LoginIn: {
@@ -2122,6 +2707,11 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * Nature
+         * @enum {string}
+         */
+        Nature: "asset" | "liability" | "equity" | "income" | "expense";
         /** PackSummary */
         PackSummary: {
             /** Code */
@@ -2188,6 +2778,26 @@ export interface components {
          * @enum {string}
          */
         PartyKind: "company" | "individual";
+        /** PartyLedgerOut */
+        PartyLedgerOut: {
+            /** Opening */
+            opening: string;
+            /** Debit Total */
+            debit_total: string;
+            /** Credit Total */
+            credit_total: string;
+            /** Closing */
+            closing: string;
+            /** Lines */
+            lines: components["schemas"]["LedgerLineOut"][];
+            /** Open Bills */
+            open_bills: components["schemas"]["BillOut"][];
+            /**
+             * On Account
+             * @description Balance not tied to any bill (debit positive)
+             */
+            on_account: string;
+        };
         /** PartyOut */
         PartyOut: {
             /**
@@ -2277,6 +2887,11 @@ export interface components {
             /** Archived At */
             archived_at: string | null;
         };
+        /**
+         * PeriodStatus
+         * @enum {string}
+         */
+        PeriodStatus: "open" | "locked";
         /** PermissionOut */
         PermissionOut: {
             /** Code */
@@ -2285,6 +2900,14 @@ export interface components {
             resource: string;
             /** Action */
             action: string;
+        };
+        /** PostIn */
+        PostIn: {
+            /**
+             * Override Lock Reason
+             * @description Needed to post into a locked period (period.override_lock)
+             */
+            override_lock_reason?: string | null;
         };
         /** PriceListIn */
         PriceListIn: {
@@ -2745,6 +3368,12 @@ export interface components {
              */
             refresh_token?: string | null;
         };
+        /**
+         * Role
+         * @description Posting rules name roles, never account codes (posting-rules.md).
+         * @enum {string}
+         */
+        Role: "ar_control" | "ap_control" | "inventory" | "cogs" | "goods_delivered_not_invoiced" | "stock_cost_adjustment" | "sales" | "sales_returns" | "purchase_price_variance" | "grni" | "vat_output" | "vat_input" | "stock_adjustment" | "bank_charges" | "rounding" | "fx_gain_loss" | "opening_balance_equity";
         /** RoleIn */
         RoleIn: {
             /** Name En */
@@ -2903,6 +3532,44 @@ export interface components {
              * Format: uuid
              */
             membership_id: string;
+        };
+        /** TrialBalanceOut */
+        TrialBalanceOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Rows */
+            rows: components["schemas"]["TrialBalanceRowOut"][];
+            /** Total Debit */
+            total_debit: string;
+            /** Total Credit */
+            total_credit: string;
+        };
+        /** TrialBalanceRowOut */
+        TrialBalanceRowOut: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            nature: components["schemas"]["Nature"];
+            /** Debit */
+            debit: string;
+            /** Credit */
+            credit: string;
         };
         /** UnitIn */
         UnitIn: {
@@ -3078,6 +3745,204 @@ export interface components {
             /** Value Ar */
             value_ar: string;
         };
+        /** VoucherIn */
+        VoucherIn: {
+            doc_type: components["schemas"]["VoucherType"];
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /** Reference */
+            reference?: string | null;
+            /** Narration */
+            narration?: string | null;
+            /**
+             * Account Id
+             * @description Receipt, payment, expense: the cash or bank account money moves through
+             */
+            account_id?: string | null;
+            /**
+             * Party Id
+             * @description Credit note: the customer; debit note: supplier
+             */
+            party_id?: string | null;
+            /**
+             * Allocations
+             * @description Credit / debit note: bill-wise for the party
+             */
+            allocations?: components["schemas"]["AllocationIn"][];
+            /** Lines */
+            lines: components["schemas"]["VoucherLineIn"][];
+        };
+        /** VoucherLineIn */
+        VoucherLineIn: {
+            /**
+             * Account Id
+             * @description Omit with a party on a receipt (receivable) or payment (payable); credit note default: sales returns; debit note default: purchase price variance
+             */
+            account_id?: string | null;
+            /** Party Id */
+            party_id?: string | null;
+            /**
+             * Amount
+             * @description Receipt, payment, expense, credit and debit notes
+             */
+            amount?: number | string | null;
+            /**
+             * Debit
+             * @description Journal and contra
+             */
+            debit?: number | string | null;
+            /**
+             * Credit
+             * @description Journal and contra
+             */
+            credit?: number | string | null;
+            /**
+             * Vat Rate
+             * @description 0 or 5 (%), expense and credit / debit notes
+             * @default 0
+             */
+            vat_rate: number | string;
+            /** Description */
+            description?: string | null;
+            /** Allocations */
+            allocations?: components["schemas"]["AllocationIn"][];
+        };
+        /** VoucherLineOut */
+        VoucherLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line No */
+            line_no: number;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Debit */
+            debit: string;
+            /** Credit */
+            credit: string;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Vat Amount */
+            vat_amount: string;
+            /** Description */
+            description: string | null;
+            /** Allocations */
+            allocations: components["schemas"]["AllocationOut"][];
+        };
+        /** VoucherOut */
+        VoucherOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["VoucherType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Account Id */
+            account_id: string | null;
+            /** Party Id */
+            party_id: string | null;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+            /** Vat Total */
+            vat_total: string;
+            /** Allocations */
+            allocations: components["schemas"]["AllocationOut"][];
+            /** Lines */
+            lines: components["schemas"]["VoucherLineOut"][];
+            /**
+             * Journal
+             * @description What it posted (empty while a draft)
+             */
+            journal: components["schemas"]["JournalLineOut"][];
+        };
+        /** VoucherSummary */
+        VoucherSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["VoucherType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Account Id */
+            account_id: string | null;
+            /** Party Id */
+            party_id: string | null;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+        };
+        /**
+         * VoucherType
+         * @enum {string}
+         */
+        VoucherType: "receipt" | "payment" | "contra" | "journal" | "expense" | "credit_note" | "debit_note";
         /** WarehouseIn */
         WarehouseIn: {
             /** Code */
@@ -5985,6 +6850,668 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accounts: {
+        parameters: {
+            query: {
+                business_id: string;
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    account_ledger: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_account_roles: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountRoleOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_account_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role: components["schemas"]["Role"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountRoleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountRoleOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_fiscal_years: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalYearOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_fiscal_year: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FiscalYearIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalYearOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lock_fiscal_period: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                period_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalPeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlock_fiscal_period: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                period_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalPeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_vouchers: {
+        parameters: {
+            query: {
+                business_id: string;
+                doc_type?: components["schemas"]["VoucherType"] | null;
+                status?: components["schemas"]["DocumentStatus"] | null;
+                party_id?: string | null;
+                from?: string | null;
+                to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoucherSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_voucher: {
+        parameters: {
+            query?: {
+                /** @description Save and post in one step */
+                post?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoucherIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoucherOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoucherOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoucherIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoucherOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoucherOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_bills: {
+        parameters: {
+            query: {
+                business_id: string;
+                party_id: string;
+                account_id?: string | null;
+                include_settled?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    party_ledger: {
+        parameters: {
+            query: {
+                business_id: string;
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyLedgerOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trial_balance: {
+        parameters: {
+            query: {
+                business_id: string;
+                as_of?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialBalanceOut"];
                 };
             };
             /** @description Validation Error */

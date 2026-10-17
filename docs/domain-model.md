@@ -155,7 +155,7 @@ transfers between warehouses and stock adjustments are also `document` types tha
 unit_price, price_source, discount_pct, discount_amount, tax_code_id, taxable_amount, tax_amount, line_total,
 warehouse_id, batch_id, source_line_id (the order/delivery line it fulfils), qty_fulfilled_base.
 
-`voucher_line` (receipt, payment, contra, journal, expense): account_id, party_id, cost_centre_id, debit,
+`voucher_line` (receipt, payment, contra, journal, expense, credit/debit note — M1.5): account_id, party_id, debit,
 credit, tax_code_id, tax_amount, description, plus `bill_allocation` rows for bill-wise settlement.
 
 `document_link`: from_document_id, to_document_id, kind (`fulfils, returns, credits`).
@@ -183,14 +183,14 @@ Every row above has a **gap-free series** (A12). Lines show VAT per line; header
 
 | Entity | Key fields | Relationships / rules |
 | --- | --- | --- |
-| account | business_id, code, name_en/_ar, parent_id, is_group, nature (`asset, liability, equity, income, expense`), account_type (`cash, bank, receivable, payable, stock, tax, cogs, sales, …`), currency (nullable), allow_manual_posting | Groups + ledgers tree, seeded from the industry pack's chart |
+| account | business_id, code, name_en/_ar, parent_id, is_group, nature (`asset, liability, equity, income, expense`), account_type (ledgers: `cash, bank, receivable, payable, stock, tax, current_asset, fixed_asset, current_liability, non_current_liability, equity, sales, other_income, cogs, expense`), allow_manual_posting, is_system, archived_at | Groups + ledgers tree, seeded from `seeds/chart_of_accounts/uae_trading.json` (A11) for every business; receivable/payable lines always name a party |
 | account_role | business_id, role (`ar_control, ap_control, inventory, cogs, goods_delivered_not_invoiced, stock_cost_adjustment, sales, sales_returns, purchase_price_variance, grni, vat_output, vat_input, stock_adjustment, bank_charges, rounding, fx_gain_loss, opening_balance_equity`), account_id | Posting rules reference roles, never codes |
 | journal_entry | business_id, branch_id, entry_date, fiscal_period_id, number, narration, source_document_id, reversal_of_id, posted_at | Only posted entries exist (drafts are documents) |
-| journal_line | entry_id, account_id, party_id, cost_centre_id, debit, credit (base currency), currency, amount_fc, exchange_rate, description | `debit ≥ 0, credit ≥ 0`, exactly one > 0; deferred trigger: Σdebit = Σcredit per entry; immutable |
-| bill | business_id, party_id, document_id, account_id (AR/AP), side (`receivable, payable`), bill_date, due_date, amount, amount_open | One per invoice/bill/opening bill; the Tally bill-wise reference |
-| bill_allocation | bill_id, journal_line_id, amount, allocation_type (`against_ref, advance, on_account`) | Receipts/payments/credit notes settle bills; `amount_open` cached |
-| fiscal_year | business_id, name, start_date, end_date, status (`open, closed`) | |
-| fiscal_period | fiscal_year_id, month, start_date, end_date, status (`open, locked`), locked_by/at | Posting into a locked period needs `period.override_lock`, audited |
+| journal_line | entry_id, business_id, entry_date (copied from the entry), line_no, account_id, party_id, debit, credit (base currency), description | `debit ≥ 0, credit ≥ 0`, exactly one > 0; deferred trigger: Σdebit = Σcredit per entry; insert-only. Foreign currency and cost centres: Phase 2 |
+| bill | business_id, party_id, account_id (AR/AP), reference, bill_date, due_date, direction (`debit, credit`), amount, amount_open, is_advance, document_id, journal_line_id | One per invoice/bill/opening bill/advance; the Tally bill-wise reference. Only `amount_open` changes (trigger) |
+| bill_allocation | bill_id, journal_line_id, amount | A posted line settling a bill (insert-only); `amount_open` cached. A party line's choices: `against_ref` (settle), `new_ref` / `advance` (open a bill), `on_account` (neither) — kept on drafts in `voucher_allocation` |
+| fiscal_year | business_id, code (`2026` / `2026-27`, the numbering key), start_date, end_date, status (`open, closed`) | Created on the first posting in the current or next year; others on purpose |
+| fiscal_period | business_id, fiscal_year_id, period_no, start_date, end_date, status (`open, locked`), locked_by/at | Posting into a locked period needs `period.override_lock` and a reason, audited (`override`) |
 | cost_centre | business_id, code, name_en/_ar, parent_id | Optional on journal lines (Phase 2 reporting) |
 | pdc_register | business_id, branch_id, direction (`received, issued`), party_id, cheque_no, bank_name, cheque_date (maturity), amount, currency, status, deposit_bank_account_id, deposited_on, cleared_on, bounce_reason, cleared_voucher_id | **Memo until cleared (A2):** no ledger entry until `cleared`, which creates the receipt/payment voucher dated the clearance date. Received: `in_hand → deposited → cleared` or `→ bounced`; `returned` before deposit. Issued: `issued → cleared` or `→ bounced / cancelled`. Every status change is audited |
 | pdc_intended_bill | pdc_id, bill_id, amount | The invoices the cheque is meant for; becomes the bill-wise allocation on clearance |

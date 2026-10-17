@@ -8,8 +8,10 @@ tenant context; every tenant table must have an entry (tests/test_tenant_isolati
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,24 @@ from app.core import jobs, numbering
 from app.core.ids import new_id
 from app.core.platform_models import Attachment, AuditLog, IdempotencyKey, IndustryPackApplication, Setting
 from app.core.security import hash_password
+from app.modules.accounting import accounts as accounting_accounts
+from app.modules.accounting import periods as accounting_periods
+from app.modules.accounting import vouchers
+from app.modules.accounting.models import (
+    AccountRole,
+    AccountType,
+    AllocationType,
+    Bill,
+    BillAllocation,
+    FiscalPeriod,
+    JournalEntry,
+    JournalLine,
+    VoucherAllocation,
+    VoucherLine,
+)
+from app.modules.accounting.models import Role as LedgerRole
+from app.modules.accounting.posting import VoucherType
+from app.modules.accounting.schemas import AccountIn, AllocationIn, VoucherIn, VoucherLineIn
 from app.modules.catalog import products as catalog_products
 from app.modules.catalog import service as catalog
 from app.modules.catalog import setup as catalog_setup
@@ -472,6 +492,163 @@ async def _supplier_profile(session: AsyncSession, seed: TenantSeed) -> Any:
     return (await parties.put_supplier_profile(session, party.id, data)).supplier_profiles[0].id
 
 
+# --- accounting (M1.5) -------------------------------------------------------------------------------------
+
+
+def dubai_today() -> date:
+    """The business's today (posting creates the current fiscal year on demand)."""
+    return datetime.now(ZoneInfo("Asia/Dubai")).date()
+
+
+async def role_account(session: AsyncSession, seed: TenantSeed, role: LedgerRole) -> uuid.UUID:
+    return (await accounting_accounts.role_map(session, seed.business_id))[role]
+
+
+async def cash_account(session: AsyncSession, seed: TenantSeed) -> uuid.UUID:
+    for account in (await accounting_accounts.accounts_by_id(session, seed.business_id)).values():
+        if account.account_type == AccountType.CASH.value:
+            return account.id
+    raise AssertionError("the default chart has a cash account")
+
+
+def charge_customer(
+    seed: TenantSeed, party_id: uuid.UUID, ar: uuid.UUID, sales: uuid.UUID, amount: Decimal, reference: str
+) -> VoucherIn:
+    """A journal billing a customer (the shape of an opening invoice): Dr customer (new bill) / Cr sales."""
+    return VoucherIn(
+        doc_type=VoucherType.JOURNAL,
+        business_id=seed.business_id,
+        branch_id=seed.branch_id,
+        doc_date=dubai_today(),
+        lines=[
+            VoucherLineIn(
+                account_id=ar,
+                party_id=party_id,
+                debit=amount,
+                allocations=[AllocationIn(type=AllocationType.NEW_REF, amount=amount, reference=reference)],
+            ),
+            VoucherLineIn(account_id=sales, credit=amount),
+        ],
+    )
+
+
+async def post_voucher(session: AsyncSession, seed: TenantSeed, data: VoucherIn) -> uuid.UUID:
+    doc = await vouchers.create_draft(session, seed.tenant_id, data)
+    await vouchers.post(
+        session,
+        doc.id,
+        node_id=seed.node_id,
+        user_id=seed.user_id,
+        may_override_lock=False,
+        override_reason=None,
+    )
+    return doc.id
+
+
+async def _billed_and_paid(session: AsyncSession, seed: TenantSeed) -> uuid.UUID:
+    """A customer billed 1,000 and paying 400 of it: journal entries, a bill and a bill allocation."""
+    party = await _new_party(session, seed)
+    ar = await role_account(session, seed, LedgerRole.AR_CONTROL)
+    sales = await role_account(session, seed, LedgerRole.SALES)
+    invoice = await post_voucher(
+        session, seed, charge_customer(seed, party.id, ar, sales, Decimal(1000), "INV-1")
+    )
+    bill_id = await session.scalar(select(Bill.id).where(Bill.document_id == invoice))
+    receipt = VoucherIn(
+        doc_type=VoucherType.RECEIPT,
+        business_id=seed.business_id,
+        branch_id=seed.branch_id,
+        doc_date=dubai_today(),
+        account_id=await cash_account(session, seed),
+        lines=[
+            VoucherLineIn(
+                party_id=party.id,
+                amount=Decimal(400),
+                allocations=[
+                    AllocationIn(type=AllocationType.AGAINST_REF, amount=Decimal(400), bill_id=bill_id)
+                ],
+            )
+        ],
+    )
+    return await post_voucher(session, seed, receipt)
+
+
+async def _account(session: AsyncSession, seed: TenantSeed) -> Any:
+    accounts = await accounting_accounts.accounts_by_id(session, seed.business_id)
+    group = next(a for a in accounts.values() if a.code == "6000")
+    data = AccountIn(
+        business_id=seed.business_id,
+        code=f"6{_tag()[:6]}",
+        name_en="Courier",
+        name_ar="البريد السريع",
+        parent_id=group.id,
+        account_type=AccountType.EXPENSE,
+    )
+    return (await accounting_accounts.create_account(session, seed.tenant_id, data)).id
+
+
+async def _account_role(session: AsyncSession, seed: TenantSeed) -> Any:
+    return await session.scalar(
+        select(AccountRole.id).where(AccountRole.business_id == seed.business_id).limit(1)
+    )
+
+
+async def _fiscal_year(session: AsyncSession, seed: TenantSeed) -> Any:
+    business = await tenancy.get_business(session, seed.business_id)
+    return (await accounting_periods.create_year(session, business, dubai_today())).id
+
+
+async def _fiscal_period(session: AsyncSession, seed: TenantSeed) -> Any:
+    year_id = await _fiscal_year(session, seed)
+    return await session.scalar(
+        select(FiscalPeriod.id).where(FiscalPeriod.fiscal_year_id == year_id).limit(1)
+    )
+
+
+async def _draft_with_allocation(session: AsyncSession, seed: TenantSeed) -> uuid.UUID:
+    party = await _new_party(session, seed)
+    ar = await role_account(session, seed, LedgerRole.AR_CONTROL)
+    sales = await role_account(session, seed, LedgerRole.SALES)
+    doc = await vouchers.create_draft(
+        session, seed.tenant_id, charge_customer(seed, party.id, ar, sales, Decimal(250), "OPEN-1")
+    )
+    return doc.id
+
+
+async def _document(session: AsyncSession, seed: TenantSeed) -> Any:
+    return await _draft_with_allocation(session, seed)
+
+
+async def _voucher_line(session: AsyncSession, seed: TenantSeed) -> Any:
+    doc_id = await _draft_with_allocation(session, seed)
+    return await session.scalar(select(VoucherLine.id).where(VoucherLine.document_id == doc_id).limit(1))
+
+
+async def _voucher_allocation(session: AsyncSession, seed: TenantSeed) -> Any:
+    doc_id = await _draft_with_allocation(session, seed)
+    return await session.scalar(select(VoucherAllocation.id).where(VoucherAllocation.document_id == doc_id))
+
+
+async def _journal_entry(session: AsyncSession, seed: TenantSeed) -> Any:
+    doc_id = await _billed_and_paid(session, seed)
+    return await session.scalar(select(JournalEntry.id).where(JournalEntry.source_document_id == doc_id))
+
+
+async def _journal_line(session: AsyncSession, seed: TenantSeed) -> Any:
+    entry_id = await _journal_entry(session, seed)
+    return await session.scalar(select(JournalLine.id).where(JournalLine.entry_id == entry_id).limit(1))
+
+
+async def _bill(session: AsyncSession, seed: TenantSeed) -> Any:
+    await _billed_and_paid(session, seed)
+    return await session.scalar(select(Bill.id).limit(1))
+
+
+async def _bill_allocation(session: AsyncSession, seed: TenantSeed) -> Any:
+    await _billed_and_paid(session, seed)
+    return await session.scalar(select(BillAllocation.id).limit(1))
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "audit_log": _audit_log,
     "numbering_series": _numbering_series,
@@ -513,10 +690,23 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "customer_group": _customer_group,
     "customer_profile": _customer_profile,
     "supplier_profile": _supplier_profile,
+    "account": _account,
+    "account_role": _account_role,
+    "fiscal_year": _fiscal_year,
+    "fiscal_period": _fiscal_period,
+    "document": _document,
+    "voucher_line": _voucher_line,
+    "voucher_allocation": _voucher_allocation,
+    "journal_entry": _journal_entry,
+    "journal_line": _journal_line,
+    "bill": _bill,
+    "bill_allocation": _bill_allocation,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.
 TENANT_COLUMN = {"tenant": "id"}
 # Tenant tables that are never synced to the cloud (local queues) and tables the app may only append to.
 NOT_SYNCED = frozenset({"sync_outbox", "outbox_event", "idempotency_key"})
-APPEND_ONLY = frozenset({"audit_log"})
+APPEND_ONLY = frozenset({"audit_log", "journal_entry", "journal_line", "bill_allocation"})
+# Rows a trigger guards against every change but one column: claiming them is tried by inserting a copy.
+GUARDED = frozenset({"bill"})
