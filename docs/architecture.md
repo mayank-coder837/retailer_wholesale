@@ -37,9 +37,9 @@ registry) → repositories → PostgreSQL, with audit, outbox and sync-outbox ro
 | `inventory` | stock_move, batch, serial, average_cost, stock_balance; item transfer posting | catalog, tenancy |
 | `sales` | sales document types (in `document`), credit checks | catalog, pricing, parties, inventory, accounting, tax, documents |
 | `purchasing` | purchase document types (in `document`) | catalog, parties, inventory, accounting, tax, documents |
-| `accounting` | account, account_role, journal_entry, journal_line, bill, bill_allocation, fiscal_year, fiscal_period, cost_centre, pdc_register, pdc_intended_bill, vouchers | parties, tenancy |
+| `accounting` | account, account_role, journal_entry, journal_line, bill, bill_allocation, fiscal_year, fiscal_period, cost_centre, pdc_register, pdc_intended_bill, voucher_line, voucher_allocation (vouchers are `document` rows) | parties, tenancy, documents |
 | `tax` | tax_code, vat_return_box, vat_return | accounting (reads via service) |
-| `documents` | document, document_line, voucher_line, document_link, templates, rendered PDFs | tenancy |
+| `documents` | document, document_line, document_link, templates, rendered PDFs | tenancy |
 | `reporting` | none (reads through other modules' query services) | all read services |
 | `core` (platform) | audit_log, numbering_series, released_number, outbox_event, idempotency_key, attachment, setting, industry_pack, sync_outbox, sync_conflict | — |
 
