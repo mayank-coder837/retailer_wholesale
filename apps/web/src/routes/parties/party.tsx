@@ -19,6 +19,7 @@ import {
   type PartyPatch,
 } from "@/routes/parties/queries";
 import { showMoney, usePriceLists } from "@/routes/pricing/queries";
+import { PartyStatement } from "@/routes/accounts/statement";
 import { useBusiness } from "@/shell/use-business";
 
 /** Customers & suppliers → one party (M1.4): details, addresses, contacts, this business's terms, credit. */
@@ -70,6 +71,7 @@ export function PartyPage() {
       {current && p.is_customer && (
         <CreditCheckPanel key={`k-${current.id}`} party={p} businessId={current.id} />
       )}
+      {current && <PartyStatement key={`l-${current.id}`} businessId={current.id} partyId={p.id} />}
     </div>
   );
 }
