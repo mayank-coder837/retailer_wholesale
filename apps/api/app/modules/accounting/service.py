@@ -2,18 +2,30 @@
 
 - ``install_for_business``: the default chart and roles for a new business (tenancy calls it).
 - ``receivable_figures``: a customer's ledger balance and oldest unpaid invoice (the credit check, M1.4).
+- ``posting_period`` / ``write_journal`` / ``role_accounts``: how other modules (inventory, later sales and
+  purchasing) post journal entries, with the same period lock and balance checks as vouchers.
 - Trial balance, account and party ledgers, open bills: read straight from ``journal_line`` and ``bill``.
 """
 
 import uuid
+from collections.abc import Sequence
 from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.accounting import accounts as chart
-from app.modules.accounting import ledger, periods
-from app.modules.accounting.models import CONTROL, AccountType, Nature
+from app.modules.accounting import ledger, periods, posting
+from app.modules.accounting.models import (
+    CONTROL,
+    AccountType,
+    FiscalPeriod,
+    FiscalYear,
+    JournalLine,
+    Nature,
+    PeriodStatus,
+    Role,
+)
 from app.modules.accounting.schemas import (
     BillOut,
     LedgerLineOut,
@@ -23,12 +35,73 @@ from app.modules.accounting.schemas import (
     TrialBalanceRowOut,
 )
 from app.modules.tenancy import service as tenancy
+from app.modules.tenancy.models import Business
 
 ZERO = Decimal("0.0000")  # money columns have 4 decimal places
 
 
 async def install_for_business(session: AsyncSession, tenant_id: uuid.UUID, business_id: uuid.UUID) -> None:
     await chart.install_chart(session, tenant_id, business_id)
+
+
+async def role_accounts(session: AsyncSession, business_id: uuid.UUID) -> dict[Role, uuid.UUID]:
+    """The account each posting role uses in this business."""
+    return await chart.role_map(session, business_id)
+
+
+async def posting_period(
+    session: AsyncSession,
+    business: Business,
+    day: date,
+    *,
+    may_override: bool = False,
+    override_reason: str | None = None,
+    document: str = "",
+) -> tuple[FiscalYear, FiscalPeriod]:
+    """The open period ``day`` posts into (its year created on demand); a locked one needs the override."""
+    year = await periods.year_for_posting(session, business, day)
+    period = await periods.period_of(session, year, day)
+    await periods.check_open(
+        session, period, may_override=may_override, override_reason=override_reason, document=document
+    )
+    return year, period
+
+
+async def is_open(session: AsyncSession, business: Business, day: date) -> bool:
+    """Whether ``day`` is in an open period (no year yet counts as open: it will be created)."""
+    year = await periods.find_year(session, business.id, day)
+    if year is None:
+        return True
+    return (await periods.period_of(session, year, day)).status == PeriodStatus.OPEN
+
+
+async def write_journal(
+    session: AsyncSession,
+    *,
+    business: Business,
+    branch_id: uuid.UUID,
+    day: date,
+    period_id: uuid.UUID,
+    number: str | None,
+    narration: str | None,
+    source_document_id: uuid.UUID | None,
+    lines: Sequence[posting.JournalLine],
+) -> list[JournalLine]:
+    """One balanced journal entry (refused in code and again by the database when it does not balance)."""
+    return await ledger.write_entry(
+        session,
+        ledger.EntryHeader(
+            tenant_id=business.tenant_id,
+            business_id=business.id,
+            branch_id=branch_id,
+            entry_date=day,
+            fiscal_period_id=period_id,
+            number=number,
+            narration=narration,
+            source_document_id=source_document_id,
+        ),
+        lines,
+    )
 
 
 async def receivable_figures(
@@ -151,3 +224,8 @@ async def trial_balance(session: AsyncSession, business_id: uuid.UUID, as_of: da
         total_debit=sum((r.debit for r in rows), ZERO),
         total_credit=sum((r.credit for r in rows), ZERO),
     )
+
+
+async def account_balance(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> Decimal:
+    """An account's balance in the journal (debit positive)."""
+    return (await ledger.account_balances(session, business_id)).get(account_id, ZERO)
