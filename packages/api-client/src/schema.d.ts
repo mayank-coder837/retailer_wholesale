@@ -1379,6 +1379,145 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stock-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Stock Documents */
+        get: operations["list_stock_documents"];
+        put?: never;
+        /** Create Stock Document */
+        post: operations["create_stock_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-documents/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Stock Document */
+        get: operations["get_stock_document"];
+        /** Update Stock Document */
+        put: operations["update_stock_document"];
+        post?: never;
+        /** Delete Stock Document */
+        delete: operations["delete_stock_document"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-documents/{doc_id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Stock Document */
+        post: operations["post_stock_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock Balances */
+        get: operations["stock_balances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock/variants/{variant_id}/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock Item Ledger */
+        get: operations["stock_item_ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock/negative": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Negative Stock */
+        get: operations["negative_stock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock/valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock Valuation */
+        get: operations["stock_valuation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock/batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock Batches */
+        get: operations["stock_batches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -1846,6 +1985,37 @@ export interface components {
             copy_dir?: string | null;
             last_copy?: components["schemas"]["BackupCopyOut"] | null;
         };
+        /** BalanceOut */
+        BalanceOut: {
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /** Sku */
+            sku: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Base Unit */
+            base_unit: string;
+            /**
+             * Warehouse Id
+             * Format: uuid
+             */
+            warehouse_id: string;
+            /** Batch Id */
+            batch_id: string | null;
+            /** Batch No */
+            batch_no: string | null;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /** Qty */
+            qty: string;
+            /** Value */
+            value: string;
+        };
         /** BarcodeIn */
         BarcodeIn: {
             /**
@@ -1923,6 +2093,30 @@ export interface components {
              * Format: uuid
              */
             variant_id: string;
+        };
+        /** BatchOut */
+        BatchOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /** Batch No */
+            batch_no: string;
+            /** Mfg Date */
+            mfg_date: string | null;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /**
+             * Qty
+             * @description In the warehouse asked for, or in all
+             */
+            qty: string;
         };
         /** BillOut */
         BillOut: {
@@ -2553,6 +2747,60 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** ItemLedgerLine */
+        ItemLedgerLine: {
+            /**
+             * Move Date
+             * Format: date
+             */
+            move_date: string;
+            /** Move Type */
+            move_type: string;
+            /** Document Id */
+            document_id: string | null;
+            /** Number */
+            number: string | null;
+            /**
+             * Warehouse Id
+             * Format: uuid
+             */
+            warehouse_id: string;
+            /** Batch No */
+            batch_no: string | null;
+            /** Qty */
+            qty: string;
+            /** Unit Cost */
+            unit_cost: string;
+            /** Value */
+            value: string;
+            /**
+             * Qty Balance
+             * @description Running quantity after this move (the warehouse, or all)
+             */
+            qty_balance: string;
+            /** Value Balance */
+            value_balance: string;
+        };
+        /** ItemLedgerOut */
+        ItemLedgerOut: {
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /** Opening Qty */
+            opening_qty: string;
+            /** Opening Value */
+            opening_value: string;
+            /** Lines */
+            lines: components["schemas"]["ItemLedgerLine"][];
+            /** Closing Qty */
+            closing_qty: string;
+            /** Closing Value */
+            closing_value: string;
+            /** Avg Cost */
+            avg_cost: string | null;
+        };
         /** JournalLineOut */
         JournalLineOut: {
             /** Line No */
@@ -2624,6 +2872,11 @@ export interface components {
             /** Lines */
             lines: components["schemas"]["LedgerLineOut"][];
         };
+        /**
+         * LineDirection
+         * @enum {string}
+         */
+        LineDirection: "in" | "out";
         /** LoginIn */
         LoginIn: {
             /**
@@ -2907,6 +3160,11 @@ export interface components {
              * Override Lock Reason
              * @description Needed to post into a locked period (period.override_lock)
              */
+            override_lock_reason?: string | null;
+        };
+        /** PostStockIn */
+        PostStockIn: {
+            /** Override Lock Reason */
             override_lock_reason?: string | null;
         };
         /** PriceListIn */
@@ -3457,6 +3715,242 @@ export interface components {
             /** @default web */
             client: components["schemas"]["ClientKind"];
         };
+        /** StockDocIn */
+        StockDocIn: {
+            doc_type: components["schemas"]["StockDocType"];
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Warehouse Id
+             * Format: uuid
+             * @description The warehouse (a transfer: where the goods leave)
+             */
+            warehouse_id: string;
+            /**
+             * To Warehouse Id
+             * @description Warehouse transfers: where they arrive
+             */
+            to_warehouse_id?: string | null;
+            /**
+             * Reason
+             * @description Adjustments: damaged, count, found…
+             */
+            reason?: string | null;
+            /** Reference */
+            reference?: string | null;
+            /** Narration */
+            narration?: string | null;
+            /** Lines */
+            lines: components["schemas"]["StockLineIn"][];
+        };
+        /** StockDocOut */
+        StockDocOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["StockDocType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Warehouse Id */
+            warehouse_id: string | null;
+            /** To Warehouse Id */
+            to_warehouse_id: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+            /** Lines */
+            lines: components["schemas"]["StockLineOut"][];
+            /**
+             * Warnings
+             * @description From the post just made
+             */
+            warnings?: components["schemas"]["StockWarning"][];
+        };
+        /** StockDocSummary */
+        StockDocSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["StockDocType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Warehouse Id */
+            warehouse_id: string | null;
+            /** To Warehouse Id */
+            to_warehouse_id: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+        };
+        /**
+         * StockDocType
+         * @enum {string}
+         */
+        StockDocType: "stock_adjustment" | "stock_transfer" | "item_transfer";
+        /** StockLineIn */
+        StockLineIn: {
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /**
+             * Unit
+             * @description One of the product's units, e.g. pcs or carton
+             */
+            unit: string;
+            /** Qty */
+            qty: number | string;
+            /**
+             * @description Adjustments and Item Transfers: in or out; warehouse transfers: ignored
+             * @default out
+             */
+            direction: components["schemas"]["LineDirection"];
+            /**
+             * Unit Cost
+             * @description Adjustments in: cost per unit typed (default: the item's current average)
+             */
+            unit_cost?: number | string | null;
+            /** Batch Id */
+            batch_id?: string | null;
+            /**
+             * Batch No
+             * @description In lines of batch items: a new or existing batch
+             */
+            batch_no?: string | null;
+            /** Expiry Date */
+            expiry_date?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** StockLineOut */
+        StockLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line No */
+            line_no: number;
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /** Sku */
+            sku: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Unit */
+            unit: string;
+            /** Qty */
+            qty: string;
+            /** Qty Base */
+            qty_base: string;
+            /** Base Unit */
+            base_unit: string;
+            direction: components["schemas"]["LineDirection"];
+            /** Unit Cost */
+            unit_cost: string | null;
+            /** Batch Id */
+            batch_id: string | null;
+            /** Batch No */
+            batch_no: string | null;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /** Description */
+            description: string | null;
+            /**
+             * Value
+             * @description What the line moved (posted only; signed: + in, - out)
+             */
+            value: string | null;
+        };
+        /** StockWarning */
+        StockWarning: {
+            /**
+             * Code
+             * @description negative_stock or no_cost
+             */
+            code: string;
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /**
+             * Warehouse Id
+             * Format: uuid
+             */
+            warehouse_id: string;
+            /** Qty After */
+            qty_after?: string | null;
+        };
         /** SupplierProfileIn */
         SupplierProfileIn: {
             /**
@@ -3674,6 +4168,29 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** ValuationOut */
+        ValuationOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Stock Value
+             * @description Σ stock_move.value: the stock ledger
+             */
+            stock_value: string;
+            /**
+             * Inventory Account
+             * @description The inventory account's balance in the journal
+             */
+            inventory_account: string;
+            /**
+             * Difference
+             * @description Always zero (CLAUDE.md rule 5)
+             */
+            difference: string;
         };
         /**
          * VariantChoice
@@ -7512,6 +8029,372 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrialBalanceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stock_documents: {
+        parameters: {
+            query: {
+                business_id: string;
+                doc_type?: components["schemas"]["StockDocType"] | null;
+                status?: components["schemas"]["DocumentStatus"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockDocSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_stock_document: {
+        parameters: {
+            query?: {
+                /** @description Save and post in one step */
+                post?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockDocIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stock_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_stock_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockDocIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_stock_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_stock_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostStockIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stock_balances: {
+        parameters: {
+            query: {
+                business_id: string;
+                warehouse_id?: string | null;
+                variant_id?: string | null;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stock_item_ledger: {
+        parameters: {
+            query: {
+                business_id: string;
+                warehouse_id?: string | null;
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                variant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemLedgerOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    negative_stock: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stock_valuation: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValuationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stock_batches: {
+        parameters: {
+            query: {
+                business_id: string;
+                variant_id: string;
+                warehouse_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchOut"][];
                 };
             };
             /** @description Validation Error */

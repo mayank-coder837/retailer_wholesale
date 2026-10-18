@@ -62,7 +62,11 @@ from app.modules.catalog.schemas import (
     UnitIn,
     VariantChoice,
 )
+from app.modules.documents.models import DocumentLine, LineDirection
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
+from app.modules.inventory import documents as stock_documents
+from app.modules.inventory.models import AverageCost, Batch, StockBalance, StockMove
+from app.modules.inventory.schemas import StockDocIn, StockDocType, StockLineIn
 from app.modules.parties import service as parties
 from app.modules.parties.models import PartyAddress, PartyContact
 from app.modules.parties.schemas import (
@@ -649,6 +653,92 @@ async def _bill_allocation(session: AsyncSession, seed: TenantSeed) -> Any:
     return await session.scalar(select(BillAllocation.id).limit(1))
 
 
+# --- inventory (M1.6) --------------------------------------------------------------------------------------
+
+
+async def stock_product(session: AsyncSession, seed: TenantSeed, *, batches: bool = False) -> Any:
+    """A stocked product counted in pieces, bought by the carton of 24."""
+    data = ProductIn(
+        sku=f"STK-{_tag()}",
+        name_en="Stock item",
+        name_ar="صنف",
+        base_unit="pcs",
+        units=[ProductUnitIn(unit="carton", factor_to_base=Decimal(24))],
+        track_batch=batches,
+        track_expiry=batches,
+    )
+    return await catalog_products.create_product(session, seed.tenant_id, data)
+
+
+def adjustment(seed: TenantSeed, lines: list[StockLineIn], doc_date: date | None = None) -> StockDocIn:
+    return StockDocIn(
+        doc_type=StockDocType.STOCK_ADJUSTMENT,
+        business_id=seed.business_id,
+        branch_id=seed.branch_id,
+        doc_date=doc_date or dubai_today(),
+        warehouse_id=seed.warehouse_id,
+        reason="count",
+        lines=lines,
+    )
+
+
+async def post_stock(session: AsyncSession, seed: TenantSeed, data: StockDocIn) -> uuid.UUID:
+    doc = await stock_documents.create_draft(session, seed.tenant_id, data)
+    await stock_documents.post(
+        session,
+        doc.id,
+        node_id=seed.node_id,
+        user_id=seed.user_id,
+        may_override_lock=False,
+        override_reason=None,
+    )
+    return doc.id
+
+
+async def _stocked(session: AsyncSession, seed: TenantSeed) -> uuid.UUID:
+    """Ten pieces of a batch item found at 15 each: moves, a pool, a balance and a batch."""
+    product = await stock_product(session, seed, batches=True)
+    line = StockLineIn(
+        variant_id=product.variants[0].id,
+        unit="pcs",
+        qty=Decimal(10),
+        direction=LineDirection.IN,
+        unit_cost=Decimal(15),
+        batch_no="B1",
+        expiry_date=dubai_today(),
+    )
+    return await post_stock(session, seed, adjustment(seed, [line]))
+
+
+async def _batch(session: AsyncSession, seed: TenantSeed) -> Any:
+    await _stocked(session, seed)
+    return await session.scalar(select(Batch.id).limit(1))
+
+
+async def _stock_move(session: AsyncSession, seed: TenantSeed) -> Any:
+    doc_id = await _stocked(session, seed)
+    return await session.scalar(select(StockMove.id).where(StockMove.document_id == doc_id).limit(1))
+
+
+async def _average_cost(session: AsyncSession, seed: TenantSeed) -> Any:
+    await _stocked(session, seed)
+    return await session.scalar(select(AverageCost.id).limit(1))
+
+
+async def _stock_balance(session: AsyncSession, seed: TenantSeed) -> Any:
+    await _stocked(session, seed)
+    return await session.scalar(select(StockBalance.id).limit(1))
+
+
+async def _document_line(session: AsyncSession, seed: TenantSeed) -> Any:
+    product = await stock_product(session, seed)
+    line = StockLineIn(
+        variant_id=product.variants[0].id, unit="carton", qty=Decimal(1), direction=LineDirection.OUT
+    )
+    doc = await stock_documents.create_draft(session, seed.tenant_id, adjustment(seed, [line]))
+    return await session.scalar(select(DocumentLine.id).where(DocumentLine.document_id == doc.id))
+
+
 ISOLATION_FACTORIES: dict[str, Factory] = {
     "audit_log": _audit_log,
     "numbering_series": _numbering_series,
@@ -701,12 +791,17 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "journal_line": _journal_line,
     "bill": _bill,
     "bill_allocation": _bill_allocation,
+    "batch": _batch,
+    "stock_move": _stock_move,
+    "average_cost": _average_cost,
+    "stock_balance": _stock_balance,
+    "document_line": _document_line,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.
 TENANT_COLUMN = {"tenant": "id"}
 # Tenant tables that are never synced to the cloud (local queues) and tables the app may only append to.
 NOT_SYNCED = frozenset({"sync_outbox", "outbox_event", "idempotency_key"})
-APPEND_ONLY = frozenset({"audit_log", "journal_entry", "journal_line", "bill_allocation"})
+APPEND_ONLY = frozenset({"audit_log", "journal_entry", "journal_line", "bill_allocation", "stock_move"})
 # Rows a trigger guards against every change but one column: claiming them is tried by inserting a copy.
 GUARDED = frozenset({"bill"})

@@ -779,3 +779,69 @@ async def exists(session: AsyncSession, kind: str, item_id: uuid.UUID) -> bool:
     """Whether a variant, product, category or brand of this tenant exists (promotion scopes)."""
     model = {"variant": Variant, "product": Product, "category": Category, "brand": Brand}[kind]
     return await session.get(model, item_id) is not None
+
+
+@dataclass(frozen=True)
+class StockUnit:
+    unit_id: uuid.UUID
+    code: str
+    factor_to_base: Decimal
+    decimals: int
+
+
+@dataclass(frozen=True)
+class StockItem:
+    """What inventory needs about a variant: whether it is stocked, tracked by batch, and its units."""
+
+    variant_id: uuid.UUID
+    product_id: uuid.UUID
+    sku: str
+    name_en: str
+    name_ar: str
+    product_type: str
+    track_batch: bool
+    track_expiry: bool
+    base_unit: str
+    units: dict[str, StockUnit]  # unit code → factor and allowed decimals
+
+    def quantity(self, qty_entered: Decimal, unit_code: str) -> tuple[StockUnit, uom.LineQuantity]:
+        """A typed quantity in one of the product's units, converted to the base unit exactly (rule 6)."""
+        unit = self.units.get(unit_code)
+        if unit is None:
+            raise InvalidProductError(f"{self.sku} has no unit {unit_code}.", field="unit")
+        try:
+            line = uom.to_base(
+                qty_entered,
+                uom_entered=unit.code,
+                entered_decimals=unit.decimals,
+                factor_to_base=unit.factor_to_base,
+            )
+        except uom.UomError as exc:
+            raise InvalidProductError(str(exc), field="qty") from exc
+        return unit, line
+
+
+async def stock_item(session: AsyncSession, variant_id: uuid.UUID) -> StockItem:
+    variant = await session.get(Variant, variant_id)
+    if variant is None:
+        raise ProductNotFoundError("There is no such variant.")
+    product = await get_product_row(session, variant.product_id)
+    rows = await session.execute(
+        select(ProductUnit, Unit)
+        .join(Unit, Unit.id == ProductUnit.unit_id)
+        .where(ProductUnit.product_id == product.id)
+    )
+    units = {u.code: StockUnit(u.id, u.code, pu.factor_to_base, u.decimals) for pu, u in rows}
+    base = next(code for code, su in units.items() if su.unit_id == product.base_unit_id)
+    return StockItem(
+        variant_id=variant.id,
+        product_id=product.id,
+        sku=variant.sku,
+        name_en=product.name_en,
+        name_ar=product.name_ar,
+        product_type=product.product_type,
+        track_batch=product.track_batch,
+        track_expiry=product.track_expiry,
+        base_unit=base,
+        units=units,
+    )

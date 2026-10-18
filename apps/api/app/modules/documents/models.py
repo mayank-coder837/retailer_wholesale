@@ -20,6 +20,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -66,6 +67,14 @@ class Document(TenantScoped, Base):
         ),
         _tenant_fk("reversal_of_id", "document"),
         _tenant_fk("reissue_of_id", "document"),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id", "warehouse_id"],
+            ["warehouse.tenant_id", "warehouse.business_id", "warehouse.id"],
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id", "to_warehouse_id"],
+            ["warehouse.tenant_id", "warehouse.business_id", "warehouse.id"],
+        ),
         CheckConstraint(_in("doc_type", tuple(PREFIXES)), name="doc_type"),
         CheckConstraint(_in("status", DocumentStatus), name="status"),
         CheckConstraint("(status = 'draft') = (number IS NULL)", name="numbered_when_posted"),
@@ -108,3 +117,57 @@ class Document(TenantScoped, Base):
     reversed_by_document_id: Mapped[uuid.UUID | None]
     reissue_of_id: Mapped[uuid.UUID | None]
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    warehouse_id: Mapped[uuid.UUID | None]  # inventory documents: the warehouse (transfers: from)
+    to_warehouse_id: Mapped[uuid.UUID | None]  # warehouse transfers: to
+    reason: Mapped[str | None] = mapped_column(String(200))  # stock adjustments: damaged, count, found…
+
+
+class LineDirection(StrEnum):
+    IN = "in"
+    OUT = "out"
+
+
+class DocumentLine(TenantScoped, Base):
+    """An item line of a document (ADR 0009).
+
+    Quantities keep their unit (CLAUDE.md rule 6): converted once, at entry, by the UOM engine. Sales and
+    purchasing add prices and tax in their milestones. Lines of a posted document never change (0010).
+    """
+
+    __tablename__ = "document_line"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id"),
+        UniqueConstraint("document_id", "line_no"),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id", "document_id"],
+            ["document.tenant_id", "document.business_id", "document.id"],
+        ),
+        _tenant_fk("variant_id", "variant"),
+        _tenant_fk("unit_id", "unit"),
+        _tenant_fk("batch_id", "batch"),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id", "warehouse_id"],
+            ["warehouse.tenant_id", "warehouse.business_id", "warehouse.id"],
+        ),
+        CheckConstraint(
+            "qty_entered > 0 AND qty_base > 0 AND factor_to_base > 0", name="positive_quantities"
+        ),
+        CheckConstraint("unit_cost IS NULL OR unit_cost >= 0", name="cost_not_negative"),
+        CheckConstraint(_in("direction", LineDirection), name="direction"),
+    )
+
+    document_id: Mapped[uuid.UUID]
+    business_id: Mapped[uuid.UUID]
+    line_no: Mapped[int] = mapped_column(Integer)
+    variant_id: Mapped[uuid.UUID]
+    description: Mapped[str | None] = mapped_column(String(500))
+    qty_entered: Mapped[Decimal] = mapped_column(Numeric(19, 6))
+    unit_id: Mapped[uuid.UUID]
+    factor_to_base: Mapped[Decimal] = mapped_column(Numeric(19, 6))
+    qty_base: Mapped[Decimal] = mapped_column(Numeric(19, 6))
+    unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(19, 6))  # per base unit; adjustments in
+    direction: Mapped[str] = mapped_column(String(3), server_default=LineDirection.IN.value)
+    warehouse_id: Mapped[uuid.UUID | None]
+    batch_id: Mapped[uuid.UUID | None]
+    batch_no: Mapped[str | None] = mapped_column(String(60))  # a new batch, created at post
+    expiry_date: Mapped[date | None] = mapped_column(Date)

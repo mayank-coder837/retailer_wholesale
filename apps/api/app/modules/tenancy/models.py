@@ -105,6 +105,8 @@ class Warehouse(TenantScoped, Base):
     __tablename__ = "warehouse"
     __table_args__ = (
         UniqueConstraint("tenant_id", "id"),
+        # Lets stock rows reference a warehouse *and* prove it belongs to their business.
+        UniqueConstraint("tenant_id", "business_id", "id"),
         UniqueConstraint("business_id", "code"),
         ForeignKeyConstraint(["tenant_id", "business_id"], ["business.tenant_id", "business.id"]),
         ForeignKeyConstraint(["tenant_id", "branch_id"], ["branch.tenant_id", "branch.id"]),

@@ -123,10 +123,10 @@ beside the balance but do not reduce it (A2).
 
 | Entity | Key fields | Relationships / rules |
 | --- | --- | --- |
-| stock_move | business_id, warehouse_id, variant_id, batch_id, serial_id, move_date, qty_base (signed), unit_cost, value (signed), move_type (`receipt, issue, transfer_in, transfer_out, item_transfer_out, item_transfer_in, adjustment, return_in, return_out, negative_revaluation, opening`), source_document_id, source_line_id, reversal_of_id | **Immutable** (trigger blocks update/delete) |
+| stock_move | business_id, warehouse_id, variant_id, batch_id, move_date, seq (per business), qty_base (signed), unit_cost, value (signed, fils), move_type (`receipt, issue, transfer_in, transfer_out, item_transfer_out, item_transfer_in, adjustment_in, adjustment_out, return_in, return_out, opening` and the value-only `negative_revaluation, recost`), document_id, document_line_id, counter_account_id, adjusts_move_id | **Insert-only** (no UPDATE/DELETE for the app role, trigger for the owner). Value-only rows have qty 0 and point at the move they adjust (M1.6) |
 | batch | variant_id, batch_no, mfg_date, expiry_date | FEFO picking suggests earliest expiry |
 | serial (Phase 2) | variant_id, serial_no, status | |
-| average_cost (cache) | business_id, variant_id, qty_base, value, avg_cost, last_purchase_cost | One moving average per item across all warehouses (ADR 0006); updated in the posting transaction |
+| average_cost (cache) | business_id, variant_id, qty_base, value, avg_cost, last_purchase_cost, last_move_date | One moving average per item across all warehouses (ADR 0006); updated in the posting transaction; a move dated before `last_move_date` triggers a recost (rule 28) |
 | stock_balance (cache) | business_id, warehouse_id, variant_id, batch_id, qty_base, value | Updated in the posting transaction; rebuildable from `stock_move` |
 
 No FIFO cost layers in the MVP. Stock may go negative (warning only); a **negative-stock report** lists every
