@@ -6,6 +6,13 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 
+import { AccountPage } from "@/routes/accounts/account";
+import { ChartPage } from "@/routes/accounts/chart";
+import { PeriodsPage } from "@/routes/accounts/periods";
+import { TrialBalancePage } from "@/routes/accounts/trial-balance";
+import { VoucherPage } from "@/routes/accounts/voucher";
+import { VoucherRoute } from "@/routes/accounts/voucher-entry";
+import { VouchersPage } from "@/routes/accounts/vouchers";
 import { CatalogSettingsPage } from "@/routes/catalog/catalog-settings";
 import { NewProductPage } from "@/routes/catalog/new-product";
 import { ProductPage } from "@/routes/catalog/product";
@@ -91,13 +98,41 @@ const thisPcRoute = createRoute({
   path: "/settings/this-pc",
   component: ThisPcPage,
 });
+/** Voucher entry: the accounting vouchers (M1.5); sales and purchase keys still show "coming soon". */
 const voucherRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/vouchers/$kind",
-  component: function Voucher() {
-    const { kind } = voucherRoute.useParams();
-    return <ComingSoon titleKey={`vouchers.${kind}`} />;
-  },
+  component: VoucherRoute,
+});
+const accountsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts",
+  component: ChartPage,
+});
+const vouchersRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/vouchers",
+  component: VouchersPage,
+});
+const voucherViewRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/vouchers/$voucherId",
+  component: VoucherPage,
+});
+const trialBalanceRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/trial-balance",
+  component: TrialBalancePage,
+});
+const periodsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/periods",
+  component: PeriodsPage,
+});
+const accountRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/$accountId",
+  component: AccountPage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -117,9 +152,14 @@ const routeTree = rootRoute.addChildren([
     catalogSettingsRoute,
     pricingSettingsRoute,
     voucherRoute,
+    accountsRoute,
+    vouchersRoute,
+    voucherViewRoute,
+    trialBalanceRoute,
+    periodsRoute,
+    accountRoute,
     page("/sales", "nav.sales"),
     page("/purchases", "nav.purchases"),
-    page("/accounts", "nav.accounts"),
     page("/reports", "nav.reports"),
   ]),
 ]);
