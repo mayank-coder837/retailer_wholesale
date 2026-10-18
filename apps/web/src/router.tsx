@@ -24,6 +24,11 @@ import { PartyPage } from "@/routes/parties/party";
 import { PricingSettingsPage } from "@/routes/pricing/pricing-settings";
 import { DashboardPage } from "@/routes/dashboard";
 import { IndexRedirect } from "@/routes/index-redirect";
+import { StockDocumentsPage } from "@/routes/inventory/documents";
+import { ItemLedgerPage } from "@/routes/inventory/item-ledger";
+import { NegativeStockPage, StockPage } from "@/routes/inventory/stock";
+import { StockDocumentPage } from "@/routes/inventory/stock-document";
+import { StockEntryRoute } from "@/routes/inventory/stock-entry";
 import { LoginPage } from "@/routes/login";
 import { RolesPage } from "@/routes/roles";
 import { SignupPage } from "@/routes/signup";
@@ -67,6 +72,36 @@ const productRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/inventory/products/$productId",
   component: ProductPage,
+});
+const stockRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/stock",
+  component: StockPage,
+});
+const negativeStockRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/negative",
+  component: NegativeStockPage,
+});
+const itemLedgerRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/items/$variantId",
+  component: ItemLedgerPage,
+});
+const stockDocumentsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/documents",
+  component: StockDocumentsPage,
+});
+const newStockDocumentRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/documents/new/$kind",
+  component: StockEntryRoute,
+});
+const stockDocumentRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/inventory/documents/$docId",
+  component: StockDocumentPage,
 });
 const partiesRoute = createRoute({
   getParentRoute: () => appRoute,
@@ -146,6 +181,12 @@ const routeTree = rootRoute.addChildren([
     inventoryRoute,
     newProductRoute,
     productRoute,
+    stockRoute,
+    negativeStockRoute,
+    itemLedgerRoute,
+    stockDocumentsRoute,
+    newStockDocumentRoute,
+    stockDocumentRoute,
     partiesRoute,
     newPartyRoute,
     partyRoute,

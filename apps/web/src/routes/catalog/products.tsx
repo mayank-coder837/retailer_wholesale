@@ -6,6 +6,7 @@ import { inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { localName } from "@/routes/catalog/product-form";
 import { useProducts } from "@/routes/catalog/queries";
+import { InventoryNav } from "@/routes/inventory/inventory-nav";
 
 /** Inventory → Products (M1.2): search by name, SKU or a scanned barcode. */
 export function ProductsPage() {
@@ -26,6 +27,7 @@ export function ProductsPage() {
           </Button>
         </div>
       </div>
+      <InventoryNav />
       <input
         className={inputClass}
         type="search"
