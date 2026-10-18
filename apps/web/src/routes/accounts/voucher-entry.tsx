@@ -604,18 +604,23 @@ function PartyPicker({
   const [query, setQuery] = useState("");
   const parties = useParties(query.trim(), role);
   return (
-    <Field label={label} className="min-w-56 flex-1">
+    <Field label={label} className="min-w-80 flex-1">
       {(p) => (
         <div className="flex gap-1">
           <input
-            className={inputClass + " w-28"}
+            className={inputClass.replace("w-full", "w-24") + " shrink-0"}
             type="search"
             aria-label={t("accounts.voucher.findParty")}
             placeholder={t("accounts.voucher.find")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <select {...p} className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
+          <select
+            {...p}
+            className={inputClass + " min-w-0 flex-1"}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          >
             <option value="">
               {allowNone ? t("accounts.voucher.noParty") : t("accounts.voucher.choose")}
             </option>
