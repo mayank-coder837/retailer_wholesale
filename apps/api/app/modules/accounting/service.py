@@ -12,13 +12,16 @@ from collections.abc import Sequence
 from datetime import date
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.accounting import accounts as chart
 from app.modules.accounting import ledger, periods, posting
 from app.modules.accounting.models import (
     CONTROL,
+    Account,
     AccountType,
+    Bill,
     FiscalPeriod,
     FiscalYear,
     JournalLine,
@@ -229,3 +232,62 @@ async def trial_balance(session: AsyncSession, business_id: uuid.UUID, as_of: da
 async def account_balance(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> Decimal:
     """An account's balance in the journal (debit positive)."""
     return (await ledger.account_balances(session, business_id)).get(account_id, ZERO)
+
+
+async def open_party_bill(
+    session: AsyncSession,
+    line: JournalLine,
+    *,
+    amount: Decimal,
+    reference: str,
+    due_date: date | None,
+    document_id: uuid.UUID | None,
+    is_advance: bool = False,
+) -> uuid.UUID:
+    """A bill-wise open item for a posted party line (an invoice, a supplier bill, an advance)."""
+    bill = await ledger.open_bill(
+        session,
+        line,
+        amount=amount,
+        reference=reference,
+        due_date=due_date,
+        is_advance=is_advance,
+        document_id=document_id,
+    )
+    return bill.id
+
+
+async def settle_document_bills(
+    session: AsyncSession, document_id: uuid.UUID, line: JournalLine, amount: Decimal
+) -> Decimal:
+    """``line`` settles up to ``amount`` of a document's open bills, oldest first; returns the amount."""
+    left = amount
+    for bill_id in await session.scalars(
+        select(Bill.id).where(Bill.document_id == document_id, Bill.amount_open > 0).order_by(Bill.created_at)
+    ):
+        if left <= 0:
+            break
+        bill = await ledger.lock_bill(session, bill_id)
+        if bill is None or bill.party_id != line.party_id or bill.account_id != line.account_id:
+            continue
+        take = min(left, bill.amount_open)
+        await ledger.settle(session, bill, line, take)
+        left -= take
+    return amount - left
+
+
+async def expense_account(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> None:
+    """Refuses an account an expense or service line may not debit: another business's, a group, archived,
+    system-only, or cash, bank, receivable, payable, tax or stock."""
+    account = await session.get(Account, account_id)
+    blocked = {AccountType.CASH, AccountType.BANK, AccountType.TAX, AccountType.STOCK, *CONTROL}
+    if (
+        account is None
+        or account.business_id != business_id
+        or account.is_group
+        or account.archived_at is not None
+        or not account.allow_manual_posting
+        or account.account_type is None
+        or AccountType(account.account_type) in blocked
+    ):
+        raise chart.InvalidAccountError("Choose an expense or asset account.", field="account_id")

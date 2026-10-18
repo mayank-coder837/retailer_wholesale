@@ -1,6 +1,8 @@
 """Inventory services other modules call, and the stock read models (M1.6).
 
 - ``stock_of``: quantity on hand of a variant (availability for sales and purchasing).
+- ``begin_posting`` / ``receive`` / ``issue`` / ``finish_posting``: how purchasing and sales move stock
+  through the cost pools (rule 27 on arrival, rule 28 after a backdated move).
 - Balances, an item's stock ledger, the negative-stock report, batches (earliest expiry first) and the
   valuation check: every figure is read from ``stock_move`` / ``stock_balance``, never typed in (rule 5).
 """
@@ -12,13 +14,17 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import UnprocessableError
 from app.modules.accounting import service as accounting
 from app.modules.accounting.models import Role
 from app.modules.catalog import products as catalog
-from app.modules.documents.models import Document
-from app.modules.inventory.models import AverageCost, Batch, StockBalance, StockMove
+from app.modules.documents.models import Document, DocumentLine
+from app.modules.inventory import stock
+from app.modules.inventory.models import AverageCost, Batch, MoveType, StockBalance, StockMove
+from app.modules.inventory.posting import batch_by_no, ensure_batch, recost
 from app.modules.inventory.schemas import BalanceOut, BatchOut, ItemLedgerLine, ItemLedgerOut, ValuationOut
 from app.modules.tenancy import service as tenancy
+from app.modules.tenancy.models import Business
 
 ZERO = Decimal("0.0000")
 QTY_ZERO = Decimal("0.000000")
@@ -215,3 +221,134 @@ async def batches(
         )
         for b, q in rows
     ]
+
+
+# --- posting stock from other modules (purchasing M1.7, sales M1.8) ----------------------------------------
+
+
+class InvalidBatchError(UnprocessableError):
+    code = "invalid_batch"
+    title = "The batch is not valid for this item"
+
+
+async def begin_posting(
+    session: AsyncSession, business: Business, day: date, document_id: uuid.UUID
+) -> stock.Context:
+    """Serialises this business's stock postings for the transaction and opens a posting context."""
+    await stock.lock_business(session, business.id)
+    roles = await accounting.role_accounts(session, business.id)
+    return stock.Context(
+        business.tenant_id, business.id, day, document_id, roles.get(Role.STOCK_COST_ADJUSTMENT)
+    )
+
+
+async def receive(
+    session: AsyncSession,
+    ctx: stock.Context,
+    *,
+    warehouse_id: uuid.UUID,
+    variant_id: uuid.UUID,
+    qty_base: Decimal,
+    value: Decimal,
+    batch_id: uuid.UUID | None,
+    line_id: uuid.UUID | None,
+    counter_account_id: uuid.UUID | None,
+    move_type: MoveType = MoveType.RECEIPT,
+) -> stock.Applied:
+    """Goods in at an exact value (a purchase receipt or a direct bill line); rule 27 applies on arrival."""
+    spec = stock.Spec(
+        move_type,
+        warehouse_id,
+        variant_id,
+        qty_base,
+        batch_id,
+        value=value,
+        purchase=move_type == MoveType.RECEIPT,
+        counter_account_id=counter_account_id,
+        document_line_id=line_id,
+    )
+    return await stock.apply(session, ctx, spec)
+
+
+async def issue(
+    session: AsyncSession,
+    ctx: stock.Context,
+    *,
+    warehouse_id: uuid.UUID,
+    variant_id: uuid.UUID,
+    qty_base: Decimal,
+    batch_id: uuid.UUID | None,
+    line_id: uuid.UUID | None,
+    counter_account_id: uuid.UUID | None,
+    move_type: MoveType = MoveType.ISSUE,
+) -> stock.Applied:
+    """Goods out at the current average (a sale, a delivery, a return to the supplier)."""
+    spec = stock.Spec(
+        move_type,
+        warehouse_id,
+        variant_id,
+        qty_base,
+        batch_id,
+        counter_account_id=counter_account_id,
+        document_line_id=line_id,
+    )
+    return await stock.apply(session, ctx, spec)
+
+
+async def finish_posting(
+    session: AsyncSession,
+    ctx: stock.Context,
+    business: Business,
+    *,
+    branch_id: uuid.UUID,
+    document_id: uuid.UUID,
+    number: str,
+) -> None:
+    """After the document's own moves: recost later moves when it was backdated (rule 28)."""
+    if ctx.backdated:
+        roles = await accounting.role_accounts(session, business.id)
+        await recost(session, ctx, business, branch_id, document_id, number, roles)
+
+
+async def check_batch(
+    session: AsyncSession,
+    item: catalog.StockItem,
+    *,
+    batch_id: uuid.UUID | None,
+    batch_no: str | None,
+    expiry_date: date | None,
+    outgoing: bool,
+) -> uuid.UUID | None:
+    """The line's batch (or None: not tracked, or a new batch created at post). Raises when it doesn't fit."""
+    if not item.track_batch:
+        if batch_id or batch_no or expiry_date:
+            raise InvalidBatchError(f"{item.sku} is not tracked by batch.")
+        return None
+    if batch_id is not None:
+        batch = await session.get(Batch, batch_id)
+        if batch is None or batch.variant_id != item.variant_id:
+            raise InvalidBatchError("There is no such batch of this item.")
+        return batch.id
+    if outgoing or not batch_no:
+        raise InvalidBatchError(f"Choose the batch of {item.sku}.")
+    existing = await batch_by_no(session, item.variant_id, batch_no)
+    if existing is not None:
+        return existing.id
+    if item.track_expiry and expiry_date is None:
+        raise InvalidBatchError(f"A new batch of {item.sku} needs its expiry date.")
+    return None
+
+
+async def batch_for_post(session: AsyncSession, tenant_id: uuid.UUID, row: DocumentLine) -> uuid.UUID | None:
+    return await ensure_batch(session, tenant_id, row)
+
+
+async def warehouse_stock(
+    session: AsyncSession, warehouse_id: uuid.UUID, variant_id: uuid.UUID, batch_id: uuid.UUID | None
+) -> Decimal:
+    return await stock.warehouse_qty(session, warehouse_id, variant_id, batch_id)
+
+
+async def batch_no(session: AsyncSession, batch_id: uuid.UUID) -> str | None:
+    batch = await session.get(Batch, batch_id)
+    return batch.batch_no if batch else None

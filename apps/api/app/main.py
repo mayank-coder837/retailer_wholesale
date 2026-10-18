@@ -27,6 +27,7 @@ from app.modules.parties import router as parties_router
 from app.modules.platform import attachments
 from app.modules.platform import router as platform_router
 from app.modules.pricing import router as pricing_router
+from app.modules.purchasing import router as purchasing_router
 from app.modules.tenancy import router as tenancy_router
 
 
@@ -89,6 +90,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(parties_router.router)
     app.include_router(accounting_router.router)
     app.include_router(inventory_router.router)
+    app.include_router(purchasing_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)
     if settings.web_dir is not None:
