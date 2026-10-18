@@ -750,5 +750,115 @@
       "credit_note": "Credit note",
       "debit_note": "Debit note"
     }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "menu": "Inventory menu",
+    "nav": {
+      "products": "Products",
+      "stock": "Stock",
+      "documents": "Stock documents",
+      "negative": "Negative stock"
+    },
+    "stock": {
+      "item": "Item",
+      "warehouse": "Warehouse",
+      "allWarehouses": "All warehouses",
+      "batch": "Batch",
+      "qty": "Quantity",
+      "value": "Value",
+      "search": "Search by SKU or name",
+      "none": "No stock yet: post an adjustment to bring items in.",
+      "noMatch": "No items match."
+    },
+    "valuation": {
+      "title": "Valuation check",
+      "stock": "Stock value:",
+      "account": "Inventory account:",
+      "agree": "The stock ledger and the books agree.",
+      "differ": "They differ by {{amount}}: tell support."
+    },
+    "negative": {
+      "hint": "Items sold or moved below zero. Fix them with an Item Transfer (sold as another item) or an adjustment after a count.",
+      "none": "Nothing is below zero."
+    },
+    "ledger": {
+      "title": "Stock ledger",
+      "average": "Average cost:",
+      "date": "Date",
+      "document": "Document",
+      "move": "Movement",
+      "balance": "Balance",
+      "closing": "Closing balance"
+    },
+    "moves": {
+      "receipt": "Purchase receipt",
+      "issue": "Issue",
+      "transfer_in": "Transfer in",
+      "transfer_out": "Transfer out",
+      "item_transfer_in": "Item Transfer in",
+      "item_transfer_out": "Item Transfer out",
+      "adjustment_in": "Adjustment in",
+      "adjustment_out": "Adjustment out",
+      "return_in": "Return in",
+      "return_out": "Return out",
+      "opening": "Opening stock",
+      "negative_revaluation": "Revaluation of negative stock",
+      "recost": "Recost"
+    },
+    "documents": {
+      "new": "New stock document",
+      "type": "Document type",
+      "allTypes": "All types",
+      "status": "Status",
+      "number": "Number",
+      "none": "No stock documents yet."
+    },
+    "docTypes": {
+      "stock_adjustment": "Stock adjustment",
+      "stock_transfer": "Warehouse transfer",
+      "item_transfer": "Item Transfer"
+    },
+    "doc": {
+      "date": "Date",
+      "reason": "Reason",
+      "from": "From warehouse",
+      "to": "To warehouse",
+      "lines": "Items",
+      "item": "Item",
+      "findItem": "Find an item",
+      "variant": "Variant",
+      "direction": "In or out",
+      "in": "In (add)",
+      "out": "Out (remove)",
+      "into": "Into this item",
+      "outOf": "Out of this item",
+      "unit": "Unit",
+      "cost": "Cost per unit",
+      "costHint": "Empty: the average",
+      "expiry": "Expiry date",
+      "noWarehouse": "This branch has no warehouse.",
+      "noDestination": "Choose the warehouse the goods go to.",
+      "needItem": "Choose the item and unit on every line.",
+      "badQty": "Quantities are numbers above zero.",
+      "badCost": "A cost is a number with up to six decimals.",
+      "needBatch": "Batch items need their batch.",
+      "noLines": "Add at least one item.",
+      "bothSides": "An Item Transfer takes stock out of one item and puts it into another."
+    },
+    "warnings": {
+      "negative_stock": "Stock in {{warehouse}} is now {{qty}}: below zero.",
+      "no_cost": "An item left {{warehouse}} with no cost to use: it went out at zero until stock arrives."
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "invalid_stock_document": "The stock document is not valid: check the items, units and batches.",
+      "stock_document_not_found": "There is no such stock document.",
+      "stock_document_not_draft": "Only a draft can change.",
+      "negative_stock": "This would take stock below zero, which this business does not allow.",
+      "recost_into_locked_period": "A later stock movement is in a locked month, so this backdated document cannot be posted.",
+      "invalid_product": "Check the quantity and unit.",
+      "permission_denied": "You do not have permission for this."
+    }
   }
 }
