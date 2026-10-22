@@ -120,6 +120,10 @@ class Document(TenantScoped, Base):
     warehouse_id: Mapped[uuid.UUID | None]  # inventory documents: the warehouse (transfers: from)
     to_warehouse_id: Mapped[uuid.UUID | None]  # warehouse transfers: to
     reason: Mapped[str | None] = mapped_column(String(200))  # stock adjustments: damaged, count, found…
+    due_date: Mapped[date | None] = mapped_column(Date)  # bills: when the payable falls due
+    supplier_ref: Mapped[str | None] = mapped_column(String(60))  # the supplier's own bill number
+    subtotal: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))  # net of VAT
+    tax_total: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))  # VAT: the sum of the lines' VAT (A3)
 
 
 class LineDirection(StrEnum):
@@ -154,15 +158,27 @@ class DocumentLine(TenantScoped, Base):
         ),
         CheckConstraint("unit_cost IS NULL OR unit_cost >= 0", name="cost_not_negative"),
         CheckConstraint(_in("direction", LineDirection), name="direction"),
+        ForeignKeyConstraint(
+            ["tenant_id", "business_id", "account_id"],
+            ["account.tenant_id", "account.business_id", "account.id"],
+        ),
+        _tenant_fk("source_line_id", "document_line"),
+        CheckConstraint("unit_price IS NULL OR unit_price >= 0", name="price_not_negative"),
+        CheckConstraint("variant_id IS NOT NULL OR account_id IS NOT NULL", name="item_or_account"),
+        CheckConstraint("(variant_id IS NULL) = (unit_id IS NULL)", name="item_has_unit"),
+        CheckConstraint("vat_rate IS NULL OR (vat_rate >= 0 AND vat_rate < 100)", name="vat_rate_range"),
+        Index(
+            "ix_document_line_source", "source_line_id", postgresql_where=text("source_line_id IS NOT NULL")
+        ),
     )
 
     document_id: Mapped[uuid.UUID]
     business_id: Mapped[uuid.UUID]
     line_no: Mapped[int] = mapped_column(Integer)
-    variant_id: Mapped[uuid.UUID]
+    variant_id: Mapped[uuid.UUID | None]  # empty on expense lines (a bill's rent, freight…)
     description: Mapped[str | None] = mapped_column(String(500))
     qty_entered: Mapped[Decimal] = mapped_column(Numeric(19, 6))
-    unit_id: Mapped[uuid.UUID]
+    unit_id: Mapped[uuid.UUID | None]
     factor_to_base: Mapped[Decimal] = mapped_column(Numeric(19, 6))
     qty_base: Mapped[Decimal] = mapped_column(Numeric(19, 6))
     unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(19, 6))  # per base unit; adjustments in
@@ -171,3 +187,14 @@ class DocumentLine(TenantScoped, Base):
     batch_id: Mapped[uuid.UUID | None]
     batch_no: Mapped[str | None] = mapped_column(String(60))  # a new batch, created at post
     expiry_date: Mapped[date | None] = mapped_column(Date)
+    # Purchasing and sales (M1.7, M1.8): prices per unit entered, VAT per line (A3).
+    unit_price: Mapped[Decimal | None] = mapped_column(Numeric(19, 6))
+    net_amount: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
+    vat_rate: Mapped[Decimal | None] = mapped_column(Numeric(19, 6))
+    vat_amount: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
+    line_total: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
+    account_id: Mapped[uuid.UUID | None]  # expense and service lines: the account debited
+    source_line_id: Mapped[uuid.UUID | None]  # the order / receipt / bill line this line follows
+    cleared_value: Mapped[Decimal | None] = mapped_column(
+        Numeric(19, 4)
+    )  # set at post: GRNI cleared, cost returned

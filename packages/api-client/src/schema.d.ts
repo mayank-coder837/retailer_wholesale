@@ -1518,6 +1518,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/purchase-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Purchase Documents */
+        get: operations["list_purchase_documents"];
+        put?: never;
+        /** Create Purchase Document */
+        post: operations["create_purchase_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-documents/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Purchase Document */
+        get: operations["get_purchase_document"];
+        /** Update Purchase Document */
+        put: operations["update_purchase_document"];
+        post?: never;
+        /** Delete Purchase Document */
+        delete: operations["delete_purchase_document"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-documents/{doc_id}/open-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Purchase Open Lines */
+        get: operations["purchase_open_lines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-documents/{doc_id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Purchase Document */
+        post: operations["post_purchase_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -2965,6 +3036,45 @@ export interface components {
          * @enum {string}
          */
         Nature: "asset" | "liability" | "equity" | "income" | "expense";
+        /**
+         * OpenLineOut
+         * @description What is still to do on a posted line: to receive (an order line) or to bill (a receipt line).
+         */
+        OpenLineOut: {
+            /**
+             * Line Id
+             * Format: uuid
+             */
+            line_id: string;
+            /** Variant Id */
+            variant_id: string | null;
+            /** Sku */
+            sku: string | null;
+            /** Name En */
+            name_en: string | null;
+            /** Name Ar */
+            name_ar: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Factor To Base */
+            factor_to_base: string;
+            /** Qty Open Base */
+            qty_open_base: string;
+            /**
+             * Qty Open
+             * @description In the line's own unit (when it divides exactly, else the base unit)
+             */
+            qty_open: string;
+            /** Unit Price */
+            unit_price: string | null;
+            /** Vat Rate */
+            vat_rate: string;
+            /**
+             * Value Open
+             * @description Receipt lines: GRNI still to clear
+             */
+            value_open?: string | null;
+        };
         /** PackSummary */
         PackSummary: {
             /** Code */
@@ -3160,6 +3270,11 @@ export interface components {
              * Override Lock Reason
              * @description Needed to post into a locked period (period.override_lock)
              */
+            override_lock_reason?: string | null;
+        };
+        /** PostPurchaseIn */
+        PostPurchaseIn: {
+            /** Override Lock Reason */
             override_lock_reason?: string | null;
         };
         /** PostStockIn */
@@ -3573,6 +3688,257 @@ export interface components {
          * @enum {string}
          */
         PromotionScope: "variant" | "product" | "category" | "brand";
+        /** PurchaseDocIn */
+        PurchaseDocIn: {
+            doc_type: components["schemas"]["PurchaseDocType"];
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Party Id
+             * Format: uuid
+             * @description The supplier
+             */
+            party_id: string;
+            /**
+             * Warehouse Id
+             * @description Receipts and returns; bills with items not received before
+             */
+            warehouse_id?: string | null;
+            /**
+             * Supplier Ref
+             * @description Bills: the supplier's bill number
+             */
+            supplier_ref?: string | null;
+            /**
+             * Due Date
+             * @description Bills: default the supplier's payment terms
+             */
+            due_date?: string | null;
+            /** Reference */
+            reference?: string | null;
+            /** Narration */
+            narration?: string | null;
+            /** Lines */
+            lines: components["schemas"]["PurchaseLineIn"][];
+        };
+        /** PurchaseDocOut */
+        PurchaseDocOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["PurchaseDocType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Warehouse Id */
+            warehouse_id: string | null;
+            /** Supplier Ref */
+            supplier_ref: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Subtotal */
+            subtotal: string;
+            /** Tax Total */
+            tax_total: string;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+            /** Lines */
+            lines: components["schemas"]["PurchaseLineOut"][];
+            /**
+             * Progress
+             * @description Orders: open, partly_received or received; receipts: open, partly_billed, billed
+             */
+            progress?: string | null;
+        };
+        /** PurchaseDocSummary */
+        PurchaseDocSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["PurchaseDocType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Warehouse Id */
+            warehouse_id: string | null;
+            /** Supplier Ref */
+            supplier_ref: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Subtotal */
+            subtotal: string;
+            /** Tax Total */
+            tax_total: string;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+        };
+        /**
+         * PurchaseDocType
+         * @enum {string}
+         */
+        PurchaseDocType: "purchase_order" | "goods_receipt" | "purchase_bill" | "purchase_return";
+        /** PurchaseLineIn */
+        PurchaseLineIn: {
+            /**
+             * Variant Id
+             * @description The item; empty on an expense line
+             */
+            variant_id?: string | null;
+            /**
+             * Account Id
+             * @description Expense lines and service items on a bill: the account debited
+             */
+            account_id?: string | null;
+            /**
+             * Unit
+             * @description One of the item's units (default: base)
+             */
+            unit?: string | null;
+            /**
+             * Qty
+             * @description Expense lines: 1
+             */
+            qty: number | string;
+            /**
+             * Unit Price
+             * @description Per unit typed, VAT-exclusive (default: the line it follows)
+             */
+            unit_price?: number | string | null;
+            /**
+             * Vat Rate
+             * @description 0 or 5 (%); default: the line it follows, else 0
+             */
+            vat_rate?: number | string | null;
+            /**
+             * Source Line Id
+             * @description Receipt: the order line; bill: the receipt line; return: the bill or receipt line
+             */
+            source_line_id?: string | null;
+            /** Batch Id */
+            batch_id?: string | null;
+            /** Batch No */
+            batch_no?: string | null;
+            /** Expiry Date */
+            expiry_date?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** PurchaseLineOut */
+        PurchaseLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line No */
+            line_no: number;
+            /** Variant Id */
+            variant_id: string | null;
+            /** Sku */
+            sku: string | null;
+            /** Name En */
+            name_en: string | null;
+            /** Name Ar */
+            name_ar: string | null;
+            /** Account Id */
+            account_id: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Qty */
+            qty: string;
+            /** Qty Base */
+            qty_base: string;
+            /** Base Unit */
+            base_unit: string | null;
+            /** Unit Price */
+            unit_price: string | null;
+            /** Net Amount */
+            net_amount: string;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Vat Amount */
+            vat_amount: string;
+            /** Line Total */
+            line_total: string;
+            /** Source Line Id */
+            source_line_id: string | null;
+            /** Batch Id */
+            batch_id: string | null;
+            /** Batch No */
+            batch_no: string | null;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /** Description */
+            description: string | null;
+            /**
+             * Cleared Value
+             * @description Bills: GRNI cleared; returns: the cost the goods left at
+             */
+            cleared_value: string | null;
+        };
         /** QuoteIn */
         QuoteIn: {
             /**
@@ -8395,6 +8761,239 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BatchOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_purchase_documents: {
+        parameters: {
+            query: {
+                business_id: string;
+                doc_type?: components["schemas"]["PurchaseDocType"] | null;
+                status?: components["schemas"]["DocumentStatus"] | null;
+                party_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseDocSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_purchase_document: {
+        parameters: {
+            query?: {
+                /** @description Save and post in one step */
+                post?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseDocIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_purchase_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_purchase_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseDocIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_purchase_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    purchase_open_lines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenLineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_purchase_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostPurchaseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseDocOut"];
                 };
             };
             /** @description Validation Error */

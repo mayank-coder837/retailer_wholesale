@@ -8,7 +8,7 @@ request's transaction, so a failure leaves nothing behind, the number included.
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import delete, select
@@ -17,7 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import audit, numbering
 from app.core.errors import ConflictError, NotFoundError, UnprocessableError
 from app.core.numbering import NotNumberOwnerError
-from app.modules.accounting import posting
 from app.modules.accounting import service as accounting
 from app.modules.accounting.models import Role
 from app.modules.catalog import products as catalog
@@ -25,6 +24,7 @@ from app.modules.catalog.models import ProductType
 from app.modules.documents.models import Document, DocumentLine, DocumentStatus, LineDirection
 from app.modules.inventory import costing, stock
 from app.modules.inventory.models import OUTBOUND, Batch, MoveType, StockMove
+from app.modules.inventory.posting import ValueJournal, batch_by_no, ensure_batch, recost
 from app.modules.inventory.schemas import (
     StockDocIn,
     StockDocOut,
@@ -62,9 +62,10 @@ class NegativeStockError(ConflictError):
     title = "This would take stock below zero, which this business does not allow"
 
 
-class RecostLockedError(ConflictError):
-    code = "recost_into_locked_period"
-    title = "A later stock move is in a locked period, so this backdated document cannot be posted"
+def _item(row: DocumentLine) -> uuid.UUID:
+    """Inventory document lines always name an item (only bills have expense lines without one)."""
+    assert row.variant_id is not None
+    return row.variant_id
 
 
 def _invalid(message: str, **where: object) -> InvalidStockDocError:
@@ -150,18 +151,12 @@ async def _check_batch(
         return batch.id
     if direction is LineDirection.OUT or not raw.batch_no:
         raise _invalid(f"Choose the batch of {item.sku}.", field=f"{where}.batch_id")
-    existing = await _batch_by_no(session, item.variant_id, raw.batch_no)
+    existing = await batch_by_no(session, item.variant_id, raw.batch_no)
     if existing is not None:
         return existing.id
     if item.track_expiry and raw.expiry_date is None:
         raise _invalid(f"A new batch of {item.sku} needs its expiry date.", field=f"{where}.expiry_date")
     return None  # created when the document is posted
-
-
-async def _batch_by_no(session: AsyncSession, variant_id: uuid.UUID, batch_no: str) -> Batch | None:
-    return (
-        await session.scalars(select(Batch).where(Batch.variant_id == variant_id, Batch.batch_no == batch_no))
-    ).first()
 
 
 # --- drafts ------------------------------------------------------------------------------------------------
@@ -268,11 +263,11 @@ async def _lines(session: AsyncSession, doc: Document) -> list[DocumentLine]:
 async def _stored_input(session: AsyncSession, doc: Document) -> StockDocIn:
     lines: list[StockLineIn] = []
     for row in await _lines(session, doc):
-        item = await catalog.stock_item(session, row.variant_id)
+        item = await catalog.stock_item(session, _item(row))
         unit = next(code for code, u in item.units.items() if u.unit_id == row.unit_id)
         lines.append(
             StockLineIn(
-                variant_id=row.variant_id,
+                variant_id=_item(row),
                 unit=unit,
                 qty=row.qty_entered,
                 direction=LineDirection(row.direction),
@@ -299,51 +294,6 @@ async def _stored_input(session: AsyncSession, doc: Document) -> StockDocIn:
 
 
 # --- posting -----------------------------------------------------------------------------------------------
-
-
-class _Journal:
-    """Changes to the inventory account and what balances them, netted per account."""
-
-    def __init__(self, inventory: uuid.UUID) -> None:
-        self.inventory = inventory
-        self.net: dict[uuid.UUID, Decimal] = {}
-
-    def add(self, change: Decimal, counter: uuid.UUID | None) -> None:
-        """``change`` (signed: + raises stock value) against ``counter``; no counter (transfers): nothing."""
-        if not change or counter is None:
-            return
-        self.net[self.inventory] = self.net.get(self.inventory, ZERO) + change
-        self.net[counter] = self.net.get(counter, ZERO) - change
-
-    def lines(self, description: str | None = None) -> list[posting.JournalLine]:
-        out: list[posting.JournalLine] = []
-        for account, amount in self.net.items():
-            if amount > 0:
-                out.append(posting.JournalLine(account, amount, ZERO, description=description))
-            elif amount < 0:
-                out.append(posting.JournalLine(account, ZERO, -amount, description=description))
-        return out
-
-
-async def _batch_for_post(session: AsyncSession, doc: Document, row: DocumentLine) -> uuid.UUID | None:
-    """The line's batch, creating it by number the first time (while the document is still a draft)."""
-    if row.batch_id is not None or row.batch_no is None:
-        return row.batch_id
-    batch = await _batch_by_no(session, row.variant_id, row.batch_no)
-    if batch is None:
-        batch = Batch(
-            tenant_id=doc.tenant_id,
-            variant_id=row.variant_id,
-            batch_no=row.batch_no,
-            expiry_date=row.expiry_date,
-        )
-        session.add(batch)
-        await session.flush()
-    row.batch_id = batch.id
-    row.batch_no = None
-    row.expiry_date = None
-    await session.flush()
-    return batch.id
 
 
 async def post(
@@ -383,7 +333,7 @@ async def post(
     for role in (Role.INVENTORY, Role.STOCK_ADJUSTMENT, Role.STOCK_COST_ADJUSTMENT):
         if role not in roles:
             raise _invalid(f"Give the role {role.value} an account first.", role=role.value)
-    journal = _Journal(roles[Role.INVENTORY])
+    journal = ValueJournal(roles[Role.INVENTORY])
     ctx = stock.Context(doc.tenant_id, business.id, doc.doc_date, doc.id, roles[Role.STOCK_COST_ADJUSTMENT])
     settings = await settings_service.effective(session, business_id=business.id, branch_id=doc.branch_id)
     warn = bool(settings["inventory.negative_stock_warning"].value)
@@ -419,13 +369,13 @@ async def post(
     kind = StockDocType(doc.doc_type)
     if kind is StockDocType.STOCK_ADJUSTMENT:
         for row in rows:
-            batch_id = await _batch_for_post(session, doc, row)
+            batch_id = await ensure_batch(session, doc.tenant_id, row)
             if row.direction == LineDirection.IN:
                 value = costing.fils(row.qty_entered * row.unit_cost) if row.unit_cost is not None else None
                 spec = stock.Spec(
                     MoveType.ADJUSTMENT_IN,
                     warehouse,
-                    row.variant_id,
+                    _item(row),
                     row.qty_base,
                     batch_id,
                     value=value,
@@ -436,7 +386,7 @@ async def post(
                 spec = stock.Spec(
                     MoveType.ADJUSTMENT_OUT,
                     warehouse,
-                    row.variant_id,
+                    _item(row),
                     row.qty_base,
                     batch_id,
                     counter_account_id=roles[Role.STOCK_ADJUSTMENT],
@@ -450,7 +400,7 @@ async def post(
                 stock.Spec(
                     MoveType.TRANSFER_OUT,
                     warehouse,
-                    row.variant_id,
+                    _item(row),
                     row.qty_base,
                     row.batch_id,
                     document_line_id=row.id,
@@ -460,7 +410,7 @@ async def post(
                 stock.Spec(
                     MoveType.TRANSFER_IN,
                     doc.to_warehouse_id,
-                    row.variant_id,
+                    _item(row),
                     row.qty_base,
                     row.batch_id,
                     value=-out.value,
@@ -475,7 +425,7 @@ async def post(
                 stock.Spec(
                     MoveType.ITEM_TRANSFER_OUT,
                     warehouse,
-                    row.variant_id,
+                    _item(row),
                     row.qty_base,
                     row.batch_id,
                     document_line_id=row.id,
@@ -484,12 +434,12 @@ async def post(
             moved += -out.value
         targets = [r for r in rows if r.direction == LineDirection.IN]
         for row, share in zip(targets, costing.split(moved, [r.qty_base for r in targets]), strict=True):
-            batch_id = await _batch_for_post(session, doc, row)
+            batch_id = await ensure_batch(session, doc.tenant_id, row)
             await run(
                 stock.Spec(
                     MoveType.ITEM_TRANSFER_IN,
                     warehouse,
-                    row.variant_id,
+                    _item(row),
                     row.qty_base,
                     batch_id,
                     value=share,
@@ -512,7 +462,7 @@ async def post(
             lines=lines,
         )
     if ctx.backdated:
-        await _recost(session, ctx, business, doc, number.formatted, roles)
+        await recost(session, ctx, business, doc.branch_id, doc.id, number.formatted, roles)
 
     doc.status = DocumentStatus.POSTED.value
     doc.series_id = number.series_id
@@ -526,77 +476,6 @@ async def post(
         session, doc, "post", changes={"number": [None, number.formatted], "total": [None, str(total)]}
     )
     return doc, warnings
-
-
-async def _recost(
-    session: AsyncSession,
-    ctx: stock.Context,
-    business: Business,
-    doc: Document,
-    number: str,
-    roles: dict[Role, uuid.UUID],
-) -> None:
-    """Rule 28: later moves of the backdated variants take their new costs, as new rows and journal entries
-    dated on the moves they correct. Item Transfers carry a change on to the target items."""
-    by_day: dict[date, _Journal] = {}
-    queue = list(ctx.backdated)
-    rounds = 0
-    while queue:
-        rounds += 1
-        if rounds > 1000:
-            raise RuntimeError("recost did not settle")
-        variant = queue.pop(0)
-        replayed = await stock.replay(session, business.id, variant)
-        for correction in replayed.corrections:
-            await stock.write_correction(session, ctx, correction, roles[Role.STOCK_COST_ADJUSTMENT])
-            counter = (
-                correction.move.counter_account_id
-                if correction.kind == MoveType.RECOST
-                else roles[Role.STOCK_COST_ADJUSTMENT]
-            )
-            if counter is not None:
-                by_day.setdefault(correction.move.move_date, _Journal(roles[Role.INVENTORY])).add(
-                    correction.delta, counter
-                )
-        await stock.set_pool(session, ctx, variant, replayed.state)
-        for out_move, delta in replayed.item_transfer_deltas:
-            targets = (
-                await session.scalars(
-                    select(StockMove)
-                    .where(
-                        StockMove.document_id == out_move.document_id,
-                        StockMove.move_type == MoveType.ITEM_TRANSFER_IN.value,
-                    )
-                    .order_by(StockMove.seq)
-                )
-            ).all()
-            for target, share in zip(
-                targets, costing.split(-delta, [t.qty_base for t in targets]), strict=True
-            ):
-                if share:
-                    await stock.write_correction(
-                        session, ctx, stock.Correction(target, MoveType.RECOST, share), None
-                    )
-                    if target.variant_id not in queue:
-                        queue.append(target.variant_id)
-    for day, journal in sorted(by_day.items()):
-        lines = journal.lines(f"Recost after {number}")
-        if not lines:
-            continue
-        if not await accounting.is_open(session, business, day):
-            raise RecostLockedError(date=day.isoformat())
-        _year, period = await accounting.posting_period(session, business, day)
-        await accounting.write_journal(
-            session,
-            business=business,
-            branch_id=doc.branch_id,
-            day=day,
-            period_id=period.id,
-            number=number,
-            narration=f"Recost after {number}",
-            source_document_id=doc.id,
-            lines=lines,
-        )
 
 
 # --- reading -----------------------------------------------------------------------------------------------
@@ -636,7 +515,7 @@ async def get_stock_document(
     batches: dict[uuid.UUID, str] = {}
     out: list[StockLineOut] = []
     for row in await _lines(session, doc):
-        item = await catalog.stock_item(session, row.variant_id)
+        item = await catalog.stock_item(session, _item(row))
         unit = next(code for code, u in item.units.items() if u.unit_id == row.unit_id)
         if row.batch_id is not None and row.batch_id not in batches:
             batch = await session.get(Batch, row.batch_id)
@@ -645,7 +524,7 @@ async def get_stock_document(
             StockLineOut(
                 id=row.id,
                 line_no=row.line_no,
-                variant_id=row.variant_id,
+                variant_id=_item(row),
                 sku=item.sku,
                 name_en=item.name_en,
                 name_ar=item.name_ar,
