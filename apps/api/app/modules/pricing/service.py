@@ -7,6 +7,7 @@ read through the catalog module's service, never its tables.
 
 import uuid
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import or_, select
@@ -143,6 +144,12 @@ async def _unit_of(
     if unit not in context.units:
         raise InvalidPricingError(f"{unit} is not a unit of this product.", field="unit")
     return context, context.units[unit].unit_id
+
+
+async def min_price(session: AsyncSession, variant_id: uuid.UUID, unit: str) -> Decimal | None:
+    """The unit's minimum sale price (M1.3 guard), or None when it has none."""
+    context, _unit_id = await _unit_of(session, variant_id, unit)
+    return context.units[unit].min_price
 
 
 async def list_items(session: AsyncSession, price_list_id: uuid.UUID) -> list[PriceListItemOut]:
@@ -316,6 +323,12 @@ async def quote(session: AsyncSession, data: QuoteIn, *, may_override_min: bool)
         )
         if _valid_on(p, day)
     ]
+    last_sale = None
+    if data.party_id is not None:
+        # Imported here: sales checks prices through this module (each calls the other).
+        from app.modules.sales import service as sales
+
+        last_sale = await sales.last_sale(session, data.business_id, data.party_id, data.variant_id)
     result = engine.quote(
         engine.QuoteInput(
             qty=data.qty,
@@ -323,8 +336,7 @@ async def quote(session: AsyncSession, data: QuoteIn, *, may_override_min: bool)
             factor_to_base=unit.factor_to_base,
             base_price=unit.sale_price,
             min_price=unit.min_price,
-            # Step 1, the last price sold to this customer, reads posted sales invoices: connected in M1.8.
-            last_sale=None,
+            last_sale=last_sale,
             customer_list=await _list_prices(session, customer_list, context.variant_id, unit_id, day),
             group_list=await _list_prices(session, group_list, context.variant_id, unit_id, day),
             standard_list=await _list_prices(session, standard, context.variant_id, unit_id, day),

@@ -1589,6 +1589,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sales-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sales Documents */
+        get: operations["list_sales_documents"];
+        put?: never;
+        /** Create Sales Document */
+        post: operations["create_sales_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-documents/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sales Document */
+        get: operations["get_sales_document"];
+        /** Update Sales Document */
+        put: operations["update_sales_document"];
+        post?: never;
+        /** Delete Sales Document */
+        delete: operations["delete_sales_document"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-documents/{doc_id}/open-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales Open Lines */
+        get: operations["sales_open_lines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-documents/{doc_id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Sales Document */
+        post: operations["post_sales_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/parties/{party_id}/sales-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Customer Sales History
+         * @description The customer history panel (A9): every item invoiced to this customer, newest first.
+         */
+        get: operations["customer_sales_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -3204,6 +3295,43 @@ export interface components {
              */
             value_open?: string | null;
         };
+        /**
+         * OpenSalesLineOut
+         * @description What is still to do on a posted line: to order, deliver, invoice or return.
+         */
+        OpenSalesLineOut: {
+            /**
+             * Line Id
+             * Format: uuid
+             */
+            line_id: string;
+            /** Variant Id */
+            variant_id: string | null;
+            /** Sku */
+            sku: string | null;
+            /** Name En */
+            name_en: string | null;
+            /** Name Ar */
+            name_ar: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Factor To Base */
+            factor_to_base: string;
+            /** Qty Open Base */
+            qty_open_base: string;
+            /**
+             * Qty Open
+             * @description In the line's own unit (when it divides exactly, else the base unit)
+             */
+            qty_open: string;
+            /**
+             * Unit Price
+             * @description Delivery lines: the price of the order line they follow
+             */
+            unit_price: string | null;
+            /** Vat Rate */
+            vat_rate: string;
+        };
         /** PackSummary */
         PackSummary: {
             /** Code */
@@ -3410,6 +3538,21 @@ export interface components {
         PostPurchaseIn: {
             /** Override Lock Reason */
             override_lock_reason?: string | null;
+            /**
+             * Reuse Number
+             * @description Take a number freed by a cancelled document (see released-numbers)
+             */
+            reuse_number?: number | null;
+        };
+        /** PostSalesIn */
+        PostSalesIn: {
+            /** Override Lock Reason */
+            override_lock_reason?: string | null;
+            /**
+             * Credit Override Reason
+             * @description Needed to post past a credit block (credit.override)
+             */
+            credit_override_reason?: string | null;
             /**
              * Reuse Number
              * @description Take a number freed by a cancelled document (see released-numbers)
@@ -4215,6 +4358,322 @@ export interface components {
             description?: string | null;
             /** Permissions */
             permissions?: string[] | null;
+        };
+        /** SalesDocIn */
+        SalesDocIn: {
+            doc_type: components["schemas"]["SalesDocType"];
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Party Id
+             * Format: uuid
+             * @description The customer
+             */
+            party_id: string;
+            /**
+             * Warehouse Id
+             * @description Delivery notes and returns; invoices with goods not delivered before
+             */
+            warehouse_id?: string | null;
+            /**
+             * Cash Account Id
+             * @description Invoices: a cash sale, paid into this cash or bank account (no receivable)
+             */
+            cash_account_id?: string | null;
+            /**
+             * Valid Until
+             * @description Quotations and proformas
+             */
+            valid_until?: string | null;
+            /**
+             * Due Date
+             * @description Credit invoices: default the customer's credit days
+             */
+            due_date?: string | null;
+            /**
+             * Reference
+             * @description The customer's order number
+             */
+            reference?: string | null;
+            /** Narration */
+            narration?: string | null;
+            /** Lines */
+            lines: components["schemas"]["SalesLineIn"][];
+        };
+        /** SalesDocOut */
+        SalesDocOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["SalesDocType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Warehouse Id */
+            warehouse_id: string | null;
+            /** Cash Account Id */
+            cash_account_id: string | null;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Subtotal */
+            subtotal: string;
+            /** Tax Total */
+            tax_total: string;
+            /** Round Off */
+            round_off: string;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+            /** Lines */
+            lines: components["schemas"]["SalesLineOut"][];
+            /**
+             * Progress
+             * @description Quotations: open, partly_ordered, ordered; orders: open, partly_delivered, delivered; delivery notes: not_invoiced, partly_invoiced, invoiced
+             */
+            progress?: string | null;
+            /**
+             * Warnings
+             * @description From the post just made (not stored)
+             * @default []
+             */
+            warnings: components["schemas"]["SalesWarningOut"][];
+        };
+        /** SalesDocSummary */
+        SalesDocSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            doc_type: components["schemas"]["SalesDocType"];
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Warehouse Id */
+            warehouse_id: string | null;
+            /** Cash Account Id */
+            cash_account_id: string | null;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Due Date */
+            due_date: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Subtotal */
+            subtotal: string;
+            /** Tax Total */
+            tax_total: string;
+            /** Round Off */
+            round_off: string;
+            /** Total */
+            total: string;
+            /** Posted At */
+            posted_at: string | null;
+        };
+        /**
+         * SalesDocType
+         * @enum {string}
+         */
+        SalesDocType: "quotation" | "proforma_invoice" | "sales_order" | "delivery_note" | "sales_invoice" | "sales_return";
+        /**
+         * SalesHistoryLineOut
+         * @description One item invoiced to the customer (the history panel, A9).
+         */
+        SalesHistoryLineOut: {
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Number */
+            number: string;
+            /**
+             * Variant Id
+             * Format: uuid
+             */
+            variant_id: string;
+            /** Sku */
+            sku: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Qty */
+            qty: string;
+            /** Unit */
+            unit: string;
+            /** Unit Price */
+            unit_price: string | null;
+        };
+        /** SalesLineIn */
+        SalesLineIn: {
+            /**
+             * Variant Id
+             * Format: uuid
+             * @description The item
+             */
+            variant_id: string;
+            /**
+             * Unit
+             * @description One of the item's units (default: base)
+             */
+            unit?: string | null;
+            /** Qty */
+            qty: number | string;
+            /**
+             * Unit Price
+             * @description Per unit typed, VAT-exclusive (default: the order line it follows); none on deliveries
+             */
+            unit_price?: number | string | null;
+            /**
+             * Vat Rate
+             * @description 0 or 5 (%); default: the line it follows, else 5
+             */
+            vat_rate?: number | string | null;
+            /**
+             * Price Source
+             * @description What the pricing engine said, e.g. last_price:INV-2026-00412
+             */
+            price_source?: string | null;
+            /**
+             * Source Line Id
+             * @description Order: the quotation line; delivery: the order line; invoice: the delivery or order line; return: the invoice line
+             */
+            source_line_id?: string | null;
+            /**
+             * Batch Id
+             * @description Goods out of a batch-tracked item
+             */
+            batch_id?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** SalesLineOut */
+        SalesLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line No */
+            line_no: number;
+            /** Variant Id */
+            variant_id: string | null;
+            /** Sku */
+            sku: string | null;
+            /** Name En */
+            name_en: string | null;
+            /** Name Ar */
+            name_ar: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Qty */
+            qty: string;
+            /** Qty Base */
+            qty_base: string;
+            /** Base Unit */
+            base_unit: string | null;
+            /** Unit Price */
+            unit_price: string | null;
+            /** Price Source */
+            price_source: string | null;
+            /** Below Min */
+            below_min: boolean;
+            /** Net Amount */
+            net_amount: string;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Vat Amount */
+            vat_amount: string;
+            /** Line Total */
+            line_total: string;
+            /** Source Line Id */
+            source_line_id: string | null;
+            /** Batch Id */
+            batch_id: string | null;
+            /** Description */
+            description: string | null;
+            /**
+             * Cost
+             * @description Delivery notes and invoices: the cost the goods left at; returns: what they came back at
+             */
+            cost: string | null;
+        };
+        /** SalesWarningOut */
+        SalesWarningOut: {
+            /**
+             * Code
+             * @description credit_warning: the customer is over the limit or overdue (policy warn)
+             */
+            code: string;
+            /**
+             * Reasons
+             * @default []
+             */
+            reasons: string[];
         };
         /** SettingIn */
         SettingIn: {
@@ -9167,6 +9626,273 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchaseDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sales_documents: {
+        parameters: {
+            query: {
+                business_id: string;
+                doc_type?: components["schemas"]["SalesDocType"] | null;
+                status?: components["schemas"]["DocumentStatus"] | null;
+                party_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDocSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_sales_document: {
+        parameters: {
+            query?: {
+                /** @description Save and post in one step (always, for a quotation) */
+                post?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesDocIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sales_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_sales_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesDocIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_sales_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sales_open_lines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenSalesLineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_sales_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostSalesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    customer_sales_history: {
+        parameters: {
+            query: {
+                business_id: string;
+                q?: string | null;
+            };
+            header?: never;
+            path: {
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesHistoryLineOut"][];
                 };
             };
             /** @description Validation Error */

@@ -337,6 +337,21 @@ async def undo_moves(
     return journal.lines()
 
 
+async def line_costs(session: AsyncSession, line_ids: list[uuid.UUID]) -> dict[uuid.UUID, Decimal]:
+    """Per document line that moved goods: the value it moved, recosts since included (out: positive)."""
+    if not line_ids:
+        return {}
+    rows = await session.execute(
+        select(StockMove.document_line_id, func.sum(StockMove.value))
+        .where(
+            StockMove.document_line_id.in_(line_ids),
+            StockMove.move_type.not_in([MoveType.CANCEL.value, MoveType.REVERSAL.value]),
+        )
+        .group_by(StockMove.document_line_id)
+    )
+    return {line: -value for line, value in rows if line is not None}
+
+
 async def has_moves(session: AsyncSession, document_id: uuid.UUID) -> bool:
     found = await session.scalar(select(StockMove.id).where(StockMove.document_id == document_id).limit(1))
     return found is not None

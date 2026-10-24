@@ -29,6 +29,7 @@
         "sales_order.view", "sales_order.create", "sales_order.edit", "sales_order.delete", "sales_order.post",
         "delivery_note.view",
         "sales_invoice.view", "sales_invoice.create", "sales_invoice.edit", "sales_invoice.delete", "sales_invoice.post", "sales_invoice.export",
+        "proforma_invoice.view", "proforma_invoice.create", "proforma_invoice.edit", "proforma_invoice.delete", "proforma_invoice.post", "proforma_invoice.export",
         "sales_return.view", "sales_return.create", "sales_return.edit",
         "receipt.view", "pdc.view"
       ]
@@ -58,7 +59,7 @@
         "business.view", "branch.view", "warehouse.view", "unit.view", "product.view", "price_list.view", "promotion.view",
         "customer.*", "supplier.*", "account.*",
         "receipt.*", "payment.*", "contra.*", "journal.*", "expense.*", "credit_note.*", "debit_note.*",
-        "sales_invoice.*", "sales_return.*", "purchase_bill.*", "purchase_return.*",
+        "sales_invoice.*", "proforma_invoice.*", "sales_return.*", "purchase_bill.*", "purchase_return.*",
         "pdc.*", "fiscal_period.*", "report.*", "period.override_lock", "credit.limit", "audit.view"
       ]
     },
@@ -71,6 +72,7 @@
         "business.view", "branch.view", "warehouse.view",
         "unit.view", "product.view", "price_list.view", "promotion.view", "customer.view", "customer.create",
         "sales_invoice.view", "sales_invoice.create", "sales_invoice.post",
+        "proforma_invoice.view", "proforma_invoice.create", "proforma_invoice.post",
         "receipt.view", "receipt.create", "receipt.post",
         "pdc.view", "pdc.create"
       ]
