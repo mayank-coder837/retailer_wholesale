@@ -44,7 +44,9 @@ from app.modules.accounting.schemas import (
     PartyLedgerOut,
     TrialBalanceOut,
     TrialBalanceRowOut,
+    VoucherIn,
 )
+from app.modules.documents.models import Document
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
@@ -263,10 +265,19 @@ async def party_ledger(
     bills = await ledger.open_bills(session, business_id, party_id)
     balance = sum((await ledger.party_balance_by_side(session, business_id, party_id)).values(), ZERO)
     on_account = balance - sum((ledger.signed_open(b) for b in bills), ZERO)
+    from app.modules.pdc import service as pdc  # the register builds on accounting
+    from app.modules.pdc.models import PdcDirection
+
+    pending = await pdc.pending_amounts(session, business_id, party_id)
+    received = pending.get((party_id, PdcDirection.RECEIVED), ZERO)
+    issued = pending.get((party_id, PdcDirection.ISSUED), ZERO)
     return PartyLedgerOut(
         **base.model_dump(),
         open_bills=[BillOut.model_validate(b) for b in bills],
         on_account=on_account,
+        pdc_received_pending=received,
+        pdc_issued_pending=issued,
+        outstanding_after_pdc=base.closing - received + issued,
     )
 
 
@@ -310,7 +321,17 @@ async def trial_balance(session: AsyncSession, business_id: uuid.UUID, as_of: da
 
 
 BUCKETS = ((0, "not_due"), (30, "days_1_30"), (60, "days_31_60"), (90, "days_61_90"))
-AGEING_FIELDS = ("not_due", "days_1_30", "days_31_60", "days_61_90", "over_90", "advances", "total")
+AGEING_FIELDS = (
+    "not_due",
+    "days_1_30",
+    "days_31_60",
+    "days_61_90",
+    "over_90",
+    "advances",
+    "total",
+    "pdc",
+    "after_pdc",
+)
 
 
 def _bucket(days_late: int) -> str:
@@ -329,6 +350,8 @@ async def ageing(
     ageing on a past date comes with the reports (M1.11).
     """
     from app.modules.parties import service as parties  # parties builds on accounting
+    from app.modules.pdc import service as pdc  # the register builds on accounting
+    from app.modules.pdc.models import PdcDirection
 
     kind = AccountType.RECEIVABLE if receivable else AccountType.PAYABLE
     owed = Direction.DEBIT if receivable else Direction.CREDIT  # invoices to customers, bills from suppliers
@@ -341,11 +364,15 @@ async def ageing(
             row["advances"] += bill.amount_open
     out: list[AgeingRowOut] = []
     totals: dict[str, Decimal] = dict.fromkeys(AGEING_FIELDS, ZERO)
+    pending = await pdc.pending_amounts(session, business_id)
+    side = PdcDirection.RECEIVED if receivable else PdcDirection.ISSUED
     for party_id, figures in rows.items():
         party = await parties.get_party_row(session, party_id)
         figures["total"] = (
             sum((figures[name] for _limit, name in BUCKETS), ZERO) + figures["over_90"] - figures["advances"]
         )
+        figures["pdc"] = pending.get((party_id, side), ZERO)
+        figures["after_pdc"] = figures["total"] - figures["pdc"]
         for name, value in figures.items():
             totals[name] += value
         out.append(
@@ -417,6 +444,57 @@ async def cash_or_bank_account(session: AsyncSession, business_id: uuid.UUID, ac
         or AccountType(account.account_type) not in CASH_OR_BANK
     ):
         raise chart.InvalidAccountError("Choose a cash or bank account.", field="cash_account_id")
+
+
+async def bank_account(
+    session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID, field: str = "bank_account_id"
+) -> None:
+    """Refuses an account a cheque cannot go through: another business's, a group, archived, or not a bank."""
+    account = await session.get(Account, account_id)
+    if (
+        account is None
+        or account.business_id != business_id
+        or account.is_group
+        or account.archived_at is not None
+        or account.account_type != AccountType.BANK.value
+    ):
+        raise chart.InvalidAccountError("Choose a bank account.", field=field)
+
+
+async def get_bill(session: AsyncSession, bill_id: uuid.UUID) -> BillOut | None:
+    bill = await session.get(Bill, bill_id)
+    return BillOut.model_validate(bill) if bill is not None else None
+
+
+async def bill_account_type(session: AsyncSession, bill_id: uuid.UUID) -> AccountType | None:
+    """Receivable or payable: which control account a bill sits on."""
+    bill = await session.get(Bill, bill_id)
+    account = await session.get(Account, bill.account_id) if bill is not None else None
+    return AccountType(account.account_type) if account is not None and account.account_type else None
+
+
+async def post_voucher(
+    session: AsyncSession,
+    tenant_id: uuid.UUID,
+    data: VoucherIn,
+    *,
+    node_id: uuid.UUID | None,
+    user_id: uuid.UUID | None,
+    may_override_lock: bool = False,
+    override_reason: str | None = None,
+) -> Document:
+    """A voucher saved and posted in one step, through the checks of one typed by hand (PDC clearance)."""
+    from app.modules.accounting import vouchers  # vouchers build on this service
+
+    draft = await vouchers.create_draft(session, tenant_id, data)
+    return await vouchers.post(
+        session,
+        draft.id,
+        node_id=node_id,
+        user_id=user_id,
+        may_override_lock=may_override_lock,
+        override_reason=override_reason,
+    )
 
 
 async def expense_account(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> None:

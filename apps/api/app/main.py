@@ -25,6 +25,7 @@ from app.modules.identity import roles_router
 from app.modules.identity import router as identity_router
 from app.modules.inventory import router as inventory_router
 from app.modules.parties import router as parties_router
+from app.modules.pdc import router as pdc_router
 from app.modules.platform import attachments
 from app.modules.platform import router as platform_router
 from app.modules.pricing import router as pricing_router
@@ -94,6 +95,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(inventory_router.router)
     app.include_router(purchasing_router.router)
     app.include_router(sales_router.router)
+    app.include_router(pdc_router.router)
     app.include_router(documents_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)

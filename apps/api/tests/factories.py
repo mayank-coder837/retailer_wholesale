@@ -77,6 +77,9 @@ from app.modules.parties.schemas import (
     PartyIn,
     SupplierProfileIn,
 )
+from app.modules.pdc import service as pdc_service
+from app.modules.pdc.models import PdcDirection, PdcIntendedBill
+from app.modules.pdc.schemas import IntendedBillIn, PdcIn
 from app.modules.pricing import service as pricing
 from app.modules.pricing.engine import PromotionKind
 from app.modules.pricing.models import PriceListItem, PromotionScope
@@ -653,6 +656,40 @@ async def _bill_allocation(session: AsyncSession, seed: TenantSeed) -> Any:
     return await session.scalar(select(BillAllocation.id).limit(1))
 
 
+# --- PDC register (M1.9) -----------------------------------------------------------------------------------
+
+
+def cheque(seed: TenantSeed, party_id: uuid.UUID, amount: Decimal, **extra: Any) -> PdcIn:
+    return PdcIn(
+        business_id=seed.business_id,
+        branch_id=seed.branch_id,
+        direction=PdcDirection.RECEIVED,
+        party_id=party_id,
+        cheque_no=f"00{_tag()[:4]}",
+        cheque_date=dubai_today(),
+        amount=amount,
+        **extra,
+    )
+
+
+async def _pdc(session: AsyncSession, seed: TenantSeed) -> Any:
+    party = await _new_party(session, seed)
+    return (await pdc_service.create(session, seed.tenant_id, cheque(seed, party.id, Decimal(500)))).id
+
+
+async def _pdc_intended_bill(session: AsyncSession, seed: TenantSeed) -> Any:
+    await _billed_and_paid(session, seed)
+    bill = (await session.scalars(select(Bill).where(Bill.amount_open > 0).limit(1))).one()
+    data = cheque(
+        seed,
+        bill.party_id,
+        Decimal(500),
+        intended_bills=[IntendedBillIn(bill_id=bill.id, amount=Decimal(500))],
+    )
+    pdc = await pdc_service.create(session, seed.tenant_id, data)
+    return await session.scalar(select(PdcIntendedBill.id).where(PdcIntendedBill.pdc_id == pdc.id))
+
+
 # --- inventory (M1.6) --------------------------------------------------------------------------------------
 
 
@@ -796,6 +833,8 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "average_cost": _average_cost,
     "stock_balance": _stock_balance,
     "document_line": _document_line,
+    "pdc": _pdc,
+    "pdc_intended_bill": _pdc_intended_bill,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.
