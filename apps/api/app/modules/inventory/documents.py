@@ -304,6 +304,7 @@ async def post(
     user_id: uuid.UUID | None,
     may_override_lock: bool,
     override_reason: str | None,
+    reuse_number: int | None = None,
 ) -> tuple[Document, list[StockWarning]]:
     doc = await _locked_draft(session, doc_id)
     data = await _stored_input(session, doc)
@@ -327,6 +328,7 @@ async def post(
         fiscal_year=year.code,
         node_id=node_id,
         document_id=doc.id,
+        reuse=reuse_number,
     )
     await stock.lock_business(session, business.id)
     roles = await accounting.role_accounts(session, business.id)
@@ -468,6 +470,7 @@ async def post(
     doc.series_id = number.series_id
     doc.number_seq = number.number
     doc.number = number.formatted
+    doc.reissue_of_id = number.reissue_of
     doc.total = total
     doc.posted_at = datetime.now(UTC)
     doc.posted_by = user_id

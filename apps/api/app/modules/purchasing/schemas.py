@@ -67,6 +67,9 @@ class PurchaseDocIn(BaseModel):
 
 class PostPurchaseIn(BaseModel):
     override_lock_reason: str | None = Field(default=None, max_length=500)
+    reuse_number: int | None = Field(
+        default=None, ge=1, description="Take a number freed by a cancelled document (see released-numbers)"
+    )
 
 
 class PurchaseLineOut(BaseModel):

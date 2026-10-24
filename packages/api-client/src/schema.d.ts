@@ -1589,6 +1589,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/{doc_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Document */
+        post: operations["cancel_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{doc_id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse Document */
+        post: operations["reverse_document"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/released-numbers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Released Numbers */
+        get: operations["list_released_numbers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -2371,6 +2422,11 @@ export interface components {
             /** Negative Stock Allowed */
             negative_stock_allowed: boolean;
         };
+        /** CancelIn */
+        CancelIn: {
+            /** Reason */
+            reason: string;
+        };
         /** CategoryIn */
         CategoryIn: {
             /** Name En */
@@ -2475,6 +2531,37 @@ export interface components {
             factor: string;
             /** Result */
             result: string;
+        };
+        /**
+         * CorrectedOut
+         * @description The cancelled or reversed document, and the reversal when there is one.
+         */
+        CorrectedOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Doc Type */
+            doc_type: string;
+            status: components["schemas"]["DocumentStatus"];
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /** Cancel Reason */
+            cancel_reason: string | null;
+            /** Reversal Id */
+            reversal_id?: string | null;
+            /** Reversal Doc Type */
+            reversal_doc_type?: string | null;
+            /** Reversal Number */
+            reversal_number?: string | null;
+            /** Reversal Date */
+            reversal_date?: string | null;
         };
         /** CreditCheckIn */
         CreditCheckIn: {
@@ -3271,16 +3358,31 @@ export interface components {
              * @description Needed to post into a locked period (period.override_lock)
              */
             override_lock_reason?: string | null;
+            /**
+             * Reuse Number
+             * @description Take a number freed by a cancelled document (see released-numbers)
+             */
+            reuse_number?: number | null;
         };
         /** PostPurchaseIn */
         PostPurchaseIn: {
             /** Override Lock Reason */
             override_lock_reason?: string | null;
+            /**
+             * Reuse Number
+             * @description Take a number freed by a cancelled document (see released-numbers)
+             */
+            reuse_number?: number | null;
         };
         /** PostStockIn */
         PostStockIn: {
             /** Override Lock Reason */
             override_lock_reason?: string | null;
+            /**
+             * Reuse Number
+             * @description Take a number freed by a cancelled document (see released-numbers)
+             */
+            reuse_number?: number | null;
         };
         /** PriceListIn */
         PriceListIn: {
@@ -3991,6 +4093,35 @@ export interface components {
              * @description Desktop sends it here; web uses the cookie
              */
             refresh_token?: string | null;
+        };
+        /** ReleasedNumberOut */
+        ReleasedNumberOut: {
+            /** Number */
+            number: number;
+            /** Formatted */
+            formatted: string;
+            /** Fiscal Year */
+            fiscal_year: string;
+            /**
+             * Cancelled Document Id
+             * Format: uuid
+             */
+            cancelled_document_id: string;
+        };
+        /** ReverseIn */
+        ReverseIn: {
+            /** Reason */
+            reason: string;
+            /**
+             * Date
+             * @description The reversal's date (default: today)
+             */
+            date?: string | null;
+            /**
+             * Override Lock Reason
+             * @description Needed to date it in a locked period (period.override_lock)
+             */
+            override_lock_reason?: string | null;
         };
         /**
          * Role
@@ -8994,6 +9125,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchaseDocOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reverse_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_released_numbers: {
+        parameters: {
+            query: {
+                branch_id: string;
+                doc_type: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleasedNumberOut"][];
                 };
             };
             /** @description Validation Error */

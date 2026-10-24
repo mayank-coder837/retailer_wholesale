@@ -178,6 +178,9 @@ class PostIn(BaseModel):
     override_lock_reason: str | None = Field(
         default=None, max_length=500, description="Needed to post into a locked period (period.override_lock)"
     )
+    reuse_number: int | None = Field(
+        default=None, ge=1, description="Take a number freed by a cancelled document (see released-numbers)"
+    )
 
 
 class VoucherLineOut(BaseModel):

@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import ConflictError
 from app.modules.accounting import posting
 from app.modules.accounting import service as accounting
-from app.modules.accounting.models import Role
+from app.modules.accounting.models import EntryKind, Role
 from app.modules.documents.models import DocumentLine
 from app.modules.inventory import costing, stock
 from app.modules.inventory.models import Batch, MoveType, StockMove
@@ -89,6 +89,7 @@ async def recost(
     document_id: uuid.UUID,
     number: str,
     roles: dict[Role, uuid.UUID],
+    narration: str | None = None,
 ) -> None:
     """Rule 28: later moves of the backdated variants take their new costs, as new rows and journal entries
     dated on the moves they correct. Item Transfers carry a change on to the target items."""
@@ -133,8 +134,9 @@ async def recost(
                     )
                     if target.variant_id not in queue:
                         queue.append(target.variant_id)
+    narration = narration or f"Recost after {number}"
     for day, journal in sorted(by_day.items()):
-        lines = journal.lines(f"Recost after {number}")
+        lines = journal.lines(narration)
         if not lines:
             continue
         if not await accounting.is_open(session, business, day):
@@ -147,7 +149,8 @@ async def recost(
             day=day,
             period_id=period.id,
             number=number,
-            narration=f"Recost after {number}",
+            narration=narration,
             source_document_id=document_id,
             lines=lines,
+            kind=EntryKind.RECOST,
         )

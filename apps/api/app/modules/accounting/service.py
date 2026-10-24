@@ -22,8 +22,11 @@ from app.modules.accounting.models import (
     Account,
     AccountType,
     Bill,
+    BillAllocation,
+    EntryKind,
     FiscalPeriod,
     FiscalYear,
+    JournalEntry,
     JournalLine,
     Nature,
     PeriodStatus,
@@ -89,6 +92,7 @@ async def write_journal(
     narration: str | None,
     source_document_id: uuid.UUID | None,
     lines: Sequence[posting.JournalLine],
+    kind: EntryKind = EntryKind.POSTING,
 ) -> list[JournalLine]:
     """One balanced journal entry (refused in code and again by the database when it does not balance)."""
     return await ledger.write_entry(
@@ -102,9 +106,80 @@ async def write_journal(
             number=number,
             narration=narration,
             source_document_id=source_document_id,
+            kind=kind,
         ),
         lines,
     )
+
+
+async def posting_lines(session: AsyncSession, document_id: uuid.UUID) -> list[JournalLine]:
+    """The lines of a document's own entries (not its recosts or undo entries)."""
+    out: list[JournalLine] = []
+    for entry in await ledger.posting_entries(session, document_id):
+        out += await ledger.lines_of(session, entry.id)
+    return out
+
+
+async def undo_journal(
+    session: AsyncSession,
+    *,
+    business: Business,
+    document_id: uuid.UUID,
+    branch_id: uuid.UUID,
+    day: date,
+    period_id: uuid.UUID,
+    number: str | None,
+    narration: str | None,
+    source_document_id: uuid.UUID,
+) -> None:
+    """Rules 32 / 33 for the books: a mirror of each of the document's posting entries, dated ``day``.
+
+    Bill-wise, the document leaves no trace: what its lines settled is open again, payments other documents
+    allocated to its bills become advances on those payments, and the mirror lines close its bills.
+    """
+    mirror_of: dict[uuid.UUID, JournalLine] = {}
+    for entry in await ledger.posting_entries(session, document_id):
+        lines = await ledger.lines_of(session, entry.id)
+        rows = await ledger.write_entry(
+            session,
+            ledger.EntryHeader(
+                tenant_id=business.tenant_id,
+                business_id=business.id,
+                branch_id=branch_id,
+                entry_date=day,
+                fiscal_period_id=period_id,
+                number=number,
+                narration=narration,
+                source_document_id=source_document_id,
+                kind=EntryKind.UNDO,
+                reversal_of_id=entry.id,
+            ),
+            ledger.mirror(lines),
+        )
+        mirror_of.update({line.id: row for line, row in zip(lines, rows, strict=True)})
+    own = list(mirror_of)
+    if not own:
+        return
+    for allocation in await ledger.live_allocations(session, BillAllocation.journal_line_id.in_(own)):
+        await ledger.unsettle(session, allocation)
+    for bill in await ledger.bills_opened_by(session, own):
+        for allocation in await ledger.live_allocations(session, BillAllocation.bill_id == bill.id):
+            await ledger.unsettle(session, allocation)
+            paid_by = await session.get(JournalLine, allocation.journal_line_id)
+            assert paid_by is not None
+            paying_entry = await session.get(JournalEntry, paid_by.entry_id)
+            assert paying_entry is not None
+            await ledger.open_bill(
+                session,
+                paid_by,
+                amount=allocation.amount,
+                reference=paying_entry.number or bill.reference,
+                due_date=None,
+                is_advance=True,
+                document_id=paying_entry.source_document_id,
+            )
+        if bill.amount_open > 0:
+            await ledger.settle(session, bill, mirror_of[bill.journal_line_id], bill.amount_open)
 
 
 async def receivable_figures(

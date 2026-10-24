@@ -61,6 +61,7 @@ class Allocated:
     number: int
     formatted: str
     reused: bool
+    reissue_of: uuid.UUID | None = None  # reused: the cancelled document that held the number
 
 
 def format_number(series: NumberingSeries, number: int) -> str:
@@ -145,7 +146,13 @@ async def allocate(
         released.reused_by_document_id = document_id
         released.reused_at = datetime.now(UTC)
         await session.flush()
-        return Allocated(series.id, reuse, format_number(series, reuse), reused=True)
+        return Allocated(
+            series.id,
+            reuse,
+            format_number(series, reuse),
+            reused=True,
+            reissue_of=released.cancelled_document_id,
+        )
 
     number = series.next_number
     series.next_number = number + 1
@@ -172,6 +179,32 @@ async def release(
     session.add(row)
     await session.flush()
     return row
+
+
+@dataclass(frozen=True, slots=True)
+class Offered:
+    number: int
+    formatted: str
+    fiscal_year: str
+    cancelled_document_id: uuid.UUID
+
+
+async def offered_for(session: AsyncSession, branch_id: uuid.UUID, doc_type: str) -> list[Offered]:
+    """Freed numbers of a branch's series of one document type (every fiscal year), oldest first."""
+    stmt = (
+        select(NumberingSeries, ReleasedNumber)
+        .join(ReleasedNumber, ReleasedNumber.series_id == NumberingSeries.id)
+        .where(
+            NumberingSeries.branch_id == branch_id,
+            NumberingSeries.doc_type == doc_type,
+            ReleasedNumber.reused_by_document_id.is_(None),
+        )
+        .order_by(NumberingSeries.fiscal_year, ReleasedNumber.number)
+    )
+    return [
+        Offered(r.number, format_number(s, r.number), s.fiscal_year, r.cancelled_document_id)
+        for s, r in (await session.execute(stmt)).all()
+    ]
 
 
 async def offered_numbers(session: AsyncSession, series_id: uuid.UUID) -> list[int]:

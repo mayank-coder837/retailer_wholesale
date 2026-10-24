@@ -69,6 +69,7 @@ async def _post(
         user_id=principal.user_id,
         may_override_lock=perms.allows("period.override_lock", doc.business_id),
         override_reason=body.override_lock_reason,
+        reuse_number=body.reuse_number,
     )
     return await documents.get_stock_document(session, doc_id, warnings)
 

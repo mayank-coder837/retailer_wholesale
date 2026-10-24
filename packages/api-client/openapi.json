@@ -7141,6 +7141,183 @@
         }
       }
     },
+    "/documents/{doc_id}/cancel": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Cancel Document",
+        "operationId": "cancel_document",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{doc_id}/reverse": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Reverse Document",
+        "operationId": "reverse_document",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/released-numbers": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "List Released Numbers",
+        "operationId": "list_released_numbers",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Branch Id"
+            }
+          },
+          {
+            "name": "doc_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReleasedNumberOut"
+                  },
+                  "title": "Response List Released Numbers"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pairing/challenge": {
       "post": {
         "tags": [
@@ -9166,6 +9343,21 @@
         ],
         "title": "BusinessOut"
       },
+      "CancelIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "CancelIn"
+      },
       "CategoryIn": {
         "properties": {
           "name_en": {
@@ -9505,6 +9697,106 @@
           "result"
         ],
         "title": "ConversionOut"
+      },
+      "CorrectedOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "doc_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Doc Date"
+          },
+          "cancel_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Reason"
+          },
+          "reversal_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversal Id"
+          },
+          "reversal_doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversal Doc Type"
+          },
+          "reversal_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversal Number"
+          },
+          "reversal_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversal Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "doc_type",
+          "status",
+          "number",
+          "doc_date",
+          "cancel_reason"
+        ],
+        "title": "CorrectedOut",
+        "description": "The cancelled or reversed document, and the reversal when there is one."
       },
       "CreditCheckIn": {
         "properties": {
@@ -11776,6 +12068,19 @@
             ],
             "title": "Override Lock Reason",
             "description": "Needed to post into a locked period (period.override_lock)"
+          },
+          "reuse_number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reuse Number",
+            "description": "Take a number freed by a cancelled document (see released-numbers)"
           }
         },
         "type": "object",
@@ -11794,6 +12099,19 @@
               }
             ],
             "title": "Override Lock Reason"
+          },
+          "reuse_number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reuse Number",
+            "description": "Take a number freed by a cancelled document (see released-numbers)"
           }
         },
         "type": "object",
@@ -11812,6 +12130,19 @@
               }
             ],
             "title": "Override Lock Reason"
+          },
+          "reuse_number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reuse Number",
+            "description": "Take a number freed by a cancelled document (see released-numbers)"
           }
         },
         "type": "object",
@@ -13996,6 +14327,76 @@
         },
         "type": "object",
         "title": "RefreshIn"
+      },
+      "ReleasedNumberOut": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "formatted": {
+            "type": "string",
+            "title": "Formatted"
+          },
+          "fiscal_year": {
+            "type": "string",
+            "title": "Fiscal Year"
+          },
+          "cancelled_document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cancelled Document Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "formatted",
+          "fiscal_year",
+          "cancelled_document_id"
+        ],
+        "title": "ReleasedNumberOut"
+      },
+      "ReverseIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date",
+            "description": "The reversal's date (default: today)"
+          },
+          "override_lock_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Lock Reason",
+            "description": "Needed to date it in a locked period (period.override_lock)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "ReverseIn"
       },
       "Role": {
         "type": "string",

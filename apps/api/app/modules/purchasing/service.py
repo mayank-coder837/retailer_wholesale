@@ -516,6 +516,7 @@ async def post(
     user_id: uuid.UUID | None,
     may_override_lock: bool,
     override_reason: str | None,
+    reuse_number: int | None = None,
 ) -> Document:
     doc = await _locked_draft(session, doc_id)
     data = await _stored_input(session, doc)
@@ -539,6 +540,7 @@ async def post(
         fiscal_year=year.code,
         node_id=node_id,
         document_id=doc.id,
+        reuse=reuse_number,
     )
     if kind is not PurchaseDocType.PURCHASE_ORDER:
         await _post_effects(session, doc, checked, business, period.id, number.formatted)
@@ -547,6 +549,7 @@ async def post(
     doc.series_id = number.series_id
     doc.number_seq = number.number
     doc.number = number.formatted
+    doc.reissue_of_id = number.reissue_of
     doc.posted_at = datetime.now(UTC)
     doc.posted_by = user_id
     await session.flush()

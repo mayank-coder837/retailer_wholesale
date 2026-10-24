@@ -20,6 +20,7 @@ from app.core.request_id import RequestIdMiddleware
 from app.core.storage import LocalStorage
 from app.modules.accounting import router as accounting_router
 from app.modules.catalog import router as catalog_router
+from app.modules.documents import router as documents_router
 from app.modules.identity import roles_router
 from app.modules.identity import router as identity_router
 from app.modules.inventory import router as inventory_router
@@ -91,6 +92,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(accounting_router.router)
     app.include_router(inventory_router.router)
     app.include_router(purchasing_router.router)
+    app.include_router(documents_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)
     if settings.web_dir is not None:

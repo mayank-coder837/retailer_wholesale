@@ -11,7 +11,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import ConflictError, UnprocessableError
@@ -22,10 +22,11 @@ from app.modules.accounting.models import (
     Bill,
     BillAllocation,
     Direction,
+    EntryKind,
     JournalEntry,
     JournalLine,
 )
-from app.modules.documents.models import Document
+from app.modules.documents.models import Document, DocumentStatus
 
 ZERO = Decimal("0.0000")  # money columns have 4 decimal places
 
@@ -50,6 +51,8 @@ class EntryHeader:
     number: str | None
     narration: str | None
     source_document_id: uuid.UUID | None
+    kind: EntryKind = EntryKind.POSTING
+    reversal_of_id: uuid.UUID | None = None  # an undo entry: the posting entry it mirrors
 
 
 async def write_entry(
@@ -69,6 +72,8 @@ async def write_entry(
         number=header.number,
         narration=header.narration,
         source_document_id=header.source_document_id,
+        kind=header.kind.value,
+        reversal_of_id=header.reversal_of_id,
     )
     session.add(entry)
     await session.flush()
@@ -159,6 +164,70 @@ async def settle(session: AsyncSession, bill: Bill, line: JournalLine, amount: D
     await session.flush()
 
 
+# --- undoing (Cancel and Reverse, rules 32 and 33) -----------------------------------------------------
+
+
+async def posting_entries(session: AsyncSession, document_id: uuid.UUID) -> list[JournalEntry]:
+    """A document's own entries (not its recosts, not undo entries), oldest first."""
+    stmt = (
+        select(JournalEntry)
+        .where(JournalEntry.source_document_id == document_id, JournalEntry.kind == EntryKind.POSTING.value)
+        .order_by(JournalEntry.posted_at, JournalEntry.id)
+    )
+    return list((await session.scalars(stmt)).all())
+
+
+async def lines_of(session: AsyncSession, entry_id: uuid.UUID) -> list[JournalLine]:
+    stmt = select(JournalLine).where(JournalLine.entry_id == entry_id).order_by(JournalLine.line_no)
+    return list((await session.scalars(stmt)).all())
+
+
+def mirror(lines: Sequence[JournalLine]) -> list[posting.JournalLine]:
+    """The same lines with debit and credit swapped."""
+    return [
+        posting.JournalLine(line.account_id, line.credit, line.debit, line.party_id, line.description)
+        for line in lines
+    ]
+
+
+async def live_allocations(session: AsyncSession, *conditions: ColumnElement[bool]) -> list[BillAllocation]:
+    """Allocations that still settle their bill: not themselves undo rows, and not undone."""
+    undone = select(BillAllocation.reversal_of_id).where(BillAllocation.reversal_of_id.is_not(None))
+    stmt = (
+        select(BillAllocation)
+        .where(BillAllocation.amount > 0, BillAllocation.id.not_in(undone), *conditions)
+        .order_by(BillAllocation.created_at, BillAllocation.id)
+    )
+    return list((await session.scalars(stmt)).all())
+
+
+async def unsettle(session: AsyncSession, allocation: BillAllocation) -> Bill:
+    """Undoes an allocation with a negative copy; its bill is open again by that amount."""
+    bill = await lock_bill(session, allocation.bill_id)
+    assert bill is not None
+    session.add(
+        BillAllocation(
+            tenant_id=allocation.tenant_id,
+            bill_id=bill.id,
+            journal_line_id=allocation.journal_line_id,
+            amount=-allocation.amount,
+            reversal_of_id=allocation.id,
+        )
+    )
+    bill.amount_open = bill.amount_open + allocation.amount
+    await session.flush()
+    return bill
+
+
+async def bills_opened_by(session: AsyncSession, line_ids: Sequence[uuid.UUID]) -> list[Bill]:
+    """The bills these lines opened, locked."""
+    ids = (
+        await session.scalars(select(Bill.id).where(Bill.journal_line_id.in_(line_ids)).order_by(Bill.id))
+    ).all()
+    found = [await lock_bill(session, bill_id) for bill_id in ids]
+    return [bill for bill in found if bill is not None]
+
+
 # --- reading -----------------------------------------------------------------------------------------------
 
 
@@ -246,6 +315,16 @@ def _ledger_select() -> Any:  # a 10-column select; rows map onto LedgerLine
     )
 
 
+def _not_cancelled_pair() -> ColumnElement[bool]:
+    """Hides a cancelled document's entry and its mirror (they net to nothing), so reports show it once.
+    Its recosts and the stock value its mirror did not cover stay visible."""
+    return or_(
+        Document.status.is_(None),
+        Document.status != DocumentStatus.CANCELLED.value,
+        and_(JournalEntry.kind != EntryKind.POSTING.value, JournalEntry.reversal_of_id.is_(None)),
+    )
+
+
 async def ledger(
     session: AsyncSession,
     business_id: uuid.UUID,
@@ -271,7 +350,7 @@ async def ledger(
         in_range.append(JournalLine.entry_date >= date_from)
     if date_to is not None:
         in_range.append(JournalLine.entry_date <= date_to)
-    rows = await session.execute(_ledger_select().where(*in_range))
+    rows = await session.execute(_ledger_select().where(*in_range, _not_cancelled_pair()))
     return opening, [LedgerLine(*row) for row in rows]
 
 
