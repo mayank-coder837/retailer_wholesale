@@ -370,6 +370,21 @@ async def open_bills(
     return list((await session.scalars(stmt.order_by(Bill.bill_date, Bill.created_at))).all())
 
 
+async def open_bills_on(
+    session: AsyncSession, business_id: uuid.UUID, account_type: AccountType
+) -> list[Bill]:
+    """Every open bill on the business's accounts of one type (receivable or payable), oldest first."""
+    accounts = select(Account.id).where(
+        Account.business_id == business_id, Account.account_type == account_type.value
+    )
+    stmt = (
+        select(Bill)
+        .where(Bill.business_id == business_id, Bill.account_id.in_(accounts), Bill.amount_open > 0)
+        .order_by(Bill.party_id, Bill.bill_date, Bill.created_at)
+    )
+    return list((await session.scalars(stmt)).all())
+
+
 @dataclass(frozen=True, slots=True)
 class ReceivableFigures:
     balance: Decimal

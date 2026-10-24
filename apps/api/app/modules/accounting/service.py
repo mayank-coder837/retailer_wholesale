@@ -24,6 +24,7 @@ from app.modules.accounting.models import (
     AccountType,
     Bill,
     BillAllocation,
+    Direction,
     EntryKind,
     FiscalPeriod,
     FiscalYear,
@@ -34,6 +35,9 @@ from app.modules.accounting.models import (
     Role,
 )
 from app.modules.accounting.schemas import (
+    AgeingBuckets,
+    AgeingOut,
+    AgeingRowOut,
     BillOut,
     LedgerLineOut,
     LedgerOut,
@@ -303,6 +307,54 @@ async def trial_balance(session: AsyncSession, business_id: uuid.UUID, as_of: da
         total_debit=sum((r.debit for r in rows), ZERO),
         total_credit=sum((r.credit for r in rows), ZERO),
     )
+
+
+BUCKETS = ((0, "not_due"), (30, "days_1_30"), (60, "days_31_60"), (90, "days_61_90"))
+AGEING_FIELDS = ("not_due", "days_1_30", "days_31_60", "days_61_90", "over_90", "advances", "total")
+
+
+def _bucket(days_late: int) -> str:
+    for limit, name in BUCKETS:
+        if days_late <= limit:
+            return name
+    return "over_90"
+
+
+async def ageing(
+    session: AsyncSession, business_id: uuid.UUID, *, receivable: bool, today: date
+) -> AgeingOut:
+    """Receivables (or payables) ageing: per party, what is open by days past due, and advances apart.
+
+    Read from the bills (bill-wise outstanding), so it agrees with the party ledgers. Today's open amounts;
+    ageing on a past date comes with the reports (M1.11).
+    """
+    from app.modules.parties import service as parties  # parties builds on accounting
+
+    kind = AccountType.RECEIVABLE if receivable else AccountType.PAYABLE
+    owed = Direction.DEBIT if receivable else Direction.CREDIT  # invoices to customers, bills from suppliers
+    rows: dict[uuid.UUID, dict[str, Decimal]] = {}
+    for bill in await ledger.open_bills_on(session, business_id, kind):
+        row = rows.setdefault(bill.party_id, dict.fromkeys(AGEING_FIELDS, ZERO))
+        if bill.direction == owed.value:
+            row[_bucket((today - (bill.due_date or bill.bill_date)).days)] += bill.amount_open
+        else:
+            row["advances"] += bill.amount_open
+    out: list[AgeingRowOut] = []
+    totals: dict[str, Decimal] = dict.fromkeys(AGEING_FIELDS, ZERO)
+    for party_id, figures in rows.items():
+        party = await parties.get_party_row(session, party_id)
+        figures["total"] = (
+            sum((figures[name] for _limit, name in BUCKETS), ZERO) + figures["over_90"] - figures["advances"]
+        )
+        for name, value in figures.items():
+            totals[name] += value
+        out.append(
+            AgeingRowOut(
+                party_id=party.id, code=party.code, name_en=party.name_en, name_ar=party.name_ar, **figures
+            )
+        )
+    out.sort(key=lambda r: (-r.total, r.code))
+    return AgeingOut(as_of=today, rows=out, totals=AgeingBuckets(**totals))
 
 
 async def account_balance(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> Decimal:

@@ -250,6 +250,31 @@ class BillOut(BaseModel):
     document_id: uuid.UUID | None
 
 
+class AgeingBuckets(BaseModel):
+    """Open bills by days past their due date (the bill date when there is none)."""
+
+    not_due: Decimal = Decimal(0)
+    days_1_30: Decimal = Decimal(0)
+    days_31_60: Decimal = Decimal(0)
+    days_61_90: Decimal = Decimal(0)
+    over_90: Decimal = Decimal(0)
+    advances: Decimal = Decimal(0)  # paid ahead, not yet allocated to a bill
+    total: Decimal = Decimal(0)  # the buckets less the advances
+
+
+class AgeingRowOut(AgeingBuckets):
+    party_id: uuid.UUID
+    code: str
+    name_en: str
+    name_ar: str
+
+
+class AgeingOut(BaseModel):
+    as_of: date
+    rows: list[AgeingRowOut]
+    totals: AgeingBuckets
+
+
 class LedgerLineOut(BaseModel):
     entry_date: date
     document_id: uuid.UUID | None

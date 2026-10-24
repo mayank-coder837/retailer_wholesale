@@ -41,6 +41,7 @@ class CorrectedOut(BaseModel):
     doc_date: date
     cancel_reason: str | None
     cancelled_at: datetime | None = None
+    sent_at: datetime | None = None  # printed, emailed or sent on WhatsApp: warn before reusing its number
     reversal_id: uuid.UUID | None = None
     reversal_doc_type: str | None = None
     reversal_number: str | None = None
@@ -54,3 +55,4 @@ class ReleasedNumberOut(BaseModel):
     formatted: str
     fiscal_year: str
     cancelled_document_id: uuid.UUID
+    was_sent: bool = False  # the cancelled document had been sent: the customer may hold this number

@@ -5884,6 +5884,104 @@
         }
       }
     },
+    "/receivables/ageing": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Receivables Ageing",
+        "description": "What customers owe by days past due, and their advances (today's figures).",
+        "operationId": "receivables_ageing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgeingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payables/ageing": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Payables Ageing",
+        "description": "What is owed to suppliers by days past due, and advances paid to them (today's figures).",
+        "operationId": "payables_ageing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgeingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/trial-balance": {
       "get": {
         "tags": [
@@ -7772,6 +7870,55 @@
         }
       }
     },
+    "/documents/{doc_id}/sent": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Mark Document Sent",
+        "description": "Printed, emailed or sent on WhatsApp: whoever may export the document may send it.",
+        "operationId": "mark_document_sent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/released-numbers": {
       "get": {
         "tags": [
@@ -8435,6 +8582,138 @@
           "shipping"
         ],
         "title": "AddressType"
+      },
+      "AgeingBuckets": {
+        "properties": {
+          "not_due": {
+            "type": "string",
+            "title": "Not Due",
+            "default": "0"
+          },
+          "days_1_30": {
+            "type": "string",
+            "title": "Days 1 30",
+            "default": "0"
+          },
+          "days_31_60": {
+            "type": "string",
+            "title": "Days 31 60",
+            "default": "0"
+          },
+          "days_61_90": {
+            "type": "string",
+            "title": "Days 61 90",
+            "default": "0"
+          },
+          "over_90": {
+            "type": "string",
+            "title": "Over 90",
+            "default": "0"
+          },
+          "advances": {
+            "type": "string",
+            "title": "Advances",
+            "default": "0"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total",
+            "default": "0"
+          }
+        },
+        "type": "object",
+        "title": "AgeingBuckets",
+        "description": "Open bills by days past their due date (the bill date when there is none)."
+      },
+      "AgeingOut": {
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/AgeingRowOut"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AgeingBuckets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "as_of",
+          "rows",
+          "totals"
+        ],
+        "title": "AgeingOut"
+      },
+      "AgeingRowOut": {
+        "properties": {
+          "not_due": {
+            "type": "string",
+            "title": "Not Due",
+            "default": "0"
+          },
+          "days_1_30": {
+            "type": "string",
+            "title": "Days 1 30",
+            "default": "0"
+          },
+          "days_31_60": {
+            "type": "string",
+            "title": "Days 31 60",
+            "default": "0"
+          },
+          "days_61_90": {
+            "type": "string",
+            "title": "Days 61 90",
+            "default": "0"
+          },
+          "over_90": {
+            "type": "string",
+            "title": "Over 90",
+            "default": "0"
+          },
+          "advances": {
+            "type": "string",
+            "title": "Advances",
+            "default": "0"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total",
+            "default": "0"
+          },
+          "party_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Party Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "party_id",
+          "code",
+          "name_en",
+          "name_ar"
+        ],
+        "title": "AgeingRowOut"
       },
       "AllocationIn": {
         "properties": {
@@ -10314,6 +10593,18 @@
               }
             ],
             "title": "Cancelled At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
           },
           "reversal_id": {
             "anyOf": [
@@ -15133,6 +15424,11 @@
             "type": "string",
             "format": "uuid",
             "title": "Cancelled Document Id"
+          },
+          "was_sent": {
+            "type": "boolean",
+            "title": "Was Sent",
+            "default": false
           }
         },
         "type": "object",

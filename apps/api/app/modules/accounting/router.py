@@ -22,6 +22,7 @@ from app.modules.accounting.schemas import (
     AccountPatch,
     AccountRoleIn,
     AccountRoleOut,
+    AgeingOut,
     BillOut,
     FiscalPeriodOut,
     FiscalYearIn,
@@ -346,6 +347,28 @@ async def party_ledger(
 ) -> PartyLedgerOut:
     await _may_see_party(perms, session, party_id)
     return await service.party_ledger(session, business_id, party_id, date_from, date_to)
+
+
+@router.get("/receivables/ageing", operation_id="receivables_ageing")
+async def receivables_ageing(
+    perms: Annotated[PermissionSet, require("report.view")], session: TenantSessionDep, business_id: uuid.UUID
+) -> AgeingOut:
+    """What customers owe by days past due, and their advances (today's figures)."""
+    perms.require_see("report.view", business_id)
+    business = await tenancy.get_business(session, business_id)
+    return await service.ageing(session, business_id, receivable=True, today=periods.business_today(business))
+
+
+@router.get("/payables/ageing", operation_id="payables_ageing")
+async def payables_ageing(
+    perms: Annotated[PermissionSet, require("report.view")], session: TenantSessionDep, business_id: uuid.UUID
+) -> AgeingOut:
+    """What is owed to suppliers by days past due, and advances paid to them (today's figures)."""
+    perms.require_see("report.view", business_id)
+    business = await tenancy.get_business(session, business_id)
+    return await service.ageing(
+        session, business_id, receivable=False, today=periods.business_today(business)
+    )
 
 
 @router.get("/trial-balance", operation_id="trial_balance")

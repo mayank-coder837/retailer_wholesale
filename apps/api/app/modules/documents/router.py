@@ -47,6 +47,15 @@ async def reverse_document(
     return await service.corrected_out(session, doc)
 
 
+@router.post("/documents/{doc_id}/sent", operation_id="mark_document_sent")
+async def mark_document_sent(doc_id: uuid.UUID, perms: Signed, session: TenantSessionDep) -> CorrectedOut:
+    """Printed, emailed or sent on WhatsApp: whoever may export the document may send it."""
+    doc = await service.get_document(session, doc_id)
+    perms.require(f"{doc.doc_type}.export", doc.business_id, doc.branch_id)
+    doc = await service.mark_sent(session, doc_id)
+    return await service.corrected_out(session, doc)
+
+
 @router.get("/documents/released-numbers", operation_id="list_released_numbers")
 async def list_released_numbers(
     branch_id: uuid.UUID, doc_type: str, perms: Signed, session: TenantSessionDep
