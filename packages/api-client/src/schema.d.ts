@@ -1362,6 +1362,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/receivables/ageing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Receivables Ageing
+         * @description What customers owe by days past due, and their advances (today's figures).
+         */
+        get: operations["receivables_ageing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payables/ageing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Payables Ageing
+         * @description What is owed to suppliers by days past due, and advances paid to them (today's figures).
+         */
+        get: operations["payables_ageing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trial-balance": {
         parameters: {
             query?: never;
@@ -1714,6 +1754,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/{doc_id}/sent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Document Sent
+         * @description Printed, emailed or sent on WhatsApp: whoever may export the document may send it.
+         */
+        post: operations["mark_document_sent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/released-numbers": {
         parameters: {
             query?: never;
@@ -1961,6 +2021,107 @@ export interface components {
          * @enum {string}
          */
         AddressType: "billing" | "shipping";
+        /**
+         * AgeingBuckets
+         * @description Open bills by days past their due date (the bill date when there is none).
+         */
+        AgeingBuckets: {
+            /**
+             * Not Due
+             * @default 0
+             */
+            not_due: string;
+            /**
+             * Days 1 30
+             * @default 0
+             */
+            days_1_30: string;
+            /**
+             * Days 31 60
+             * @default 0
+             */
+            days_31_60: string;
+            /**
+             * Days 61 90
+             * @default 0
+             */
+            days_61_90: string;
+            /**
+             * Over 90
+             * @default 0
+             */
+            over_90: string;
+            /**
+             * Advances
+             * @default 0
+             */
+            advances: string;
+            /**
+             * Total
+             * @default 0
+             */
+            total: string;
+        };
+        /** AgeingOut */
+        AgeingOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Rows */
+            rows: components["schemas"]["AgeingRowOut"][];
+            totals: components["schemas"]["AgeingBuckets"];
+        };
+        /** AgeingRowOut */
+        AgeingRowOut: {
+            /**
+             * Not Due
+             * @default 0
+             */
+            not_due: string;
+            /**
+             * Days 1 30
+             * @default 0
+             */
+            days_1_30: string;
+            /**
+             * Days 31 60
+             * @default 0
+             */
+            days_31_60: string;
+            /**
+             * Days 61 90
+             * @default 0
+             */
+            days_61_90: string;
+            /**
+             * Over 90
+             * @default 0
+             */
+            over_90: string;
+            /**
+             * Advances
+             * @default 0
+             */
+            advances: string;
+            /**
+             * Total
+             * @default 0
+             */
+            total: string;
+            /**
+             * Party Id
+             * Format: uuid
+             */
+            party_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+        };
         /** AllocationIn */
         AllocationIn: {
             type: components["schemas"]["AllocationType"];
@@ -2668,6 +2829,8 @@ export interface components {
             cancel_reason: string | null;
             /** Cancelled At */
             cancelled_at?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
             /** Reversal Id */
             reversal_id?: string | null;
             /** Reversal Doc Type */
@@ -4292,6 +4455,11 @@ export interface components {
              * Format: uuid
              */
             cancelled_document_id: string;
+            /**
+             * Was Sent
+             * @default false
+             */
+            was_sent: boolean;
         };
         /** ReverseIn */
         ReverseIn: {
@@ -9008,6 +9176,68 @@ export interface operations {
             };
         };
     };
+    receivables_ageing: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgeingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    payables_ageing: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgeingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     trial_balance: {
         parameters: {
             query: {
@@ -9955,6 +10185,37 @@ export interface operations {
                 "application/json": components["schemas"]["ReverseIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_document_sent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

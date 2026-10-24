@@ -344,6 +344,7 @@ async def corrected_out(session: AsyncSession, doc: Document) -> CorrectedOut:
         doc_date=doc.doc_date,
         cancel_reason=doc.cancel_reason,
         cancelled_at=doc.cancelled_at,
+        sent_at=doc.sent_at,
         reversal_id=reversal.id if reversal else None,
         reversal_doc_type=reversal.doc_type if reversal else None,
         reversal_number=reversal.number if reversal else None,
@@ -356,12 +357,28 @@ async def corrected_out(session: AsyncSession, doc: Document) -> CorrectedOut:
 async def released_numbers(
     session: AsyncSession, branch_id: uuid.UUID, doc_type: str
 ) -> list[ReleasedNumberOut]:
-    return [
-        ReleasedNumberOut(
-            number=o.number,
-            formatted=o.formatted,
-            fiscal_year=o.fiscal_year,
-            cancelled_document_id=o.cancelled_document_id,
+    out: list[ReleasedNumberOut] = []
+    for o in await numbering.offered_for(session, branch_id, doc_type):
+        cancelled = await session.get(Document, o.cancelled_document_id)
+        out.append(
+            ReleasedNumberOut(
+                number=o.number,
+                formatted=o.formatted,
+                fiscal_year=o.fiscal_year,
+                cancelled_document_id=o.cancelled_document_id,
+                was_sent=cancelled is not None and cancelled.sent_at is not None,
+            )
         )
-        for o in await numbering.offered_for(session, branch_id, doc_type)
-    ]
+    return out
+
+
+async def mark_sent(session: AsyncSession, doc_id: uuid.UUID) -> Document:
+    """The document was printed, emailed or sent on WhatsApp (the first time counts). Reusing its number after
+    a cancel then comes with a warning (posting-rules.md, Cancel and Reverse)."""
+    doc = await _locked(session, doc_id)
+    if doc.status == DocumentStatus.DRAFT:
+        raise NotPostedError("Only a posted document is sent.", document_status=doc.status)
+    if doc.sent_at is None:
+        doc.sent_at = datetime.now(UTC)
+        await session.flush()  # audited as an update of the document, like any change
+    return doc

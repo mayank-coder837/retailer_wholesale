@@ -168,15 +168,32 @@ async def release(
     number: int,
     cancelled_document_id: uuid.UUID,
 ) -> ReleasedNumber:
-    """Frees a cancelled document's number (decision A7). Unreused, it stays visible as CANCELLED: no gap."""
-    row = ReleasedNumber(
-        id=new_id(),
-        tenant_id=tenant_id,
-        series_id=series_id,
-        number=number,
-        cancelled_document_id=cancelled_document_id,
-    )
-    session.add(row)
+    """Frees a cancelled document's number (decision A7). Unreused, it stays visible as CANCELLED: no gap.
+
+    A number freed, reused and freed again (the reissue cancelled too) opens its one row again; the earlier
+    cancel stays in the documents and the audit log.
+    """
+    row = (
+        await session.scalars(
+            select(ReleasedNumber)
+            .where(ReleasedNumber.series_id == series_id, ReleasedNumber.number == number)
+            .with_for_update()
+        )
+    ).first()
+    if row is None:
+        row = ReleasedNumber(
+            id=new_id(),
+            tenant_id=tenant_id,
+            series_id=series_id,
+            number=number,
+            cancelled_document_id=cancelled_document_id,
+        )
+        session.add(row)
+    else:
+        row.cancelled_document_id = cancelled_document_id
+        row.released_at = datetime.now(UTC)
+        row.reused_by_document_id = None
+        row.reused_at = None
     await session.flush()
     return row
 
