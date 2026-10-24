@@ -185,8 +185,8 @@ describe("App shell", () => {
     await userEvent.click(screen.getByRole("link", { name: "Inventory" }));
     expect(await screen.findByRole("heading", { name: "Products" })).toBeInTheDocument(); // built in M1.2
 
-    await userEvent.click(screen.getByRole("link", { name: "Sales" }));
-    expect(await screen.findByText("Sales arrives in Phase 1.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("link", { name: "Reports" }));
+    expect(await screen.findByText("Reports arrives in Phase 1.")).toBeInTheDocument();
   });
 
   it("keeps settings in their own menu and folds the phone menu after a choice", async () => {

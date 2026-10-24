@@ -19,7 +19,7 @@ export default defineConfig({
     { name: "smoke", testMatch: /smoke\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
     {
       name: "full",
-      testMatch: /(onboarding|accounts|inventory|purchasing)\.spec\.ts/,
+      testMatch: /(onboarding|accounts|inventory|purchasing|sales)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
   ],

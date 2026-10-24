@@ -561,7 +561,8 @@
       "chart": "Chart of accounts",
       "vouchers": "Vouchers",
       "trialBalance": "Trial balance",
-      "periods": "Fiscal periods"
+      "periods": "Fiscal periods",
+      "ageing": "Ageing"
     },
     "chart": {
       "new": "New account",
@@ -998,6 +999,177 @@
       "invalid_reversal": "A reversal cannot be dated before the document.",
       "recost_into_locked_period": "A later stock movement is in a locked period, so this cannot be done.",
       "permission_denied": "You don't have permission to do that."
+    },
+    "wasSent": "This document was printed or sent to the customer: they hold its number. Cancelling frees it for reuse; reversing keeps it and writes a dated reversal, which is usually better once the customer has it."
+  },
+  "sales": {
+    "title": "Sales",
+    "back": "← Sales",
+    "new": "New sales document",
+    "flowHint": "Quotation → order → delivery note → invoice. A return starts from the invoice it returns.",
+    "type": "Type",
+    "status": "Status",
+    "all": "All",
+    "none": "No sales documents yet.",
+    "nextSteps": "Next step",
+    "sent": "Sent",
+    "markSent": "Mark as sent",
+    "markSentHint": "Printed, emailed or sent on WhatsApp: the customer has it.",
+    "belowMinFlag": "below minimum",
+    "types": {
+      "quotation": "Quotation",
+      "proforma_invoice": "Proforma invoice",
+      "sales_order": "Sales order",
+      "delivery_note": "Delivery note",
+      "sales_invoice": "Sales invoice",
+      "sales_return": "Sales return"
+    },
+    "newTypes": {
+      "quotation": "New quotation",
+      "proforma_invoice": "Proforma",
+      "sales_order": "New order",
+      "delivery_note": "Deliver goods",
+      "sales_invoice": "New invoice"
+    },
+    "plural": {
+      "quotation": "Quotations",
+      "proforma_invoice": "Proformas",
+      "sales_order": "Orders",
+      "delivery_note": "Deliveries",
+      "sales_invoice": "Invoices",
+      "sales_return": "Returns"
+    },
+    "progress": {
+      "open": "Open",
+      "partly_ordered": "Partly ordered",
+      "ordered": "Ordered",
+      "partly_delivered": "Partly delivered",
+      "delivered": "Delivered",
+      "not_invoiced": "Not invoiced",
+      "partly_invoiced": "Partly invoiced",
+      "invoiced": "Invoiced"
+    },
+    "next": {
+      "quotation": {
+        "sales_order": "Make the order"
+      },
+      "sales_order": {
+        "delivery_note": "Deliver goods",
+        "sales_invoice": "Invoice"
+      },
+      "delivery_note": {
+        "sales_invoice": "Invoice the delivery"
+      },
+      "sales_invoice": {
+        "sales_return": "Goods returned"
+      }
+    },
+    "doc": {
+      "date": "Date",
+      "number": "Number",
+      "customer": "Customer",
+      "customerRef": "Customer's order no.",
+      "dueDate": "Due date",
+      "validUntil": "Valid until",
+      "paidInto": "Paid into",
+      "lines": "Lines",
+      "totals": "Totals",
+      "subtotal": "Subtotal",
+      "vat": "VAT",
+      "roundOff": "Round-off",
+      "total": "Total",
+      "price": "Price per unit",
+      "net": "Net",
+      "vatRate": "VAT"
+    },
+    "entry": {
+      "noBranch": "Choose a branch first.",
+      "needCustomer": "Choose the customer.",
+      "noWarehouse": "This branch has no warehouse.",
+      "needCashAccount": "Choose the cash or bank account.",
+      "needItem": "Choose an item and its unit.",
+      "badQty": "Enter a quantity above zero (up to 6 decimals).",
+      "needPrice": "Enter the price.",
+      "badPrice": "Enter a price of up to 6 decimals.",
+      "needBatch": "Choose the batch.",
+      "returnNeedsSource": "A return starts from the invoice it returns: open it and choose “Goods returned”.",
+      "noLines": "Add at least one line.",
+      "from": "Following",
+      "findCustomer": "Find customer",
+      "dueHint": "Empty: the customer's credit days",
+      "noPricesHint": "A delivery note shows quantities only: the invoice carries the prices.",
+      "cashSale": "Cash sale (paid now, no credit)",
+      "cashAccount": "Paid into",
+      "nothingOpen": "Nothing is left open on that document.",
+      "addItem": "Add item",
+      "stillOpen": "Still open: {{qty}} {{unit}}",
+      "belowMin": "Below the minimum price ({{min}})",
+      "number": "Number",
+      "reuseSent": "Reuse {{number}} (it was sent to the customer)",
+      "reuseSentWarning": "{{number}} was printed or sent to the customer before it was cancelled: they may still hold it. Reuse it only if they know.",
+      "saveQuotation": "Save quotation"
+    },
+    "priceSource": {
+      "last_price": "Last price to this customer ({{name}})",
+      "customer_list": "Their price list ({{name}})",
+      "group_list": "Their group's price list ({{name}})",
+      "quantity_break": "Quantity price ({{name}})",
+      "promotion": "Promotion ({{name}})",
+      "base": "Standard price",
+      "none": "No price set: type it"
+    },
+    "history": {
+      "title": "What this customer bought",
+      "search": "Search items",
+      "none": "Nothing invoiced to this customer yet.",
+      "add": "Add",
+      "addItem": "Add {{sku}}"
+    },
+    "credit": {
+      "blocked": "This customer is blocked: over the credit limit or with overdue bills.",
+      "reasons": {
+        "over_limit": "over the credit limit",
+        "overdue": "bills overdue"
+      },
+      "figures": "Owed with this document: {{exposure}} · limit {{limit}}",
+      "reason": "Why let it through?",
+      "postAnyway": "Post anyway",
+      "askSomeone": "Ask someone who may override the credit limit to post it."
+    },
+    "warnings": {
+      "credit_warning": "Posted, but note: the customer is {{reasons}}.",
+      "credit_overridden": "Posted past the credit block ({{reasons}}); the reason is recorded."
+    },
+    "errors": {
+      "generic": "That didn't work. Check the document and try again.",
+      "more_than_open": "That is more than is still open on the line it follows.",
+      "invalid_sales_document": "This document is not complete: check its lines.",
+      "sales_document_not_draft": "Only a draft can be changed or deleted.",
+      "sales_document_not_found": "That sales document no longer exists.",
+      "below_minimum_price": "A price is below the item's minimum price: ask someone who may sell below it.",
+      "number_not_available": "That number has just been taken: choose the next number.",
+      "invalid_batch": "Check the batch: it does not fit this item.",
+      "permission_denied": "You don't have permission to do that."
+    }
+  },
+  "ageing": {
+    "title": "Ageing",
+    "side": "Customers or suppliers",
+    "receivables": "Customers owe",
+    "payables": "We owe suppliers",
+    "asOf": "Open today ({{date}}), by days past the due date.",
+    "none": "Nothing is open.",
+    "nothingOpen": "Nothing open for this customer.",
+    "party": "Party",
+    "totals": "Total",
+    "columns": {
+      "not_due": "Not due",
+      "days_1_30": "1–30",
+      "days_31_60": "31–60",
+      "days_61_90": "61–90",
+      "over_90": "Over 90",
+      "advances": "Advances",
+      "total": "Total"
     }
   }
 }
