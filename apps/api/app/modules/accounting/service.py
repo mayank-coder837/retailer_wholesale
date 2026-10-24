@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.accounting import accounts as chart
 from app.modules.accounting import ledger, periods, posting
 from app.modules.accounting.models import (
+    CASH_OR_BANK,
     CONTROL,
     Account,
     AccountType,
@@ -349,6 +350,21 @@ async def settle_document_bills(
         await ledger.settle(session, bill, line, take)
         left -= take
     return amount - left
+
+
+async def cash_or_bank_account(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> None:
+    """Refuses an account money may not be taken into: another business's, a group, archived, or not cash or
+    bank."""
+    account = await session.get(Account, account_id)
+    if (
+        account is None
+        or account.business_id != business_id
+        or account.is_group
+        or account.archived_at is not None
+        or account.account_type is None
+        or AccountType(account.account_type) not in CASH_OR_BANK
+    ):
+        raise chart.InvalidAccountError("Choose a cash or bank account.", field="cash_account_id")
 
 
 async def expense_account(session: AsyncSession, business_id: uuid.UUID, account_id: uuid.UUID) -> None:

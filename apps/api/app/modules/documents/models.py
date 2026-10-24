@@ -14,6 +14,7 @@ from enum import StrEnum
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -105,7 +106,7 @@ class Document(TenantScoped, Base):
     reference: Mapped[str | None] = mapped_column(String(100))
     narration: Mapped[str | None] = mapped_column(Text)
     party_id: Mapped[uuid.UUID | None]
-    account_id: Mapped[uuid.UUID | None]  # a voucher's cash or bank account
+    account_id: Mapped[uuid.UUID | None]  # a voucher's cash or bank account; a cash sale's
     currency: Mapped[str] = mapped_column(String(3), server_default="AED")
     total: Mapped[Decimal] = mapped_column(Numeric(19, 4), server_default=text("0"))
     posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -124,6 +125,7 @@ class Document(TenantScoped, Base):
     supplier_ref: Mapped[str | None] = mapped_column(String(60))  # the supplier's own bill number
     subtotal: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))  # net of VAT
     tax_total: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))  # VAT: the sum of the lines' VAT (A3)
+    valid_until: Mapped[date | None] = mapped_column(Date)  # quotations and proformas
 
 
 class LineDirection(StrEnum):
@@ -195,6 +197,8 @@ class DocumentLine(TenantScoped, Base):
     line_total: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
     account_id: Mapped[uuid.UUID | None]  # expense and service lines: the account debited
     source_line_id: Mapped[uuid.UUID | None]  # the order / receipt / bill line this line follows
+    price_source: Mapped[str | None] = mapped_column(String(80))  # sales: where the price came from (A9)
+    below_min: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))  # let through below min
     cleared_value: Mapped[Decimal | None] = mapped_column(
         Numeric(19, 4)
     )  # set at post: GRNI cleared, cost returned

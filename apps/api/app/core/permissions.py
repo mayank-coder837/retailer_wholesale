@@ -43,6 +43,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "account": _MASTER,
     # Sales and purchasing documents
     "quotation": _DOCUMENT,
+    "proforma_invoice": _DOCUMENT,
     "sales_order": _DOCUMENT,
     "delivery_note": _DOCUMENT,
     "sales_invoice": _DOCUMENT,
