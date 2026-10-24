@@ -591,7 +591,7 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
 }
 
 /** A searchable customer or supplier choice. */
-function PartyPicker({
+export function PartyPicker({
   label,
   role,
   value,

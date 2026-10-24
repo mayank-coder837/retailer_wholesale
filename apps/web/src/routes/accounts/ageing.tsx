@@ -12,9 +12,20 @@ import { useAgeing } from "@/routes/sales/queries";
 import { useBusiness } from "@/shell/use-business";
 
 type Buckets = components["schemas"]["AgeingBuckets"];
-const COLUMNS = ["not_due", "days_1_30", "days_31_60", "days_61_90", "over_90", "advances", "total"] as const;
+const COLUMNS = [
+  "not_due",
+  "days_1_30",
+  "days_31_60",
+  "days_61_90",
+  "over_90",
+  "advances",
+  "total",
+  "pdc",
+  "after_pdc",
+] as const;
 
-/** Accounts → ageing (M1.8c): what customers owe (or suppliers are owed) by days past due, advances apart. */
+/** Accounts → ageing (M1.8c): what customers owe (or suppliers are owed) by days past due, advances apart;
+ * cheques not yet cleared and what stays open after them (M1.9b). */
 export function AgeingPage() {
   const { t } = useTranslation();
   const { current } = useBusiness();
