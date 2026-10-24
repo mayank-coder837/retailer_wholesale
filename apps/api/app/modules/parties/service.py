@@ -11,6 +11,7 @@
 import re
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -457,14 +458,20 @@ async def credit_figures(
     session: AsyncSession, party_id: uuid.UUID, business_id: uuid.UUID
 ) -> credit.CreditFigures:
     """Ledger balance and the oldest unpaid invoice from accounting (M1.5), the open value of posted orders
-    (M1.8); PDCs in hand (M1.9) are zero until that module exists."""
+    (M1.8), and the customer's cheques in hand (M1.9: shown beside the balance, never subtracted)."""
     from app.modules.accounting import service as accounting  # accounting builds on parties
+    from app.modules.pdc import service as pdc  # the register builds on parties
+    from app.modules.pdc.models import PdcDirection
     from app.modules.sales import service as sales  # sales builds on parties
 
     balance, oldest_days = await accounting.receivable_figures(session, business_id, party_id)
     open_orders = await sales.open_order_value(session, business_id, party_id)
+    pending = await pdc.pending_amounts(session, business_id, party_id)
     return credit.CreditFigures(
-        ledger_balance=balance, open_orders=open_orders, oldest_overdue_days=oldest_days
+        ledger_balance=balance,
+        open_orders=open_orders,
+        oldest_overdue_days=oldest_days,
+        pdc_in_hand=pending.get((party_id, PdcDirection.RECEIVED), Decimal(0)),
     )
 
 

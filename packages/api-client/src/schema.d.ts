@@ -1720,6 +1720,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/pdcs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Pdcs */
+        get: operations["list_pdcs"];
+        put?: never;
+        /** Create Pdc */
+        post: operations["create_pdc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdcs/{pdc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Pdc */
+        get: operations["get_pdc"];
+        /** Update Pdc */
+        put: operations["update_pdc"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdcs/{pdc_id}/deposit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deposit Pdc */
+        post: operations["deposit_pdc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdcs/{pdc_id}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clear Pdc */
+        post: operations["clear_pdc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdcs/{pdc_id}/bounce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bounce Pdc */
+        post: operations["bounce_pdc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdcs/{pdc_id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Return Pdc */
+        post: operations["return_pdc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdcs/{pdc_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Pdc */
+        post: operations["cancel_pdc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -2061,6 +2182,16 @@ export interface components {
              * @default 0
              */
             total: string;
+            /**
+             * Pdc
+             * @default 0
+             */
+            pdc: string;
+            /**
+             * After Pdc
+             * @default 0
+             */
+            after_pdc: string;
         };
         /** AgeingOut */
         AgeingOut: {
@@ -2110,6 +2241,16 @@ export interface components {
              * @default 0
              */
             total: string;
+            /**
+             * Pdc
+             * @default 0
+             */
+            pdc: string;
+            /**
+             * After Pdc
+             * @default 0
+             */
+            after_pdc: string;
             /**
              * Party Id
              * Format: uuid
@@ -2560,6 +2701,21 @@ export interface components {
             /** File */
             file: string;
         };
+        /** BounceIn */
+        BounceIn: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Charge
+             * @description A bank charge for the bounce: posts an expense voucher (pdc.post)
+             */
+            charge?: number | string | null;
+        };
         /** BranchIn */
         BranchIn: {
             /** Code */
@@ -2758,6 +2914,22 @@ export interface components {
             server_name: string;
             /** Proof */
             proof: string;
+        };
+        /** ClearIn */
+        ClearIn: {
+            /**
+             * Date
+             * Format: date
+             * @description The clearance date: the receipt or payment is dated on it
+             */
+            date: string;
+            /**
+             * Bank Account Id
+             * @description Received and not deposited: the bank account it cleared into
+             */
+            bank_account_id?: string | null;
+            /** Override Lock Reason */
+            override_lock_reason?: string | null;
         };
         /**
          * ClientKind
@@ -3071,6 +3243,19 @@ export interface components {
             /** Server Version */
             server_version: string;
         };
+        /** DepositIn */
+        DepositIn: {
+            /**
+             * Bank Account Id
+             * Format: uuid
+             */
+            bank_account_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+        };
         /**
          * Direction
          * @enum {string}
@@ -3183,6 +3368,33 @@ export interface components {
             product: string;
             /** Version */
             version: string;
+        };
+        /** IntendedBillIn */
+        IntendedBillIn: {
+            /**
+             * Bill Id
+             * Format: uuid
+             */
+            bill_id: string;
+            /** Amount */
+            amount: number | string;
+        };
+        /** IntendedBillOut */
+        IntendedBillOut: {
+            /**
+             * Bill Id
+             * Format: uuid
+             */
+            bill_id: string;
+            /** Reference */
+            reference: string;
+            /** Amount */
+            amount: string;
+            /**
+             * Amount Open
+             * @description What is still open on the bill now
+             */
+            amount_open: string;
         };
         /** ItemLedgerLine */
         ItemLedgerLine: {
@@ -3580,6 +3792,24 @@ export interface components {
              * @description Balance not tied to any bill (debit positive)
              */
             on_account: string;
+            /**
+             * Pdc Received Pending
+             * @description Cheques received from the party, not yet cleared (A2)
+             * @default 0
+             */
+            pdc_received_pending: string;
+            /**
+             * Pdc Issued Pending
+             * @description Cheques issued to the party, not cleared
+             * @default 0
+             */
+            pdc_issued_pending: string;
+            /**
+             * Outstanding After Pdc
+             * @description The closing balance once those cheques clear (debit positive)
+             * @default 0
+             */
+            outstanding_after_pdc: string;
         };
         /** PartyOut */
         PartyOut: {
@@ -3670,6 +3900,125 @@ export interface components {
             /** Archived At */
             archived_at: string | null;
         };
+        /**
+         * PdcDirection
+         * @enum {string}
+         */
+        PdcDirection: "received" | "issued";
+        /** PdcIn */
+        PdcIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            direction: components["schemas"]["PdcDirection"];
+            /**
+             * Party Id
+             * Format: uuid
+             * @description Received: the customer; issued: the supplier
+             */
+            party_id: string;
+            /** Cheque No */
+            cheque_no: string;
+            /**
+             * Bank Name
+             * @description The drawer's bank
+             */
+            bank_name?: string | null;
+            /**
+             * Cheque Date
+             * Format: date
+             * @description Maturity: when it may be presented
+             */
+            cheque_date: string;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Deposit Account Id
+             * @description Issued: the bank account it is drawn on (required)
+             */
+            deposit_account_id?: string | null;
+            /**
+             * Intended Bills
+             * @description The open bills it is meant for
+             */
+            intended_bills?: components["schemas"]["IntendedBillIn"][];
+            /** Notes */
+            notes?: string | null;
+        };
+        /** PdcOut */
+        PdcOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            direction: components["schemas"]["PdcDirection"];
+            /**
+             * Party Id
+             * Format: uuid
+             */
+            party_id: string;
+            /** Party Name En */
+            party_name_en: string;
+            /** Party Name Ar */
+            party_name_ar: string;
+            /** Cheque No */
+            cheque_no: string;
+            /** Bank Name */
+            bank_name: string | null;
+            /**
+             * Cheque Date
+             * Format: date
+             */
+            cheque_date: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            status: components["schemas"]["PdcStatus"];
+            /** Deposit Account Id */
+            deposit_account_id: string | null;
+            /** Deposited On */
+            deposited_on: string | null;
+            /** Cleared On */
+            cleared_on: string | null;
+            /** Bounced On */
+            bounced_on: string | null;
+            /** Bounce Reason */
+            bounce_reason: string | null;
+            /** Voucher Id */
+            voucher_id: string | null;
+            /** Voucher Number */
+            voucher_number: string | null;
+            /** Charge Voucher Id */
+            charge_voucher_id: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Intended Bills */
+            intended_bills: components["schemas"]["IntendedBillOut"][];
+        };
+        /**
+         * PdcStatus
+         * @enum {string}
+         */
+        PdcStatus: "in_hand" | "deposited" | "issued" | "cleared" | "bounced" | "returned" | "cancelled";
         /**
          * PeriodStatus
          * @enum {string}
@@ -10123,6 +10472,309 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesHistoryLineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_pdcs: {
+        parameters: {
+            query: {
+                business_id: string;
+                direction?: components["schemas"]["PdcDirection"] | null;
+                status?: components["schemas"]["PdcStatus"] | null;
+                party_id?: string | null;
+                due_from?: string | null;
+                due_to?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PdcIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PdcIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deposit_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepositIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClearIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bounce_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BounceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    return_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_pdc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pdc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdcOut"];
                 };
             };
             /** @description Validation Error */

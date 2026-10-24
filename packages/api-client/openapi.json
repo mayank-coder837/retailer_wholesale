@@ -7754,6 +7754,571 @@
         }
       }
     },
+    "/pdcs": {
+      "get": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "List Pdcs",
+        "operationId": "list_pdcs",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PdcDirection"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PdcStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "party_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Party Id"
+            }
+          },
+          {
+            "name": "due_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Due From"
+            }
+          },
+          {
+            "name": "due_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Due To"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 200,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PdcOut"
+                  },
+                  "title": "Response List Pdcs"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Create Pdc",
+        "operationId": "create_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdcIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdcs/{pdc_id}": {
+      "get": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Get Pdc",
+        "operationId": "get_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Update Pdc",
+        "operationId": "update_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdcIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdcs/{pdc_id}/deposit": {
+      "post": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Deposit Pdc",
+        "operationId": "deposit_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdcs/{pdc_id}/clear": {
+      "post": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Clear Pdc",
+        "operationId": "clear_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdcs/{pdc_id}/bounce": {
+      "post": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Bounce Pdc",
+        "operationId": "bounce_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BounceIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdcs/{pdc_id}/return": {
+      "post": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Return Pdc",
+        "operationId": "return_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdcs/{pdc_id}/cancel": {
+      "post": {
+        "tags": [
+          "pdc"
+        ],
+        "summary": "Cancel Pdc",
+        "operationId": "cancel_pdc",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pdc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Pdc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdcOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/{doc_id}/cancel": {
       "post": {
         "tags": [
@@ -8619,6 +9184,16 @@
             "type": "string",
             "title": "Total",
             "default": "0"
+          },
+          "pdc": {
+            "type": "string",
+            "title": "Pdc",
+            "default": "0"
+          },
+          "after_pdc": {
+            "type": "string",
+            "title": "After Pdc",
+            "default": "0"
           }
         },
         "type": "object",
@@ -8686,6 +9261,16 @@
           "total": {
             "type": "string",
             "title": "Total",
+            "default": "0"
+          },
+          "pdc": {
+            "type": "string",
+            "title": "Pdc",
+            "default": "0"
+          },
+          "after_pdc": {
+            "type": "string",
+            "title": "After Pdc",
             "default": "0"
           },
           "party_id": {
@@ -9823,6 +10408,43 @@
         ],
         "title": "Body_upload_attachment"
       },
+      "BounceIn": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "charge": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charge",
+            "description": "A bank charge for the bounce: posts an expense voucher (pdc.post)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "reason"
+        ],
+        "title": "BounceIn"
+      },
       "BranchIn": {
         "properties": {
           "code": {
@@ -10391,6 +11013,46 @@
           "proof"
         ],
         "title": "ChallengeOut"
+      },
+      "ClearIn": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date",
+            "description": "The clearance date: the receipt or payment is dated on it"
+          },
+          "bank_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Account Id",
+            "description": "Received and not deposited: the bank account it cleared into"
+          },
+          "override_lock_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Lock Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "title": "ClearIn"
       },
       "ClientKind": {
         "type": "string",
@@ -11418,6 +12080,26 @@
         ],
         "title": "DatabaseHealthOut"
       },
+      "DepositIn": {
+        "properties": {
+          "bank_account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Bank Account Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_account_id",
+          "date"
+        ],
+        "title": "DepositIn"
+      },
       "Direction": {
         "type": "string",
         "enum": [
@@ -11652,6 +12334,63 @@
           "version"
         ],
         "title": "HealthOut"
+      },
+      "IntendedBillIn": {
+        "properties": {
+          "bill_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Bill Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bill_id",
+          "amount"
+        ],
+        "title": "IntendedBillIn"
+      },
+      "IntendedBillOut": {
+        "properties": {
+          "bill_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Bill Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "amount_open": {
+            "type": "string",
+            "title": "Amount Open",
+            "description": "What is still open on the bill now"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bill_id",
+          "reference",
+          "amount",
+          "amount_open"
+        ],
+        "title": "IntendedBillOut"
       },
       "ItemLedgerLine": {
         "properties": {
@@ -12698,6 +13437,24 @@
             "type": "string",
             "title": "On Account",
             "description": "Balance not tied to any bill (debit positive)"
+          },
+          "pdc_received_pending": {
+            "type": "string",
+            "title": "Pdc Received Pending",
+            "description": "Cheques received from the party, not yet cleared (A2)",
+            "default": "0"
+          },
+          "pdc_issued_pending": {
+            "type": "string",
+            "title": "Pdc Issued Pending",
+            "description": "Cheques issued to the party, not cleared",
+            "default": "0"
+          },
+          "outstanding_after_pdc": {
+            "type": "string",
+            "title": "Outstanding After Pdc",
+            "description": "The closing balance once those cheques clear (debit positive)",
+            "default": "0"
           }
         },
         "type": "object",
@@ -13056,6 +13813,337 @@
           "archived_at"
         ],
         "title": "PartySummary"
+      },
+      "PdcDirection": {
+        "type": "string",
+        "enum": [
+          "received",
+          "issued"
+        ],
+        "title": "PdcDirection"
+      },
+      "PdcIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Branch Id"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/PdcDirection"
+          },
+          "party_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Party Id",
+            "description": "Received: the customer; issued: the supplier"
+          },
+          "cheque_no": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Cheque No"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name",
+            "description": "The drawer's bank"
+          },
+          "cheque_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Cheque Date",
+            "description": "Maturity: when it may be presented"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "deposit_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Account Id",
+            "description": "Issued: the bank account it is drawn on (required)"
+          },
+          "intended_bills": {
+            "items": {
+              "$ref": "#/components/schemas/IntendedBillIn"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Intended Bills",
+            "description": "The open bills it is meant for"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "branch_id",
+          "direction",
+          "party_id",
+          "cheque_no",
+          "cheque_date",
+          "amount"
+        ],
+        "title": "PdcIn"
+      },
+      "PdcOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "branch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Branch Id"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/PdcDirection"
+          },
+          "party_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Party Id"
+          },
+          "party_name_en": {
+            "type": "string",
+            "title": "Party Name En"
+          },
+          "party_name_ar": {
+            "type": "string",
+            "title": "Party Name Ar"
+          },
+          "cheque_no": {
+            "type": "string",
+            "title": "Cheque No"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name"
+          },
+          "cheque_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Cheque Date"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PdcStatus"
+          },
+          "deposit_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Account Id"
+          },
+          "deposited_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposited On"
+          },
+          "cleared_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cleared On"
+          },
+          "bounced_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bounced On"
+          },
+          "bounce_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bounce Reason"
+          },
+          "voucher_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voucher Id"
+          },
+          "voucher_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voucher Number"
+          },
+          "charge_voucher_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charge Voucher Id"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "intended_bills": {
+            "items": {
+              "$ref": "#/components/schemas/IntendedBillOut"
+            },
+            "type": "array",
+            "title": "Intended Bills"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "branch_id",
+          "direction",
+          "party_id",
+          "party_name_en",
+          "party_name_ar",
+          "cheque_no",
+          "bank_name",
+          "cheque_date",
+          "amount",
+          "currency",
+          "status",
+          "deposit_account_id",
+          "deposited_on",
+          "cleared_on",
+          "bounced_on",
+          "bounce_reason",
+          "voucher_id",
+          "voucher_number",
+          "charge_voucher_id",
+          "notes",
+          "intended_bills"
+        ],
+        "title": "PdcOut"
+      },
+      "PdcStatus": {
+        "type": "string",
+        "enum": [
+          "in_hand",
+          "deposited",
+          "issued",
+          "cleared",
+          "bounced",
+          "returned",
+          "cancelled"
+        ],
+        "title": "PdcStatus"
       },
       "PeriodStatus": {
         "type": "string",

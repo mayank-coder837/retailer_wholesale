@@ -260,6 +260,8 @@ class AgeingBuckets(BaseModel):
     over_90: Decimal = Decimal(0)
     advances: Decimal = Decimal(0)  # paid ahead, not yet allocated to a bill
     total: Decimal = Decimal(0)  # the buckets less the advances
+    pdc: Decimal = Decimal(0)  # cheques not yet cleared: received (receivables) or issued (payables)
+    after_pdc: Decimal = Decimal(0)  # the total once they clear
 
 
 class AgeingRowOut(AgeingBuckets):
@@ -300,6 +302,15 @@ class LedgerOut(BaseModel):
 class PartyLedgerOut(LedgerOut):
     open_bills: list[BillOut]
     on_account: Decimal = Field(description="Balance not tied to any bill (debit positive)")
+    pdc_received_pending: Decimal = Field(
+        default=Decimal(0), description="Cheques received from the party, not yet cleared (A2)"
+    )
+    pdc_issued_pending: Decimal = Field(
+        default=Decimal(0), description="Cheques issued to the party, not cleared"
+    )
+    outstanding_after_pdc: Decimal = Field(
+        default=Decimal(0), description="The closing balance once those cheques clear (debit positive)"
+    )
 
 
 class TrialBalanceRowOut(BaseModel):

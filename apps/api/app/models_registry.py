@@ -8,6 +8,7 @@ from app.modules.documents import models as documents_models  # noqa: F401
 from app.modules.identity import models as identity_models  # noqa: F401
 from app.modules.inventory import models as inventory_models  # noqa: F401
 from app.modules.parties import models as parties_models  # noqa: F401
+from app.modules.pdc import models as pdc_models  # noqa: F401
 from app.modules.pricing import models as pricing_models  # noqa: F401
 from app.modules.tenancy import models as tenancy_models  # noqa: F401
 
