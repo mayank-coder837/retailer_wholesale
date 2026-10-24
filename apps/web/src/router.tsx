@@ -8,6 +8,9 @@ import {
 
 import { AccountPage } from "@/routes/accounts/account";
 import { AgeingPage } from "@/routes/accounts/ageing";
+import { PdcPage } from "@/routes/accounts/pdc";
+import { PdcEntryRoute } from "@/routes/accounts/pdc-entry";
+import { PdcRegisterPage } from "@/routes/accounts/pdcs";
 import { ChartPage } from "@/routes/accounts/chart";
 import { PeriodsPage } from "@/routes/accounts/periods";
 import { TrialBalancePage } from "@/routes/accounts/trial-balance";
@@ -202,6 +205,24 @@ const trialBalanceRoute = createRoute({
   path: "/accounts/trial-balance",
   component: TrialBalancePage,
 });
+const chequesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/cheques",
+  component: PdcRegisterPage,
+});
+/** ``direction``: received (the default) or issued. */
+const newChequeRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/cheques/new",
+  validateSearch: (search: Record<string, unknown>): { direction?: string } =>
+    typeof search.direction === "string" ? { direction: search.direction } : {},
+  component: PdcEntryRoute,
+});
+const chequeRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/cheques/$pdcId",
+  component: PdcPage,
+});
 const ageingRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/accounts/ageing",
@@ -251,6 +272,9 @@ const routeTree = rootRoute.addChildren([
     vouchersRoute,
     voucherViewRoute,
     trialBalanceRoute,
+    chequesRoute,
+    newChequeRoute,
+    chequeRoute,
     ageingRoute,
     periodsRoute,
     accountRoute,

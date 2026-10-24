@@ -562,7 +562,8 @@
       "vouchers": "Vouchers",
       "trialBalance": "Trial balance",
       "periods": "Fiscal periods",
-      "ageing": "Ageing"
+      "ageing": "Ageing",
+      "cheques": "Cheques (PDC)"
     },
     "chart": {
       "new": "New account",
@@ -1169,7 +1170,132 @@
       "days_61_90": "61–90",
       "over_90": "Over 90",
       "advances": "Advances",
-      "total": "Total"
+      "total": "Total",
+      "pdc": "PDCs",
+      "after_pdc": "After PDCs"
+    }
+  },
+  "pdc": {
+    "direction": "Received or issued",
+    "directions": {
+      "received": "Cheques received",
+      "issued": "Cheques issued"
+    },
+    "status": "Status",
+    "pendingFilter": "Not cleared yet",
+    "allFilter": "All",
+    "statuses": {
+      "in_hand": "In hand",
+      "deposited": "Deposited",
+      "issued": "Issued",
+      "cleared": "Cleared",
+      "bounced": "Bounced",
+      "returned": "Returned",
+      "cancelled": "Cancelled"
+    },
+    "new": {
+      "received": "Record a cheque received",
+      "issued": "Record a cheque issued"
+    },
+    "memoNote": "Post-dated cheques are a memo: nothing is in the books until the bank clears them.",
+    "none": "No cheques here.",
+    "monthTotal_one": "{{count}} cheque,",
+    "monthTotal_other": "{{count}} cheques,",
+    "chequeDate": "Cheque date",
+    "chequeDateHint": "When it may be presented",
+    "chequeNo": "Cheque no.",
+    "party": "Party",
+    "partyLabel": {
+      "received": "Customer",
+      "issued": "Supplier"
+    },
+    "bank": "Bank",
+    "bankHint": "The bank the cheque is drawn on",
+    "amount": "Amount",
+    "drawnOn": "Our bank account it is drawn on",
+    "depositTo": "Bank account",
+    "due": "Due",
+    "notes": "Notes",
+    "intended": "Bills this cheque is for",
+    "intendedHint": "Settled when the cheque clears, as far as they are still open; the rest becomes an advance.",
+    "noOpenBills": "No open bills: the whole cheque becomes an advance when it clears.",
+    "forThisCheque": "For this cheque",
+    "forBill": "Amount for {{reference}}",
+    "stillOpen": "Open now",
+    "save": "Save cheque",
+    "cheque": "Cheque",
+    "depositedOn": "Deposited on",
+    "clearedOn": "Cleared on",
+    "bouncedOn": "Bounced on",
+    "postedAs": {
+      "received": "Receipt posted:",
+      "issued": "Payment posted:"
+    },
+    "chargeVoucher": "Bank charge voucher",
+    "actions": "Cheque actions",
+    "do": {
+      "deposit": "Deposit",
+      "clear": "Cleared by the bank",
+      "bounce": "Bounced",
+      "return": "Return to customer",
+      "cancel": "Cancel cheque"
+    },
+    "confirm": {
+      "deposit": "Mark deposited",
+      "clear": "Post and mark cleared",
+      "bounce": "Mark bounced",
+      "return": "Mark returned",
+      "cancel": "Cancel cheque"
+    },
+    "dates": {
+      "deposit": "Deposited on",
+      "clear": "Cleared on",
+      "bounce": "Bounced on"
+    },
+    "hints": {
+      "deposit": {
+        "received": "Still nothing in the books until the bank clears it.",
+        "issued": ""
+      },
+      "clear": {
+        "received": "Posts a receipt on this date and settles the bills it was for.",
+        "issued": "Posts a payment on this date and settles the bills it was for."
+      },
+      "bounce": {
+        "received": "Nothing is posted: the customer still owes the bills. A bank charge, if any, is posted as an expense.",
+        "issued": "Nothing is posted: the supplier is still owed. A bank charge, if any, is posted as an expense."
+      },
+      "return": {
+        "received": "The cheque goes back to the customer unused.",
+        "issued": ""
+      },
+      "cancel": {
+        "received": "",
+        "issued": "The cheque is void; nothing was posted."
+      }
+    },
+    "bounceReason": "Reason",
+    "bankCharge": "Bank charge",
+    "bankChargeHint": "Optional; posted to bank charges",
+    "afterPdc": "After cheques:",
+    "pending": {
+      "received": "Cheques in hand:",
+      "issued": "Cheques issued, not cleared:"
+    },
+    "errors": {
+      "needParty": {
+        "received": "Choose the customer.",
+        "issued": "Choose the supplier."
+      },
+      "needChequeNo": "Enter the cheque number.",
+      "needAmount": "Enter an amount above zero, like 1250.00.",
+      "needBank": "Choose the bank account.",
+      "billAmount": "Bill amounts are numbers, like 500.00.",
+      "invalid_pdc": "Check the cheque: a bill may be another party's, or take more than is open or than the cheque.",
+      "invalid_pdc_transition": "Someone has already moved this cheque. Reload to see where it stands.",
+      "pdc_not_editable": "This cheque can no longer change.",
+      "invalid_account": "Choose a bank account.",
+      "forbidden": "You are not allowed to do that."
     }
   }
 }

@@ -4,7 +4,8 @@ import { Balance } from "@/routes/accounts/accounts-nav";
 import { LedgerTable } from "@/routes/accounts/ledger-table";
 import { money, usePartyLedger } from "@/routes/accounts/queries";
 
-/** The party's statement in this business (M1.5): ledger lines, open bills and what is on account. */
+/** The party's statement in this business (M1.5): ledger lines, open bills and what is on account; cheques
+ * not yet cleared and the balance after them (M1.9b). */
 export function PartyStatement({ businessId, partyId }: { businessId: string; partyId: string }) {
   const { t } = useTranslation();
   const statement = usePartyLedger(businessId, partyId);
@@ -57,6 +58,29 @@ export function PartyStatement({ businessId, partyId }: { businessId: string; pa
             ))}
           </tbody>
         </table>
+      )}
+      {(Number(s.pdc_received_pending) !== 0 || Number(s.pdc_issued_pending) !== 0) && (
+        <p className="flex flex-wrap gap-x-4 text-sm">
+          {Number(s.pdc_received_pending) !== 0 && (
+            <span>
+              {t("pdc.pending.received")}{" "}
+              <span dir="ltr" className="tabular-nums">
+                {money(s.pdc_received_pending)}
+              </span>
+            </span>
+          )}
+          {Number(s.pdc_issued_pending) !== 0 && (
+            <span>
+              {t("pdc.pending.issued")}{" "}
+              <span dir="ltr" className="tabular-nums">
+                {money(s.pdc_issued_pending)}
+              </span>
+            </span>
+          )}
+          <span className="font-medium">
+            {t("pdc.afterPdc")} <Balance amount={s.outstanding_after_pdc} />
+          </span>
+        </p>
       )}
       {s.on_account !== "0.0000" && (
         <p className="text-sm">

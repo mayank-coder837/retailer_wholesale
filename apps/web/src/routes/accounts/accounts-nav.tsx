@@ -3,7 +3,13 @@ import { useTranslation } from "react-i18next";
 import { AreaNav, type AreaLink } from "@/components/area-nav";
 import { money } from "@/routes/accounts/queries";
 
-const SECTIONS = ["/accounts/vouchers", "/accounts/trial-balance", "/accounts/ageing", "/accounts/periods"];
+const SECTIONS = [
+  "/accounts/vouchers",
+  "/accounts/cheques",
+  "/accounts/trial-balance",
+  "/accounts/ageing",
+  "/accounts/periods",
+];
 
 /** The Accounts area's own menu, under its title. An account's ledger belongs to the chart; voucher entry and a
  * voucher's page to Vouchers. */
@@ -20,6 +26,11 @@ export function AccountsNav() {
       to: "/accounts/vouchers",
       label: t("accounts.nav.vouchers"),
       matches: (p) => p.startsWith("/accounts/vouchers") || p.startsWith("/vouchers/"),
+    },
+    {
+      to: "/accounts/cheques",
+      label: t("accounts.nav.cheques"),
+      matches: (p) => p.startsWith("/accounts/cheques"),
     },
     {
       to: "/accounts/trial-balance",
