@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useApi } from "@/api/use-api";
-import { Field, inputClass } from "@/components/field";
+import { besideField, Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { localName } from "@/routes/catalog/product-form";
 import { errorCode, unwrap, useProduct, type Product } from "@/routes/catalog/queries";
@@ -30,9 +30,9 @@ export function ProductPage() {
     t("catalog.defaultVariant");
 
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
+    <div className="flex max-w-5xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">{localName(p, i18n.language)}</h1>
+        <h1 className="text-2xl font-bold leading-9">{localName(p, i18n.language)}</h1>
         <p className="text-sm text-muted-foreground">
           <span dir="ltr" className="font-mono">
             {p.sku}
@@ -149,7 +149,7 @@ function Barcodes({
         </ul>
       )}
       <form
-        className="grid items-end gap-3 sm:grid-cols-[1fr_auto_1fr_auto]"
+        className="grid items-start gap-3 sm:grid-cols-[1fr_auto_1fr_auto]"
         onSubmit={(e) => {
           e.preventDefault();
           add.mutate();
@@ -193,7 +193,7 @@ function Barcodes({
             />
           )}
         </Field>
-        <Button type="submit" disabled={add.isPending}>
+        <Button type="submit" className={besideField} disabled={add.isPending}>
           {code.trim() ? t("catalog.addBarcode") : t("catalog.generateBarcode")}
         </Button>
       </form>

@@ -11,6 +11,7 @@ import { LedgerTable } from "@/routes/accounts/ledger-table";
 import { accountName, useAccountLedger, useAccounts } from "@/routes/accounts/queries";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
 import { useBusiness } from "@/shell/use-business";
+import { CodeTag } from "@/components/code-tag";
 
 /** Accounts → one account (M1.5): its ledger for a date range; a group shows every ledger inside it. */
 export function AccountPage() {
@@ -41,12 +42,10 @@ export function AccountPage() {
   return (
     <div className="flex max-w-5xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold leading-9">
           {account ? (
             <>
-              <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-                {account.code}
-              </span>
+              <CodeTag>{account.code}</CodeTag>
               {accountName(account, i18n.language)}
             </>
           ) : (

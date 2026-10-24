@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useApi } from "@/api/use-api";
-import { Field, inputClass } from "@/components/field";
+import { besideField, Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import {
   emptyDraft,
@@ -62,7 +62,7 @@ export function NewProductPage() {
         create.mutate();
       }}
     >
-      <h1 className="text-2xl font-bold">{t("catalog.newProduct")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("catalog.newProduct")}</h1>
       {create.isError && (
         <p role="alert" className="text-destructive">
           {t(`catalog.errors.${errorCode(create.error)}`, { defaultValue: t("catalog.errors.generic") })}
@@ -178,7 +178,7 @@ export function NewProductPage() {
           )}
         </Field>
         {draft.units.map((row, index) => (
-          <div key={index} className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <div key={index} className="grid items-start gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <Field label={t("catalog.otherUnit")}>
               {(p) => (
                 <select
@@ -224,6 +224,7 @@ export function NewProductPage() {
             <Button
               type="button"
               variant="ghost"
+              className={besideField}
               onClick={() => set({ units: draft.units.filter((_, i) => i !== index) })}
             >
               {t("catalog.remove")}

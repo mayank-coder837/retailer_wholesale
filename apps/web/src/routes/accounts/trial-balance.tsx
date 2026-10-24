@@ -7,6 +7,7 @@ import { AccountsNav } from "@/routes/accounts/accounts-nav";
 import { accountName, money, useTrialBalance } from "@/routes/accounts/queries";
 import { errorCode } from "@/routes/catalog/queries";
 import { useBusiness } from "@/shell/use-business";
+import { CodeTag } from "@/components/code-tag";
 
 /** Accounts → trial balance (M1.5): every account's balance on a day; the two columns are always equal. */
 export function TrialBalancePage() {
@@ -16,8 +17,8 @@ export function TrialBalancePage() {
   const tb = useTrialBalance(current?.id, asOf);
 
   return (
-    <div className="flex max-w-4xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">{t("accounts.title")}</h1>
+    <div className="flex max-w-5xl flex-col gap-5">
+      <h1 className="text-2xl font-bold leading-9">{t("accounts.title")}</h1>
       <AccountsNav />
       <Field label={t("accounts.tb.asOf")} hint={t("accounts.tb.asOfHint")} className="w-56">
         {(p) => (
@@ -44,17 +45,15 @@ export function TrialBalancePage() {
           <thead className="text-muted-foreground">
             <tr>
               <th className="py-2 text-start font-medium">{t("accounts.chart.account")}</th>
-              <th className="py-2 text-end font-medium">{t("accounts.dr")}</th>
-              <th className="py-2 text-end font-medium">{t("accounts.cr")}</th>
+              <th className="py-2 text-right font-medium">{t("accounts.dr")}</th>
+              <th className="py-2 text-right font-medium">{t("accounts.cr")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {tb.data.rows.map((r) => (
               <tr key={r.account_id}>
                 <td className="py-1.5">
-                  <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-                    {r.code}
-                  </span>
+                  <CodeTag>{r.code}</CodeTag>
                   <Link
                     to="/accounts/$accountId"
                     params={{ accountId: r.account_id }}
@@ -63,21 +62,21 @@ export function TrialBalancePage() {
                     {accountName(r, i18n.language)}
                   </Link>
                 </td>
-                <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                  {r.debit === "0.0000" ? "" : money(r.debit)}
+                <td className="py-1.5 text-right tabular-nums">
+                  <span dir="ltr">{r.debit === "0.0000" ? "" : money(r.debit)}</span>
                 </td>
-                <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                  {r.credit === "0.0000" ? "" : money(r.credit)}
+                <td className="py-1.5 text-right tabular-nums">
+                  <span dir="ltr">{r.credit === "0.0000" ? "" : money(r.credit)}</span>
                 </td>
               </tr>
             ))}
             <tr className="font-semibold">
               <td className="py-1.5">{t("accounts.tb.total")}</td>
-              <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                {money(tb.data.total_debit)}
+              <td className="py-1.5 text-right tabular-nums">
+                <span dir="ltr">{money(tb.data.total_debit)}</span>
               </td>
-              <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                {money(tb.data.total_credit)}
+              <td className="py-1.5 text-right tabular-nums">
+                <span dir="ltr">{money(tb.data.total_credit)}</span>
               </td>
             </tr>
           </tbody>

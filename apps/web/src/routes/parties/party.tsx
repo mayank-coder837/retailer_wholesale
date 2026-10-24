@@ -21,6 +21,7 @@ import {
 import { showMoney, usePriceLists } from "@/routes/pricing/queries";
 import { PartyStatement } from "@/routes/accounts/statement";
 import { useBusiness } from "@/shell/use-business";
+import { cn } from "@/lib/utils";
 
 /** Customers & suppliers → one party (M1.4): details, addresses, contacts, this business's terms, credit. */
 export function PartyPage() {
@@ -34,9 +35,9 @@ export function PartyPage() {
   const p = party.data;
 
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
+    <div className="flex max-w-5xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">{partyName(p, i18n.language)}</h1>
+        <h1 className="text-2xl font-bold leading-9">{partyName(p, i18n.language)}</h1>
         <p className="text-sm text-muted-foreground">
           <span dir="ltr" className="font-mono">
             {p.code}
@@ -602,7 +603,7 @@ function CustomerTerms({
   return (
     <Section title={t("parties.customerTerms")}>
       <form
-        className="grid items-end gap-4 sm:grid-cols-2"
+        className="grid items-start gap-4 sm:grid-cols-2"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
@@ -689,7 +690,7 @@ function CustomerTerms({
             </select>
           )}
         </Field>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:col-span-2">
           <Button type="submit" disabled={save.isPending}>
             {t("parties.saveTerms")}
           </Button>
@@ -737,7 +738,7 @@ function SupplierTerms({ party, businessId }: { party: Party; businessId: string
           {(p) => (
             <input
               {...p}
-              className={inputClass + " w-32"}
+              className={cn(inputClass, "w-32")}
               dir="ltr"
               inputMode="numeric"
               value={days}
@@ -784,7 +785,7 @@ function CreditCheckPanel({ party, businessId }: { party: Party; businessId: str
           {(p) => (
             <input
               {...p}
-              className={inputClass + " w-40"}
+              className={cn(inputClass, "w-40")}
               dir="ltr"
               inputMode="decimal"
               value={amount}

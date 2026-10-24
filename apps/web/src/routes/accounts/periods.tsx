@@ -45,8 +45,8 @@ export function PeriodsPage() {
   const failure = lock.error ?? create.error ?? years.error;
 
   return (
-    <div className="flex max-w-4xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">{t("accounts.title")}</h1>
+    <div className="flex max-w-5xl flex-col gap-5">
+      <h1 className="text-2xl font-bold leading-9">{t("accounts.title")}</h1>
       <AccountsNav />
       <p className="text-sm text-muted-foreground">{t("accounts.periods.hint")}</p>
       {failure && (
@@ -84,7 +84,7 @@ export function PeriodsPage() {
         </section>
       ))}
       <form
-        className="flex flex-wrap items-end gap-2 border-t pt-4"
+        className="flex flex-wrap items-start gap-2 border-t pt-4"
         onSubmit={(e) => {
           e.preventDefault();
           if (current && day) create.mutate();
@@ -101,7 +101,7 @@ export function PeriodsPage() {
             />
           )}
         </Field>
-        <Button type="submit" variant="outline" disabled={create.isPending}>
+        <Button type="submit" variant="outline" className="mt-6" disabled={create.isPending}>
           {t("accounts.periods.create")}
         </Button>
       </form>

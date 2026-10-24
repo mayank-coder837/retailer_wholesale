@@ -6,6 +6,7 @@ import { inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { errorCode } from "@/routes/catalog/queries";
 import { partyName, roleLabel, useParties, type Role } from "@/routes/parties/queries";
+import { cn } from "@/lib/utils";
 
 const FILTERS: (Role | null)[] = [null, "customer", "supplier"];
 
@@ -19,14 +20,14 @@ export function PartiesPage() {
   return (
     <div className="flex max-w-5xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{t("parties.title")}</h1>
+        <h1 className="text-2xl font-bold leading-9">{t("parties.title")}</h1>
         <Button asChild>
           <Link to="/parties/new">{t("parties.new")}</Link>
         </Button>
       </div>
       <div className="flex flex-wrap gap-3">
         <input
-          className={inputClass + " min-w-60 flex-1"}
+          className={cn(inputClass, "min-w-60 flex-1")}
           type="search"
           aria-label={t("parties.search")}
           placeholder={t("parties.search")}
@@ -69,8 +70,8 @@ export function PartiesPage() {
           <tbody className="divide-y">
             {parties.data.map((p) => (
               <tr key={p.id}>
-                <td className="py-2 font-mono" dir="ltr">
-                  {p.code}
+                <td className="py-2 font-mono">
+                  <span dir="ltr">{p.code}</span>
                 </td>
                 <td className="py-2">
                   <Link
@@ -82,11 +83,11 @@ export function PartiesPage() {
                   </Link>
                 </td>
                 <td className="py-2">{roleLabel(t, p)}</td>
-                <td className="py-2 font-mono" dir="ltr">
-                  {p.trn ?? ""}
+                <td className="py-2 font-mono">
+                  <span dir="ltr">{p.trn ?? ""}</span>
                 </td>
-                <td className="py-2" dir="ltr">
-                  {p.phone ?? ""}
+                <td className="py-2">
+                  <span dir="ltr">{p.phone ?? ""}</span>
                 </td>
               </tr>
             ))}

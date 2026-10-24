@@ -84,7 +84,7 @@ export function SignupPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-6 px-4 py-10">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{t("signup.title", { product: product.name })}</h1>
+        <h1 className="text-2xl font-bold leading-9">{t("signup.title", { product: product.name })}</h1>
         <LanguageSwitch />
       </div>
       <ol className="flex gap-1" aria-label={t("signup.stepOf", { step: step + 1, total: STEPS.length })}>

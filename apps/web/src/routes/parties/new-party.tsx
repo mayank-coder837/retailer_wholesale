@@ -63,7 +63,7 @@ export function NewPartyPage() {
         if (Object.keys(errors).length === 0) save.mutate();
       }}
     >
-      <h1 className="text-2xl font-bold">{t("parties.new")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("parties.new")}</h1>
 
       <fieldset className="flex flex-col gap-2 text-sm">
         <legend className="mb-1 font-medium">{t("parties.roles")}</legend>

@@ -17,7 +17,7 @@ export function ThisPcPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-2xl font-bold">{t("thisPc.title")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("thisPc.title")}</h1>
       {role === "main" && <MainPc />}
       {role === "office" && <OfficePc />}
       {!role && <p className="text-muted-foreground">{t("thisPc.browser")}</p>}

@@ -16,9 +16,11 @@ export function PricingSettingsPage() {
   const { current } = useBusiness();
   if (!current) return <p>{t("common.loading")}</p>;
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold">{t("pricing.settingsTitle")}</h1>
-      <p className="text-sm text-muted-foreground">{t("pricing.settingsHint")}</p>
+    <div className="flex max-w-5xl flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold leading-9">{t("pricing.settingsTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("pricing.settingsHint")}</p>
+      </div>
       <PriceLists businessId={current.id} currency={current.base_currency} />
       <Promotions businessId={current.id} />
       <CustomerGroups businessId={current.id} />
@@ -57,7 +59,7 @@ function PriceLists({ businessId, currency }: { businessId: string; currency: st
     <section className="flex flex-col gap-3" aria-label={t("pricing.lists")}>
       <h2 className="text-lg font-semibold">{t("pricing.lists")}</h2>
       {(lists.data ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("pricing.noLists")}</p>
+        <p className="text-sm text-muted-foreground">{t("pricing.noListsYet")}</p>
       ) : (
         <ul className="divide-y rounded-md border text-sm">
           {(lists.data ?? []).map((l) => (

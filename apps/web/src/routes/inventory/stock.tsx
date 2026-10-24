@@ -17,6 +17,8 @@ import {
   type Warehouse,
 } from "@/routes/inventory/queries";
 import { useBusiness } from "@/shell/use-business";
+import { CodeTag } from "@/components/code-tag";
+import { cn } from "@/lib/utils";
 
 /** Quantity and value per item, warehouse and batch, each linking to the item's stock ledger. */
 export function BalanceTable({ rows, warehouses }: { rows: Balance[]; warehouses: Warehouse[] | undefined }) {
@@ -28,17 +30,15 @@ export function BalanceTable({ rows, warehouses }: { rows: Balance[]; warehouses
           <th className="py-2 text-start font-medium">{t("inventory.stock.item")}</th>
           <th className="py-2 text-start font-medium">{t("inventory.stock.warehouse")}</th>
           <th className="py-2 text-start font-medium">{t("inventory.stock.batch")}</th>
-          <th className="py-2 text-end font-medium">{t("inventory.stock.qty")}</th>
-          <th className="py-2 text-end font-medium">{t("inventory.stock.value")}</th>
+          <th className="py-2 text-right font-medium">{t("inventory.stock.qty")}</th>
+          <th className="py-2 text-right font-medium">{t("inventory.stock.value")}</th>
         </tr>
       </thead>
       <tbody className="divide-y">
         {rows.map((r) => (
           <tr key={`${r.variant_id}-${r.warehouse_id}-${r.batch_id ?? ""}`}>
             <td className="py-1.5">
-              <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-                {r.sku}
-              </span>
+              <CodeTag>{r.sku}</CodeTag>
               <Link
                 to="/inventory/items/$variantId"
                 params={{ variantId: r.variant_id }}
@@ -48,18 +48,23 @@ export function BalanceTable({ rows, warehouses }: { rows: Balance[]; warehouses
               </Link>
             </td>
             <td className="py-1.5">{warehouseName(warehouses, r.warehouse_id, i18n.language)}</td>
-            <td className="py-1.5" dir="ltr">
-              {r.batch_no ?? ""}
-              {r.expiry_date && <span className="ms-2 text-xs text-muted-foreground">{r.expiry_date}</span>}
+            <td className="py-1.5">
+              <span dir="ltr">
+                {r.batch_no ?? ""}
+                {r.expiry_date && <span className="ms-2 text-xs text-muted-foreground">{r.expiry_date}</span>}
+              </span>
             </td>
             <td
-              className={"py-1.5 text-end tabular-nums" + (r.qty.startsWith("-") ? " text-destructive" : "")}
-              dir="ltr"
+              className={
+                "py-1.5 text-right tabular-nums" + (r.qty.startsWith("-") ? " text-destructive" : "")
+              }
             >
-              {qty(r.qty)} {r.base_unit}
+              <span dir="ltr">
+                {qty(r.qty)} {r.base_unit}
+              </span>
             </td>
-            <td className="py-1.5 text-end tabular-nums" dir="ltr">
-              {money(r.value)}
+            <td className="py-1.5 text-right tabular-nums">
+              <span dir="ltr">{money(r.value)}</span>
             </td>
           </tr>
         ))}
@@ -81,7 +86,7 @@ export function StockPage() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">{t("inventory.title")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("inventory.title")}</h1>
       <InventoryNav />
       {valuation.data && (
         <section
@@ -111,7 +116,7 @@ export function StockPage() {
       )}
       <div className="flex flex-wrap gap-3">
         <input
-          className={inputClass + " min-w-60 flex-1"}
+          className={cn(inputClass, "min-w-60 flex-1")}
           type="search"
           aria-label={t("inventory.stock.search")}
           placeholder={t("inventory.stock.search")}
@@ -162,7 +167,7 @@ export function NegativeStockPage() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">{t("inventory.title")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("inventory.title")}</h1>
       <InventoryNav />
       <p className="text-sm text-muted-foreground">{t("inventory.negative.hint")}</p>
       {negative.isPending && <p>{t("common.loading")}</p>}

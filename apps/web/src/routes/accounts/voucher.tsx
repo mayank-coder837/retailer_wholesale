@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { AccountsNav } from "@/routes/accounts/accounts-nav";
 import { money, useVoucher } from "@/routes/accounts/queries";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
+import { CodeTag } from "@/components/code-tag";
+import { useParty } from "@/routes/parties/queries";
 
 /** Accounts → one voucher (M1.5): what it posted; a draft can be posted or deleted here. */
 export function VoucherPage() {
@@ -61,9 +63,9 @@ export function VoucherPage() {
   const failure = post.error ?? remove.error;
 
   return (
-    <div className="flex max-w-4xl flex-col gap-5">
+    <div className="flex max-w-5xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold leading-9">
           {t(`accounts.voucherTypes.${v.doc_type}`)}{" "}
           <span className="font-mono" dir="ltr">
             {v.number ?? ""}
@@ -103,25 +105,24 @@ export function VoucherPage() {
             <thead className="text-muted-foreground">
               <tr>
                 <th className="py-2 text-start font-medium">{t("accounts.voucher.account")}</th>
-                <th className="py-2 text-end font-medium">{t("accounts.dr")}</th>
-                <th className="py-2 text-end font-medium">{t("accounts.cr")}</th>
+                <th className="py-2 text-right font-medium">{t("accounts.dr")}</th>
+                <th className="py-2 text-right font-medium">{t("accounts.cr")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {v.journal.map((j) => (
                 <tr key={j.line_no}>
                   <td className="py-1.5">
-                    <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-                      {j.account_code}
-                    </span>
+                    <CodeTag>{j.account_code}</CodeTag>
                     {i18n.language === "ar" ? j.account_name_ar : j.account_name_en}
+                    {j.party_id && <PartyName partyId={j.party_id} />}
                     {j.description && <span className="ms-2 text-muted-foreground">— {j.description}</span>}
                   </td>
-                  <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                    {j.debit === "0.0000" ? "" : money(j.debit)}
+                  <td className="py-1.5 text-right tabular-nums">
+                    <span dir="ltr">{j.debit === "0.0000" ? "" : money(j.debit)}</span>
                   </td>
-                  <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                    {j.credit === "0.0000" ? "" : money(j.credit)}
+                  <td className="py-1.5 text-right tabular-nums">
+                    <span dir="ltr">{j.credit === "0.0000" ? "" : money(j.credit)}</span>
                   </td>
                 </tr>
               ))}
@@ -165,5 +166,17 @@ export function VoucherPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** The customer or supplier of a party line, after its account. */
+function PartyName({ partyId }: { partyId: string }) {
+  const { i18n } = useTranslation();
+  const party = useParty(partyId);
+  if (!party.data) return null;
+  return (
+    <span className="ms-2 text-muted-foreground">
+      · {i18n.language === "ar" ? party.data.name_ar : party.data.name_en}
+    </span>
   );
 }

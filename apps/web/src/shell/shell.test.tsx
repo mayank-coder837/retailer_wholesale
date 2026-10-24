@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -187,6 +187,24 @@ describe("App shell", () => {
 
     await userEvent.click(screen.getByRole("link", { name: "Sales" }));
     expect(await screen.findByText("Sales arrives in Phase 1.")).toBeInTheDocument();
+  });
+
+  it("keeps settings in their own menu and folds the phone menu after a choice", async () => {
+    const { api } = shopApi({ signedIn: true });
+    render(<App api={api} />);
+    await screen.findByRole("heading", { name: "Welcome, Fatima Owner" });
+
+    const main = screen.getByRole("navigation", { name: "Main menu" });
+    const settings = screen.getByRole("navigation", { name: "Settings" });
+    expect(within(settings).getByRole("link", { name: "Pricing" })).toBeInTheDocument();
+    expect(within(main).queryByRole("link", { name: "Pricing" })).toBeNull();
+
+    const toggle = screen.getByRole("button", { name: "Menu" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute("aria-expanded", "true");
+    await userEvent.click(within(main).getByRole("link", { name: "Sales" }));
+    expect(await screen.findByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
   });
 
   it("is right-to-left in Arabic", async () => {

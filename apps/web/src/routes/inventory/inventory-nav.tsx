@@ -1,29 +1,32 @@
-import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
-const LINKS = [
-  { to: "/inventory", key: "products" },
-  { to: "/inventory/stock", key: "stock" },
-  { to: "/inventory/documents", key: "documents" },
-  { to: "/inventory/negative", key: "negative" },
-] as const;
+import { AreaNav, type AreaLink } from "@/components/area-nav";
 
-/** The Inventory area's own menu, under its title. */
+/** The Inventory area's own menu, under its title. A product belongs to Products, an item's ledger to Stock, a
+ * stock document to Stock documents. */
 export function InventoryNav() {
   const { t } = useTranslation();
-  return (
-    <nav aria-label={t("inventory.menu")} className="flex flex-wrap gap-1 border-b pb-2 text-sm">
-      {LINKS.map((l) => (
-        <Link
-          key={l.to}
-          to={l.to}
-          activeOptions={{ exact: true }}
-          className="rounded-md px-3 py-1.5 hover:bg-muted"
-          activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
-        >
-          {t(`inventory.nav.${l.key}`)}
-        </Link>
-      ))}
-    </nav>
-  );
+  const links: AreaLink[] = [
+    {
+      to: "/inventory",
+      label: t("inventory.nav.products"),
+      matches: (p) => p === "/inventory" || p.startsWith("/inventory/products"),
+    },
+    {
+      to: "/inventory/stock",
+      label: t("inventory.nav.stock"),
+      matches: (p) => p.startsWith("/inventory/stock") || p.startsWith("/inventory/items/"),
+    },
+    {
+      to: "/inventory/documents",
+      label: t("inventory.nav.documents"),
+      matches: (p) => p.startsWith("/inventory/documents"),
+    },
+    {
+      to: "/inventory/negative",
+      label: t("inventory.nav.negative"),
+      matches: (p) => p.startsWith("/inventory/negative"),
+    },
+  ];
+  return <AreaNav label={t("inventory.menu")} links={links} />;
 }

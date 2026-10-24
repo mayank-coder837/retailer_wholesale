@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
 import { useCustomerGroups } from "@/routes/parties/queries";
 import { usePriceLists } from "@/routes/pricing/queries";
+import { cn } from "@/lib/utils";
 
 /** Settings → Pricing → customer groups (M1.4): a group's price list is pricing step 3. */
 export function CustomerGroups({ businessId }: { businessId: string }) {
@@ -70,7 +71,7 @@ export function CustomerGroups({ businessId }: { businessId: string }) {
             <li key={g.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
               <span>{name(g)}</span>
               <select
-                className={inputClass + " w-auto"}
+                className={cn(inputClass, "w-auto")}
                 aria-label={t("parties.groupList", { name: name(g) })}
                 value={g.price_list_id ?? ""}
                 disabled={setList.isPending}
@@ -83,49 +84,53 @@ export function CustomerGroups({ businessId }: { businessId: string }) {
         </ul>
       )}
       <form
-        className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]"
+        aria-label={t("parties.addGroupTitle")}
+        className="flex flex-col gap-3 rounded-lg border p-4"
         onSubmit={(e) => {
           e.preventDefault();
           if (form.en.trim() && form.ar.trim()) add.mutate();
         }}
       >
-        <Field label={t("parties.nameEn")}>
-          {(p) => (
-            <input
-              {...p}
-              className={inputClass}
-              dir="ltr"
-              value={form.en}
-              onChange={(e) => setForm({ ...form, en: e.target.value })}
-            />
-          )}
-        </Field>
-        <Field label={t("parties.nameAr")}>
-          {(p) => (
-            <input
-              {...p}
-              className={inputClass}
-              dir="rtl"
-              value={form.ar}
-              onChange={(e) => setForm({ ...form, ar: e.target.value })}
-            />
-          )}
-        </Field>
-        <Field label={t("parties.priceList")}>
-          {(p) => (
-            <select
-              {...p}
-              className={inputClass}
-              value={form.list}
-              onChange={(e) => setForm({ ...form, list: e.target.value })}
-            >
-              {listOptions}
-            </select>
-          )}
-        </Field>
-        <Button type="submit" disabled={!form.en.trim() || !form.ar.trim() || add.isPending}>
-          {t("parties.addGroup")}
-        </Button>
+        <h3 className="font-semibold">{t("parties.addGroupTitle")}</h3>
+        <div className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+          <Field label={t("parties.nameEn")}>
+            {(p) => (
+              <input
+                {...p}
+                className={inputClass}
+                dir="ltr"
+                value={form.en}
+                onChange={(e) => setForm({ ...form, en: e.target.value })}
+              />
+            )}
+          </Field>
+          <Field label={t("parties.nameAr")}>
+            {(p) => (
+              <input
+                {...p}
+                className={inputClass}
+                dir="rtl"
+                value={form.ar}
+                onChange={(e) => setForm({ ...form, ar: e.target.value })}
+              />
+            )}
+          </Field>
+          <Field label={t("parties.priceList")}>
+            {(p) => (
+              <select
+                {...p}
+                className={inputClass}
+                value={form.list}
+                onChange={(e) => setForm({ ...form, list: e.target.value })}
+              >
+                {listOptions}
+              </select>
+            )}
+          </Field>
+          <Button type="submit" disabled={!form.en.trim() || !form.ar.trim() || add.isPending}>
+            {t("parties.addGroup")}
+          </Button>
+        </div>
       </form>
       {(add.isError || setList.isError) && (
         <p role="alert" className="text-sm text-destructive">
