@@ -17,7 +17,7 @@ export function ProductsPage() {
   return (
     <div className="flex max-w-5xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{t("catalog.products")}</h1>
+        <h1 className="text-2xl font-bold leading-9">{t("catalog.products")}</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/settings/catalog">{t("catalog.setup")}</Link>
@@ -52,14 +52,14 @@ export function ProductsPage() {
               <th className="py-2 text-start font-medium">{t("catalog.sku")}</th>
               <th className="py-2 text-start font-medium">{t("catalog.name")}</th>
               <th className="py-2 text-start font-medium">{t("catalog.baseUnit")}</th>
-              <th className="py-2 text-end font-medium">{t("catalog.variants")}</th>
+              <th className="py-2 text-right font-medium">{t("catalog.variants")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {products.data.map((p) => (
               <tr key={p.id}>
-                <td className="py-2 font-mono" dir="ltr">
-                  {p.sku}
+                <td className="py-2 font-mono">
+                  <span dir="ltr">{p.sku}</span>
                 </td>
                 <td className="py-2">
                   <Link
@@ -70,10 +70,10 @@ export function ProductsPage() {
                     {localName(p, i18n.language)}
                   </Link>
                 </td>
-                <td className="py-2" dir="ltr">
-                  {p.base_unit}
+                <td className="py-2">
+                  <span dir="ltr">{p.base_unit}</span>
                 </td>
-                <td className="py-2 text-end">{p.variant_count}</td>
+                <td className="py-2 text-right">{p.variant_count}</td>
               </tr>
             ))}
           </tbody>

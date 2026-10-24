@@ -4,6 +4,7 @@ import { inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { allocationsOf, type BillWise, type BillWiseMode } from "@/routes/accounts/bill-wise-model";
 import { fromFils, money, toFils, useOpenBills } from "@/routes/accounts/queries";
+import { cn } from "@/lib/utils";
 
 /**
  * The bill-wise picker for one party line. ``side`` is the line's side: a credit settles the party's
@@ -73,28 +74,30 @@ export function BillWisePicker({
                   <tr>
                     <th className="py-1 text-start font-medium">{t("accounts.billWise.reference")}</th>
                     <th className="py-1 text-start font-medium">{t("accounts.billWise.date")}</th>
-                    <th className="py-1 text-end font-medium">{t("accounts.billWise.open")}</th>
-                    <th className="py-1 text-end font-medium">{t("accounts.billWise.settle")}</th>
+                    <th className="py-1 text-right font-medium">{t("accounts.billWise.open")}</th>
+                    <th className="py-1 text-right font-medium">{t("accounts.billWise.settle")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {settleable.map((b) => (
                     <tr key={b.id}>
-                      <td className="py-1 font-mono" dir="ltr">
-                        {b.reference}
-                        {b.is_advance && (
-                          <span className="ms-1 text-xs">({t("accounts.billWise.advance")})</span>
-                        )}
+                      <td className="py-1 font-mono">
+                        <span dir="ltr">
+                          {b.reference}
+                          {b.is_advance && (
+                            <span className="ms-1 text-xs">({t("accounts.billWise.advance")})</span>
+                          )}
+                        </span>
                       </td>
-                      <td className="py-1" dir="ltr">
-                        {b.bill_date}
+                      <td className="py-1">
+                        <span dir="ltr">{b.bill_date}</span>
                       </td>
-                      <td className="py-1 text-end tabular-nums" dir="ltr">
-                        {money(b.amount_open)}
+                      <td className="py-1 text-right tabular-nums">
+                        <span dir="ltr">{money(b.amount_open)}</span>
                       </td>
-                      <td className="py-1 text-end">
+                      <td className="py-1 ps-4 text-right">
                         <input
-                          className={inputClass + " w-32 text-end"}
+                          className={cn(inputClass, "w-32 text-end")}
                           dir="ltr"
                           inputMode="decimal"
                           aria-label={t("accounts.billWise.settleBill", { reference: b.reference })}
@@ -118,7 +121,7 @@ export function BillWisePicker({
       {(value.mode === "advance" || value.mode === "new_ref") && (
         <div className="flex flex-wrap gap-2">
           <input
-            className={inputClass + " w-48"}
+            className={cn(inputClass, "w-48")}
             dir="ltr"
             aria-label={t("accounts.billWise.reference")}
             placeholder={value.mode === "advance" ? t("accounts.billWise.referenceOptional") : ""}
@@ -128,7 +131,7 @@ export function BillWisePicker({
           {value.mode === "new_ref" && (
             <input
               type="date"
-              className={inputClass + " w-44"}
+              className={cn(inputClass, "w-44")}
               aria-label={t("accounts.billWise.due")}
               value={value.dueDate}
               onChange={(e) => set({ dueDate: e.target.value })}

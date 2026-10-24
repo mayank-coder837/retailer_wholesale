@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 export const inputClass =
   "h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-destructive";
 
+/** For a button beside fields in a top-aligned row: drops it by one label line, level with the inputs.
+ * Rows of fields align to the top (``items-start``), so a hint or error under one field moves nothing else. */
+export const besideField = "sm:mt-6";
+
 /** A labelled control with an optional hint and error, wired for screen readers. */
 export function Field({
   label,

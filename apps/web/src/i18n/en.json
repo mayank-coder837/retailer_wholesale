@@ -85,6 +85,8 @@
   },
   "nav": {
     "main": "Main menu",
+    "openMenu": "Menu",
+    "closeMenu": "Close menu",
     "dashboard": "Dashboard",
     "sales": "Sales",
     "purchases": "Purchases",
@@ -157,6 +159,10 @@
     }
   },
   "resources": {
+    "audit": "Audit log",
+    "backup": "Backups",
+    "promotion": "Promotions",
+    "unit": "Units of measure",
     "tenant": "Account settings",
     "business": "Businesses",
     "branch": "Branches",
@@ -377,6 +383,7 @@
     "saved": "Saved.",
     "addListPrice": "Put in a price list",
     "noLists": "No price lists yet: add one in Settings → Pricing.",
+    "noListsYet": "No price lists yet.",
     "list": "Price list",
     "standard": "standard",
     "fromQty": "From quantity",
@@ -527,6 +534,7 @@
     "noGroups": "No customer groups yet.",
     "groupList": "Price list of {{name}}",
     "addGroup": "Add group",
+    "addGroupTitle": "Add a customer group",
     "errors": {
       "generic": "That did not work. Check the details and try again.",
       "required": "Required.",

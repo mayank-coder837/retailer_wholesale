@@ -18,6 +18,7 @@ import {
   type StockWarnings,
 } from "@/routes/inventory/queries";
 import { useBusiness } from "@/shell/use-business";
+import { CodeTag } from "@/components/code-tag";
 
 /** Inventory → one stock document (M1.6): its lines and what they moved; a draft can be posted or deleted. */
 export function StockDocumentPage() {
@@ -79,7 +80,7 @@ export function StockDocumentPage() {
   return (
     <div className="flex max-w-5xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold leading-9">
           {t(`inventory.docTypes.${d.doc_type}`)}{" "}
           <span className="font-mono" dir="ltr">
             {d.number ?? ""}
@@ -136,18 +137,16 @@ export function StockDocumentPage() {
             {d.doc_type !== "stock_transfer" && (
               <th className="py-2 text-start font-medium">{t("inventory.doc.direction")}</th>
             )}
-            <th className="py-2 text-end font-medium">{t("inventory.stock.qty")}</th>
+            <th className="py-2 text-right font-medium">{t("inventory.stock.qty")}</th>
             <th className="py-2 text-start font-medium">{t("inventory.stock.batch")}</th>
-            <th className="py-2 text-end font-medium">{t("inventory.stock.value")}</th>
+            <th className="py-2 text-right font-medium">{t("inventory.stock.value")}</th>
           </tr>
         </thead>
         <tbody className="divide-y">
           {d.lines.map((l) => (
             <tr key={l.id}>
               <td className="py-1.5">
-                <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-                  {l.sku}
-                </span>
+                <CodeTag>{l.sku}</CodeTag>
                 {i18n.language === "ar" ? l.name_ar : l.name_en}
               </td>
               {d.doc_type !== "stock_transfer" && (
@@ -157,19 +156,21 @@ export function StockDocumentPage() {
                   )}
                 </td>
               )}
-              <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                {qty(l.qty)} {l.unit}
-                {l.unit !== l.base_unit && (
-                  <span className="ms-1 text-xs text-muted-foreground">
-                    ({qty(l.qty_base)} {l.base_unit})
-                  </span>
-                )}
+              <td className="py-1.5 text-right tabular-nums">
+                <span dir="ltr">
+                  {qty(l.qty)} {l.unit}
+                  {l.unit !== l.base_unit && (
+                    <span className="ms-1 text-xs text-muted-foreground">
+                      ({qty(l.qty_base)} {l.base_unit})
+                    </span>
+                  )}
+                </span>
               </td>
-              <td className="py-1.5" dir="ltr">
-                {l.batch_no ?? ""}
+              <td className="py-1.5">
+                <span dir="ltr">{l.batch_no ?? ""}</span>
               </td>
-              <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                {l.value === null || l.value === undefined ? "" : money(l.value)}
+              <td className="py-1.5 text-right tabular-nums">
+                <span dir="ltr">{l.value === null || l.value === undefined ? "" : money(l.value)}</span>
               </td>
             </tr>
           ))}

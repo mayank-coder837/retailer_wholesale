@@ -19,6 +19,7 @@ import {
 } from "@/routes/accounts/queries";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
 import { useBusiness } from "@/shell/use-business";
+import { CodeTag } from "@/components/code-tag";
 
 /** Ledger types that fit under each nature (as the API checks). */
 const TYPES_BY_NATURE: Record<Account["nature"], AccountType[]> = {
@@ -54,7 +55,7 @@ export function ChartPage() {
   return (
     <div className="flex max-w-5xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{t("accounts.title")}</h1>
+        <h1 className="text-2xl font-bold leading-9">{t("accounts.title")}</h1>
         <Button onClick={() => setAdding((v) => !v)} aria-expanded={adding}>
           {t("accounts.chart.new")}
         </Button>
@@ -75,7 +76,7 @@ export function ChartPage() {
             <tr>
               <th className="py-2 text-start font-medium">{t("accounts.chart.account")}</th>
               <th className="py-2 text-start font-medium">{t("accounts.chart.type")}</th>
-              <th className="py-2 text-end font-medium">{t("accounts.chart.balance")}</th>
+              <th className="py-2 text-right font-medium">{t("accounts.chart.balance")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -87,9 +88,7 @@ export function ChartPage() {
                     className="py-1.5"
                     style={{ paddingInlineStart: `${(depth.get(a.id) ?? 0) * 1.25}rem` }}
                   >
-                    <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-                      {a.code}
-                    </span>
+                    <CodeTag>{a.code}</CodeTag>
                     <Link
                       to="/accounts/$accountId"
                       params={{ accountId: a.id }}
@@ -102,11 +101,11 @@ export function ChartPage() {
                     {a.account_type ? t(`accounts.types.${a.account_type}`) : t("accounts.chart.group")}
                     {(a.roles ?? []).length > 0 && (
                       <span className="ms-2 text-xs">
-                        ({(a.roles ?? []).map((r) => t(`accounts.roles.${r}`)).join(", ")})
+                        · {(a.roles ?? []).map((r) => t(`accounts.roles.${r}`)).join(", ")}
                       </span>
                     )}
                   </td>
-                  <td className="py-1.5 text-end">
+                  <td className="py-1.5 text-right">
                     <Balance amount={a.balance} />
                   </td>
                 </tr>

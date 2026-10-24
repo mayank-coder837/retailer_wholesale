@@ -48,7 +48,7 @@ export function LoginPage() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold">{product.name}</p>
-          <h1 className="text-2xl font-bold">{t("login.title")}</h1>
+          <h1 className="text-2xl font-bold leading-9">{t("login.title")}</h1>
         </div>
         <LanguageSwitch />
       </div>

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import product from "@smartbiz/config";
@@ -10,6 +10,7 @@ import { useSession } from "@/auth/use-session";
 import { inputClass } from "@/components/field";
 import { LanguageSwitch } from "@/components/language-switch";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ServerStatus } from "@/shell/server-status";
 import { useDesktopShortcuts } from "@/shell/shortcuts";
 import { BusinessContext, rememberedBusinessKey, type Business } from "@/shell/use-business";
@@ -23,6 +24,26 @@ const NAV = [
   { to: "/accounts", key: "accounts" },
   { to: "/reports", key: "reports" },
 ] as const;
+
+const SETTINGS = [
+  { to: "/settings/roles", key: "roles" },
+  { to: "/settings/catalog", key: "catalog" },
+  { to: "/settings/pricing", key: "pricing" },
+] as const;
+
+/** A sidebar entry; on a phone, choosing one folds the menu away. */
+function MenuLink({ to, onPick, children }: { to: string; onPick: () => void; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      onClick={onPick}
+      className="rounded-md px-3 py-2 hover:bg-muted"
+      activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
+    >
+      {children}
+    </Link>
+  );
+}
 
 function readRemembered(key: string): string | null {
   try {
@@ -50,6 +71,8 @@ function SignedInShell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useDesktopShortcuts();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
 
   const me = useQuery({
     queryKey: ["me", session.tenantId],
@@ -107,56 +130,53 @@ function SignedInShell() {
   return (
     <BusinessContext.Provider value={businessValue}>
       <div className="flex min-h-screen flex-col md:flex-row">
-        <aside className="flex shrink-0 flex-col gap-4 border-b bg-muted/40 p-4 md:w-60 md:border-e md:border-b-0">
+        <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-3 md:hidden">
           <Link to="/dashboard" className="text-lg font-bold">
+            {product.name}
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-expanded={menuOpen}
+            aria-controls="app-menu"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+          </Button>
+        </div>
+        <aside
+          id="app-menu"
+          className={cn(
+            menuOpen ? "flex" : "hidden",
+            "shrink-0 flex-col gap-4 border-b bg-muted/40 p-4",
+            "md:sticky md:top-0 md:flex md:h-screen md:w-60 md:overflow-y-auto md:border-e md:border-b-0",
+          )}
+        >
+          <Link to="/dashboard" className="hidden text-lg font-bold md:block">
             {product.name}
           </Link>
           <nav aria-label={t("nav.main")} className="flex flex-col gap-1 text-sm">
             {NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-md px-3 py-2 hover:bg-muted"
-                activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
-              >
+              <MenuLink key={item.to} to={item.to} onPick={closeMenu}>
                 {t(`nav.${item.key}`)}
-              </Link>
+              </MenuLink>
             ))}
-            <p className="mt-3 px-3 text-xs font-medium uppercase text-muted-foreground">
-              {t("nav.settings")}
-            </p>
-            <Link
-              to="/settings/roles"
-              className="rounded-md px-3 py-2 hover:bg-muted"
-              activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
-            >
-              {t("nav.roles")}
-            </Link>
-            <Link
-              to="/settings/catalog"
-              className="rounded-md px-3 py-2 hover:bg-muted"
-              activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
-            >
-              {t("nav.catalog")}
-            </Link>
-            <Link
-              to="/settings/pricing"
-              className="rounded-md px-3 py-2 hover:bg-muted"
-              activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
-            >
-              {t("nav.pricing")}
-            </Link>
-            {window.smartbiz?.role && (
-              <Link
-                to="/settings/this-pc"
-                className="rounded-md px-3 py-2 hover:bg-muted"
-                activeProps={{ className: "bg-secondary font-semibold", "aria-current": "page" }}
-              >
-                {t("nav.thisPc")}
-              </Link>
-            )}
           </nav>
-          <div className="mt-auto">
+          {/* Settings sit at the bottom, above the server status: daily work stays on top. */}
+          <div className="mt-auto flex flex-col gap-4">
+            <nav aria-label={t("nav.settings")} className="flex flex-col gap-1 text-sm">
+              <p className="px-3 text-xs font-medium uppercase text-muted-foreground">{t("nav.settings")}</p>
+              {SETTINGS.map((item) => (
+                <MenuLink key={item.to} to={item.to} onPick={closeMenu}>
+                  {t(`nav.${item.key}`)}
+                </MenuLink>
+              ))}
+              {window.smartbiz?.role && (
+                <MenuLink to="/settings/this-pc" onPick={closeMenu}>
+                  {t("nav.thisPc")}
+                </MenuLink>
+              )}
+            </nav>
             <ServerStatus />
           </div>
         </aside>
@@ -167,7 +187,7 @@ function SignedInShell() {
               <label className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">{t("shell.business")}</span>
                 <select
-                  className={inputClass + " w-auto"}
+                  className={cn(inputClass, "w-auto")}
                   value={businessValue.current?.id ?? ""}
                   onChange={(e) => businessValue.select(e.target.value)}
                 >
@@ -183,7 +203,7 @@ function SignedInShell() {
               <label className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">{t("shell.account")}</span>
                 <select
-                  className={inputClass + " w-auto"}
+                  className={cn(inputClass, "w-auto")}
                   value={session.tenantId ?? ""}
                   onChange={(e) => void switchAccount(e.target.value)}
                 >

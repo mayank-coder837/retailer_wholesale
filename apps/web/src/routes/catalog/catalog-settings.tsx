@@ -25,9 +25,9 @@ export function CatalogSettingsPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("units");
   return (
-    <div className="flex max-w-4xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">{t("catalog.setup")}</h1>
-      <div role="tablist" className="flex flex-wrap gap-1 border-b">
+    <div className="flex max-w-5xl flex-col gap-5">
+      <h1 className="text-2xl font-bold leading-9">{t("catalog.setup")}</h1>
+      <div role="tablist" className="flex flex-wrap gap-1 border-b pb-2 text-sm">
         {TABS.map((name) => (
           <button
             key={name}
@@ -35,8 +35,8 @@ export function CatalogSettingsPage() {
             type="button"
             aria-selected={tab === name}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm",
-              tab === name ? "border-primary font-semibold" : "border-transparent text-muted-foreground",
+              "rounded-md px-3 py-1.5 hover:bg-muted",
+              tab === name && "bg-secondary font-semibold",
             )}
             onClick={() => setTab(name)}
           >
@@ -169,8 +169,8 @@ function UnitsTab() {
           <tr>
             <th className="py-2 text-start font-medium">{t("catalog.unit")}</th>
             <th className="py-2 text-start font-medium">{t("catalog.family")}</th>
-            <th className="py-2 text-start font-medium">{t("catalog.factorToFamilyBase")}</th>
-            <th className="py-2 text-start font-medium">{t("catalog.decimals")}</th>
+            <th className="py-2 text-right font-medium">{t("catalog.factorToFamilyBase")}</th>
+            <th className="py-2 text-right font-medium">{t("catalog.decimals")}</th>
           </tr>
         </thead>
         <tbody className="divide-y">
@@ -180,10 +180,10 @@ function UnitsTab() {
                 {localName(u, i18n.language)} <span className="text-muted-foreground">({u.code})</span>
               </td>
               <td className="py-1.5">{t(`catalog.families.${u.family}`, { defaultValue: u.family })}</td>
-              <td className="py-1.5" dir="ltr">
-                {u.factor_to_family_base}
+              <td className="py-1.5 text-right tabular-nums">
+                <span dir="ltr">{u.factor_to_family_base}</span>
               </td>
-              <td className="py-1.5">{u.decimals}</td>
+              <td className="py-1.5 text-right tabular-nums">{u.decimals}</td>
             </tr>
           ))}
         </tbody>

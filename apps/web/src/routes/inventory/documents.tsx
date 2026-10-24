@@ -26,7 +26,7 @@ export function StockDocumentsPage() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">{t("inventory.title")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("inventory.title")}</h1>
       <InventoryNav />
       <div className="flex flex-wrap gap-2" role="group" aria-label={t("inventory.documents.new")}>
         {STOCK_DOC_TYPES.map((kind) => (
@@ -55,7 +55,6 @@ export function StockDocumentsPage() {
           {STATUSES.map((s) => (
             <Button
               key={s ?? "all"}
-              size="sm"
               variant={status === s ? "default" : "outline"}
               aria-pressed={status === s}
               onClick={() => setStatus(s)}
@@ -80,14 +79,14 @@ export function StockDocumentsPage() {
               <th className="py-2 text-start font-medium">{t("inventory.documents.number")}</th>
               <th className="py-2 text-start font-medium">{t("inventory.documents.type")}</th>
               <th className="py-2 text-start font-medium">{t("inventory.doc.reason")}</th>
-              <th className="py-2 text-end font-medium">{t("inventory.stock.value")}</th>
+              <th className="py-2 text-right font-medium">{t("inventory.stock.value")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {docs.data.map((d) => (
               <tr key={d.id}>
-                <td className="py-1.5" dir="ltr">
-                  {d.doc_date}
+                <td className="py-1.5">
+                  <span dir="ltr">{d.doc_date}</span>
                 </td>
                 <td className="py-1.5 font-mono">
                   <Link
@@ -100,8 +99,8 @@ export function StockDocumentsPage() {
                 </td>
                 <td className="py-1.5">{t(`inventory.docTypes.${d.doc_type}`)}</td>
                 <td className="py-1.5">{d.reason ?? d.narration ?? ""}</td>
-                <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                  {money(d.total)}
+                <td className="py-1.5 text-right tabular-nums">
+                  <span dir="ltr">{money(d.total)}</span>
                 </td>
               </tr>
             ))}

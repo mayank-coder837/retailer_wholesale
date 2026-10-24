@@ -7,6 +7,7 @@ import { errorCode } from "@/routes/catalog/queries";
 import { InventoryNav } from "@/routes/inventory/inventory-nav";
 import { qty, useBalances, useItemLedger, useWarehouses, warehouseName } from "@/routes/inventory/queries";
 import { useBusiness } from "@/shell/use-business";
+import { CodeTag } from "@/components/code-tag";
 
 /** Inventory → one item's stock ledger (M1.6): every move with the running quantity and value. */
 export function ItemLedgerPage() {
@@ -21,12 +22,10 @@ export function ItemLedgerPage() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-5">
-      <h1 className="text-2xl font-bold">
+      <h1 className="text-2xl font-bold leading-9">
         {item ? (
           <>
-            <span className="me-2 font-mono text-muted-foreground" dir="ltr">
-              {item.sku}
-            </span>
+            <CodeTag>{item.sku}</CodeTag>
             {i18n.language === "ar" ? item.name_ar : item.name_en}
           </>
         ) : (
@@ -68,42 +67,46 @@ export function ItemLedgerPage() {
                 <th className="py-2 text-start font-medium">{t("inventory.ledger.document")}</th>
                 <th className="py-2 text-start font-medium">{t("inventory.ledger.move")}</th>
                 <th className="py-2 text-start font-medium">{t("inventory.stock.warehouse")}</th>
-                <th className="py-2 text-end font-medium">{t("inventory.stock.qty")}</th>
-                <th className="py-2 text-end font-medium">{t("inventory.stock.value")}</th>
-                <th className="py-2 text-end font-medium">{t("inventory.ledger.balance")}</th>
+                <th className="py-2 text-right font-medium">{t("inventory.stock.qty")}</th>
+                <th className="py-2 text-right font-medium">{t("inventory.stock.value")}</th>
+                <th className="py-2 text-right font-medium">{t("inventory.ledger.balance")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {ledger.data.lines.map((line, i) => (
                 <tr key={i}>
-                  <td className="py-1.5" dir="ltr">
-                    {line.move_date}
+                  <td className="py-1.5">
+                    <span dir="ltr">{line.move_date}</span>
                   </td>
-                  <td className="py-1.5 font-mono" dir="ltr">
-                    {line.document_id ? (
-                      <Link
-                        to="/inventory/documents/$docId"
-                        params={{ docId: line.document_id }}
-                        className="underline-offset-2 hover:underline"
-                      >
-                        {line.number}
-                      </Link>
-                    ) : (
-                      line.number
-                    )}
+                  <td className="py-1.5 font-mono">
+                    <span dir="ltr">
+                      {line.document_id ? (
+                        <Link
+                          to="/inventory/documents/$docId"
+                          params={{ docId: line.document_id }}
+                          className="underline-offset-2 hover:underline"
+                        >
+                          {line.number}
+                        </Link>
+                      ) : (
+                        line.number
+                      )}
+                    </span>
                   </td>
                   <td className="py-1.5">{t(`inventory.moves.${line.move_type}`)}</td>
                   <td className="py-1.5">
                     {warehouseName(warehouses.data, line.warehouse_id, i18n.language)}
                   </td>
-                  <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                    {/^-?0*(\.0*)?$/.test(line.qty) ? "" : qty(line.qty)}
+                  <td className="py-1.5 text-right tabular-nums">
+                    <span dir="ltr">{/^-?0*(\.0*)?$/.test(line.qty) ? "" : qty(line.qty)}</span>
                   </td>
-                  <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                    {money(line.value)}
+                  <td className="py-1.5 text-right tabular-nums">
+                    <span dir="ltr">{money(line.value)}</span>
                   </td>
-                  <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                    {qty(line.qty_balance)} · {money(line.value_balance)}
+                  <td className="py-1.5 text-right tabular-nums">
+                    <span dir="ltr">
+                      {qty(line.qty_balance)} · {money(line.value_balance)}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -111,8 +114,10 @@ export function ItemLedgerPage() {
                 <td className="py-1.5" colSpan={6}>
                   {t("inventory.ledger.closing")}
                 </td>
-                <td className="py-1.5 text-end tabular-nums" dir="ltr">
-                  {qty(ledger.data.closing_qty)} · {money(ledger.data.closing_value)}
+                <td className="py-1.5 text-right tabular-nums">
+                  <span dir="ltr">
+                    {qty(ledger.data.closing_qty)} · {money(ledger.data.closing_value)}
+                  </span>
                 </td>
               </tr>
             </tbody>

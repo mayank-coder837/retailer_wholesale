@@ -37,6 +37,7 @@ import { errorCode, unwrap } from "@/routes/catalog/queries";
 import { ComingSoon } from "@/routes/coming-soon";
 import { partyName, useParties, type Role } from "@/routes/parties/queries";
 import { useBusiness } from "@/shell/use-business";
+import { cn } from "@/lib/utils";
 
 /** Accounts a single-entry line may not use (the API refuses them too). */
 const NOT_ON_LINES: Partial<Record<VoucherType, AccountType[]>> = {
@@ -270,7 +271,7 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
         submit(true);
       }}
     >
-      <h1 className="text-2xl font-bold">{t(`accounts.voucherTypes.${kind}`)}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t(`accounts.voucherTypes.${kind}`)}</h1>
       <AccountsNav />
       <div className="grid gap-3 sm:grid-cols-4">
         <Field label={t("accounts.voucher.date")}>
@@ -406,7 +407,7 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
                     {(p) => (
                       <input
                         {...p}
-                        className={inputClass + " text-end"}
+                        className={cn(inputClass, "text-end")}
                         dir="ltr"
                         inputMode="decimal"
                         value={l.amount}
@@ -420,7 +421,7 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
                       {(p) => (
                         <input
                           {...p}
-                          className={inputClass + " text-end"}
+                          className={cn(inputClass, "text-end")}
                           dir="ltr"
                           inputMode="decimal"
                           value={l.debit}
@@ -432,7 +433,7 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
                       {(p) => (
                         <input
                           {...p}
-                          className={inputClass + " text-end"}
+                          className={cn(inputClass, "text-end")}
                           dir="ltr"
                           inputMode="decimal"
                           value={l.credit}
@@ -502,48 +503,51 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
         {(p) => (
           <textarea
             {...p}
-            className={inputClass + " h-16 py-2"}
+            className={cn(inputClass, "h-16 py-2")}
             value={narration}
             onChange={(e) => setNarration(e.target.value)}
           />
         )}
       </Field>
 
-      <dl className="grid max-w-md grid-cols-2 gap-1 text-sm" aria-label={t("accounts.voucher.totals")}>
+      <dl
+        className="ms-auto grid w-full max-w-xs grid-cols-2 gap-1 rounded-lg border p-3 text-sm"
+        aria-label={t("accounts.voucher.totals")}
+      >
         {single ? (
           <>
             {WITH_VAT.includes(kind) && (
               <>
                 <dt>{t("accounts.voucher.net")}</dt>
-                <dd className="text-end tabular-nums" dir="ltr">
-                  {money(fromFils(net))}
+                <dd className="text-right tabular-nums">
+                  <span dir="ltr">{money(fromFils(net))}</span>
                 </dd>
                 <dt>{t("accounts.voucher.vat")}</dt>
-                <dd className="text-end tabular-nums" dir="ltr">
-                  {money(fromFils(vat))}
+                <dd className="text-right tabular-nums">
+                  <span dir="ltr">{money(fromFils(vat))}</span>
                 </dd>
               </>
             )}
             <dt className="font-semibold">{t("accounts.voucher.total")}</dt>
-            <dd className="text-end font-semibold tabular-nums" dir="ltr">
-              {money(fromFils(total))}
+            <dd className="text-right font-semibold tabular-nums">
+              <span dir="ltr">{money(fromFils(total))}</span>
             </dd>
           </>
         ) : (
           <>
             <dt>{t("accounts.dr")}</dt>
-            <dd className="text-end tabular-nums" dir="ltr">
-              {money(fromFils(debits))}
+            <dd className="text-right tabular-nums">
+              <span dir="ltr">{money(fromFils(debits))}</span>
             </dd>
             <dt>{t("accounts.cr")}</dt>
-            <dd className="text-end tabular-nums" dir="ltr">
-              {money(fromFils(credits))}
+            <dd className="text-right tabular-nums">
+              <span dir="ltr">{money(fromFils(credits))}</span>
             </dd>
             {debits !== credits && (
               <>
                 <dt className="text-destructive">{t("accounts.voucher.difference")}</dt>
-                <dd className="text-end tabular-nums text-destructive" dir="ltr">
-                  {money(fromFils(debits - credits))}
+                <dd className="text-right tabular-nums text-destructive">
+                  <span dir="ltr">{money(fromFils(debits - credits))}</span>
                 </dd>
               </>
             )}
@@ -617,7 +621,7 @@ function PartyPicker({
           />
           <select
             {...p}
-            className={inputClass + " min-w-0 flex-1"}
+            className={cn(inputClass, "min-w-0 flex-1")}
             value={value}
             onChange={(e) => onChange(e.target.value)}
           >

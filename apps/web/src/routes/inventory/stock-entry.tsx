@@ -24,6 +24,7 @@ import {
   type StockLineIn,
 } from "@/routes/inventory/queries";
 import { useBusiness } from "@/shell/use-business";
+import { cn } from "@/lib/utils";
 
 type Direction = "in" | "out";
 
@@ -210,7 +211,7 @@ export function StockEntryPage({ kind }: { kind: StockDocType }) {
         submit(true);
       }}
     >
-      <h1 className="text-2xl font-bold">{t(`inventory.docTypes.${kind}`)}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t(`inventory.docTypes.${kind}`)}</h1>
       <InventoryNav />
       <div className="grid gap-3 sm:grid-cols-4">
         <Field label={t("inventory.doc.date")}>
@@ -336,7 +337,7 @@ export function StockEntryPage({ kind }: { kind: StockDocType }) {
         {(p) => (
           <textarea
             {...p}
-            className={inputClass + " h-16 py-2"}
+            className={cn(inputClass, "h-16 py-2")}
             value={narration}
             onChange={(e) => setNarration(e.target.value)}
           />
@@ -445,7 +446,7 @@ function StockLine({
             />
             <select
               {...p}
-              className={inputClass + " min-w-0 flex-1"}
+              className={cn(inputClass, "min-w-0 flex-1")}
               value={line.productId}
               onChange={(e) => pick(e.target.value)}
             >
@@ -498,7 +499,7 @@ function StockLine({
         {(p) => (
           <input
             {...p}
-            className={inputClass + " text-end"}
+            className={cn(inputClass, "text-end")}
             dir="ltr"
             inputMode="decimal"
             value={line.qty}
@@ -528,7 +529,7 @@ function StockLine({
           {(p) => (
             <input
               {...p}
-              className={inputClass + " text-end"}
+              className={cn(inputClass, "text-end")}
               dir="ltr"
               inputMode="decimal"
               value={line.cost}

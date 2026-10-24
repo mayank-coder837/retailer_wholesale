@@ -32,23 +32,25 @@ export function PartyStatement({ businessId, partyId }: { businessId: string; pa
               <th className="py-1 text-start font-medium">{t("accounts.billWise.reference")}</th>
               <th className="py-1 text-start font-medium">{t("accounts.billWise.date")}</th>
               <th className="py-1 text-start font-medium">{t("accounts.billWise.due")}</th>
-              <th className="py-1 text-end font-medium">{t("accounts.billWise.open")}</th>
+              <th className="py-1 text-right font-medium">{t("accounts.billWise.open")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {s.open_bills.map((b) => (
               <tr key={b.id}>
-                <td className="py-1 font-mono" dir="ltr">
-                  {b.reference}
-                  {b.is_advance && <span className="ms-1 text-xs">({t("accounts.billWise.advance")})</span>}
+                <td className="py-1 font-mono">
+                  <span dir="ltr">
+                    {b.reference}
+                    {b.is_advance && <span className="ms-1 text-xs">({t("accounts.billWise.advance")})</span>}
+                  </span>
                 </td>
-                <td className="py-1" dir="ltr">
-                  {b.bill_date}
+                <td className="py-1">
+                  <span dir="ltr">{b.bill_date}</span>
                 </td>
-                <td className="py-1" dir="ltr">
-                  {b.due_date ?? ""}
+                <td className="py-1">
+                  <span dir="ltr">{b.due_date ?? ""}</span>
                 </td>
-                <td className="py-1 text-end">
+                <td className="py-1 text-right">
                   <Balance amount={b.direction === "debit" ? b.amount_open : `-${b.amount_open}`} />
                 </td>
               </tr>

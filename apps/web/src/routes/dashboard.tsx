@@ -26,7 +26,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-bold leading-9">
           {t("dashboard.welcome", { name: me.data?.user.full_name ?? "" })}
         </h1>
         <p className="text-muted-foreground">

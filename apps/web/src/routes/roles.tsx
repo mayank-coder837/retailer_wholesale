@@ -60,7 +60,7 @@ export function RolesPage() {
 
   return (
     <div className="flex max-w-6xl flex-col gap-6">
-      <h1 className="text-2xl font-bold">{t("roles.title")}</h1>
+      <h1 className="text-2xl font-bold leading-9">{t("roles.title")}</h1>
       <div className="flex flex-col gap-6 md:flex-row">
         <nav aria-label={t("roles.title")} className="flex shrink-0 flex-col gap-1 md:w-56">
           {roles.data.map((r) => (
