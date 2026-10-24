@@ -56,3 +56,12 @@ async def list_released_numbers(
     branch = await tenancy.get_branch(session, branch_id)
     perms.require(f"{doc_type}.create", branch.business_id, branch.id)
     return await service.released_numbers(session, branch_id, doc_type)
+
+
+# After /documents/released-numbers, which it would otherwise swallow.
+@router.get("/documents/{doc_id}", operation_id="get_document_state")
+async def get_document_state(doc_id: uuid.UUID, perms: Signed, session: TenantSessionDep) -> CorrectedOut:
+    """Where any document stands for Cancel and Reverse (every page shows it the same way)."""
+    doc = await service.get_document(session, doc_id)
+    perms.require(f"{doc.doc_type}.view", doc.business_id, doc.branch_id)
+    return await service.corrected_out(session, doc)

@@ -581,12 +581,13 @@ def summary(doc: Document) -> VoucherSummary:
 
 async def get_voucher(session: AsyncSession, doc_id: uuid.UUID) -> VoucherOut:
     doc = await get_document(session, doc_id)
-    data = await _stored_input(session, doc)
     rows = (
         await session.scalars(
             select(VoucherLine).where(VoucherLine.document_id == doc.id).order_by(VoucherLine.line_no)
         )
     ).all()
+    # A reversal (M1.7b) has no lines of its own: only the mirror entry, shown below.
+    data = await _stored_input(session, doc) if doc.reversal_of_id is None else None
     accounts = await chart.accounts_by_id(session, doc.business_id)
     journal = [
         JournalLineOut(
@@ -605,7 +606,7 @@ async def get_voucher(session: AsyncSession, doc_id: uuid.UUID) -> VoucherOut:
     return VoucherOut(
         **summary(doc).model_dump(),
         vat_total=sum((r.vat_amount for r in rows), ZERO),
-        allocations=[AllocationOut(**a.model_dump()) for a in data.allocations],
+        allocations=[AllocationOut(**a.model_dump()) for a in data.allocations] if data else [],
         lines=[
             VoucherLineOut(
                 id=r.id,
@@ -619,7 +620,7 @@ async def get_voucher(session: AsyncSession, doc_id: uuid.UUID) -> VoucherOut:
                 description=r.description,
                 allocations=[AllocationOut(**a.model_dump()) for a in line_in.allocations],
             )
-            for r, line_in in zip(rows, data.lines, strict=True)
+            for r, line_in in zip(rows, data.lines if data else [], strict=True)
         ],
         journal=journal,
     )

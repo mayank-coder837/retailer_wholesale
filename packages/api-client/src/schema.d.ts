@@ -1640,6 +1640,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document State
+         * @description Where any document stands for Cancel and Reverse (every page shows it the same way).
+         */
+        get: operations["get_document_state"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/pairing/challenge": {
         parameters: {
             query?: never;
@@ -2534,7 +2554,8 @@ export interface components {
         };
         /**
          * CorrectedOut
-         * @description The cancelled or reversed document, and the reversal when there is one.
+         * @description Where a document stands for Cancel and Reverse: its status, its reversal when there is one, the
+         *     document it reverses (a reversal), and the cancelled document whose number it reuses (a reissue).
          */
         CorrectedOut: {
             /**
@@ -2554,6 +2575,8 @@ export interface components {
             doc_date: string;
             /** Cancel Reason */
             cancel_reason: string | null;
+            /** Cancelled At */
+            cancelled_at?: string | null;
             /** Reversal Id */
             reversal_id?: string | null;
             /** Reversal Doc Type */
@@ -2562,6 +2585,8 @@ export interface components {
             reversal_number?: string | null;
             /** Reversal Date */
             reversal_date?: string | null;
+            reversal_of?: components["schemas"]["LinkedDocOut"] | null;
+            reissue_of?: components["schemas"]["LinkedDocOut"] | null;
         };
         /** CreditCheckIn */
         CreditCheckIn: {
@@ -3035,6 +3060,23 @@ export interface components {
          * @enum {string}
          */
         LineDirection: "in" | "out";
+        /** LinkedDocOut */
+        LinkedDocOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Doc Type */
+            doc_type: string;
+            /** Number */
+            number: string | null;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+        };
         /** LoginIn */
         LoginIn: {
             /**
@@ -9227,6 +9269,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReleasedNumberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_state: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectedOut"];
                 };
             };
             /** @description Validation Error */

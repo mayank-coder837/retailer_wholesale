@@ -10,6 +10,7 @@ import { AccountsNav } from "@/routes/accounts/accounts-nav";
 import { money, useVoucher } from "@/routes/accounts/queries";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
 import { CodeTag } from "@/components/code-tag";
+import { CorrectionPanel } from "@/components/correction-panel";
 import { useParty } from "@/routes/parties/queries";
 
 /** Accounts → one voucher (M1.5): what it posted; a draft can be posted or deleted here. */
@@ -87,7 +88,7 @@ export function VoucherPage() {
             <dd>{v.reference}</dd>
           </>
         )}
-        {v.vat_total !== "0.0000" && (
+        {Number(v.vat_total) !== 0 && (
           <>
             <dt className="text-muted-foreground">{t("accounts.voucher.vat")}</dt>
             <dd className="tabular-nums" dir="ltr">
@@ -165,6 +166,7 @@ export function VoucherPage() {
           </div>
         </div>
       )}
+      {v.status !== "draft" && <CorrectionPanel docId={v.id} />}
     </div>
   );
 }

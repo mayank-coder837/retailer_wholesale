@@ -22,6 +22,9 @@ import { NewPartyPage } from "@/routes/parties/new-party";
 import { PartiesPage } from "@/routes/parties/parties";
 import { PartyPage } from "@/routes/parties/party";
 import { PricingSettingsPage } from "@/routes/pricing/pricing-settings";
+import { PurchaseDocumentPage } from "@/routes/purchasing/purchase-document";
+import { PurchaseEntryRoute } from "@/routes/purchasing/purchase-entry";
+import { PurchasesPage } from "@/routes/purchasing/purchases";
 import { DashboardPage } from "@/routes/dashboard";
 import { IndexRedirect } from "@/routes/index-redirect";
 import { StockDocumentsPage } from "@/routes/inventory/documents";
@@ -139,6 +142,24 @@ const voucherRoute = createRoute({
   path: "/vouchers/$kind",
   component: VoucherRoute,
 });
+const purchasesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/purchases",
+  component: PurchasesPage,
+});
+/** ``from``: start from an earlier document (an order to receive, a receipt to bill, a bill to return). */
+const newPurchaseRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/purchases/new/$kind",
+  validateSearch: (search: Record<string, unknown>): { from?: string } =>
+    typeof search.from === "string" ? { from: search.from } : {},
+  component: PurchaseEntryRoute,
+});
+const purchaseRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/purchases/$docId",
+  component: PurchaseDocumentPage,
+});
 const accountsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/accounts",
@@ -192,6 +213,9 @@ const routeTree = rootRoute.addChildren([
     partyRoute,
     catalogSettingsRoute,
     pricingSettingsRoute,
+    purchasesRoute,
+    newPurchaseRoute,
+    purchaseRoute,
     voucherRoute,
     accountsRoute,
     vouchersRoute,
@@ -200,7 +224,6 @@ const routeTree = rootRoute.addChildren([
     periodsRoute,
     accountRoute,
     page("/sales", "nav.sales"),
-    page("/purchases", "nav.purchases"),
     page("/reports", "nav.reports"),
   ]),
 ]);

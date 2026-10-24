@@ -19,6 +19,7 @@ import {
 } from "@/routes/inventory/queries";
 import { useBusiness } from "@/shell/use-business";
 import { CodeTag } from "@/components/code-tag";
+import { CorrectionPanel } from "@/components/correction-panel";
 
 /** Inventory → one stock document (M1.6): its lines and what they moved; a draft can be posted or deleted. */
 export function StockDocumentPage() {
@@ -212,6 +213,7 @@ export function StockDocumentPage() {
           </div>
         </div>
       )}
+      {d.status !== "draft" && <CorrectionPanel docId={d.id} />}
     </div>
   );
 }
