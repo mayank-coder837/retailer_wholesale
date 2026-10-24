@@ -4,7 +4,7 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useApi } from "@/api/use-api";
-import { Field, inputClass } from "@/components/field";
+import { besideField, Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { todayIso, useBranches } from "@/routes/accounts/queries";
 import { localName } from "@/routes/catalog/product-form";
@@ -432,7 +432,7 @@ function StockLine({
   }, [needsDefaults, chosen, onChange]);
 
   return (
-    <div className="flex flex-wrap items-end gap-2 rounded-lg border p-3">
+    <div className="flex flex-wrap items-start gap-2 rounded-lg border p-3">
       <Field label={t("inventory.doc.item")} className="min-w-80 flex-1">
         {(p) => (
           <div className="flex gap-1">
@@ -590,6 +590,7 @@ function StockLine({
         <Button
           type="button"
           variant="ghost"
+          className={besideField}
           aria-label={t("accounts.voucher.removeLine", { n: index + 1 })}
           onClick={onRemove}
         >

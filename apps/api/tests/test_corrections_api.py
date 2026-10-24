@@ -296,3 +296,40 @@ async def test_vouchers_cancel_and_reverse_bill_wise(client: AsyncClient) -> Non
     assert await b.bills() == []
     ledger = await ok(await client.get(f"/accounts/{b.account('1200')}/ledger", headers=b.h))
     assert ledger["closing"] == "0.0000"
+
+
+async def test_every_page_can_show_where_a_document_stands(client: AsyncClient) -> None:
+    b = await buyer(client)
+    _order, receipt = await received(b)
+    bill = await b.post(bill_of(b, receipt))
+    posted = await ok(await client.get(f"/documents/{bill['id']}", headers=b.h))
+    assert (posted["status"], posted["reversal_of"], posted["reissue_of"]) == ("posted", None, None)
+
+    result = await reverse(client, bill["id"], b.h)
+    state = await ok(await client.get(f"/documents/{bill['id']}", headers=b.h))
+    assert (state["status"], state["reversal_number"]) == ("reversed", result["reversal_number"])
+    note = await ok(await client.get(f"/documents/{result['reversal_id']}", headers=b.h))
+    assert (note["doc_type"], note["reversal_of"]["number"]) == ("debit_note", bill["number"])
+    # The reversal opens on its own page (a debit note is a voucher), holding the mirror entry.
+    voucher = await ok(await client.get(f"/vouchers/{result['reversal_id']}", headers=b.h))
+    assert (voucher["number"], len(voucher["journal"])) == (result["reversal_number"], 4)
+
+    grn = await reverse(client, receipt["id"], b.h)
+    page = await ok(await client.get(f"/purchase-documents/{grn['reversal_id']}", headers=b.h))
+    assert (page["doc_type"], page["lines"]) == ("goods_receipt", [])
+
+    s = await store(client, "stock2@shop.ae")
+    rice = await s.item("RICE")
+    found = await s.adjust(rice, "5", "in", "4")
+    undone = await reverse(client, found["id"], s.h)
+    stock_page = await ok(await client.get(f"/stock-documents/{undone['reversal_id']}", headers=s.h))
+    assert stock_page["number"] == undone["reversal_number"]
+
+    missing = await ok(await client.get(f"/documents/{uuid.uuid4()}", headers=b.h), 404)
+    assert missing["code"] == "document_not_found"
+    offered = await client.get(
+        "/documents/released-numbers",
+        params={"branch_id": b.shop.branch_a, "doc_type": "purchase_bill"},
+        headers=b.h,
+    )
+    assert offered.status_code == 200

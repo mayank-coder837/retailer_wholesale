@@ -7318,6 +7318,55 @@
         }
       }
     },
+    "/documents/{doc_id}": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Get Document State",
+        "description": "Where any document stands for Cancel and Reverse (every page shows it the same way).",
+        "operationId": "get_document_state",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/pairing/challenge": {
       "post": {
         "tags": [
@@ -9739,6 +9788,18 @@
             ],
             "title": "Cancel Reason"
           },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          },
           "reversal_id": {
             "anyOf": [
               {
@@ -9784,6 +9845,26 @@
               }
             ],
             "title": "Reversal Date"
+          },
+          "reversal_of": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedDocOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reissue_of": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedDocOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -9796,7 +9877,7 @@
           "cancel_reason"
         ],
         "title": "CorrectedOut",
-        "description": "The cancelled or reversed document, and the reversal when there is one."
+        "description": "Where a document stands for Cancel and Reverse: its status, its reversal when there is one, the\ndocument it reverses (a reversal), and the cancelled document whose number it reuses (a reissue)."
       },
       "CreditCheckIn": {
         "properties": {
@@ -11130,6 +11211,43 @@
           "out"
         ],
         "title": "LineDirection"
+      },
+      "LinkedDocOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "doc_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Doc Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "doc_type",
+          "number",
+          "doc_date"
+        ],
+        "title": "LinkedDocOut"
       },
       "LoginIn": {
         "properties": {

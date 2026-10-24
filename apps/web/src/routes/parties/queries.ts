@@ -31,6 +31,7 @@ export function useParty(partyId: string) {
   const api = useApi();
   return useQuery({
     queryKey: ["party", partyId],
+    enabled: !!partyId,
     queryFn: async () =>
       unwrap(await api.GET("/parties/{party_id}", { params: { path: { party_id: partyId } } })),
   });

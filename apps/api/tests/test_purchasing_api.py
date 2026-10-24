@@ -1,6 +1,7 @@
 """Purchasing API (M1.7a): order → partial receipts → bills (price variance) → returns; GRNI clears to zero;
 payables bill-wise; expense bills; the books agree throughout (posting rules 7 to 9)."""
 
+from decimal import Decimal
 from typing import Any
 
 from httpx import AsyncClient
@@ -252,7 +253,10 @@ async def test_returns_against_a_bill_and_against_an_unbilled_receipt(client: As
 
     # A receipt not billed yet: goods go back against GRNI at the receipt's price.
     later = await b.post(
-        b.doc("goods_receipt", [{"variant_id": b.fabric, "unit": "pcs", "qty": "10", "unit_price": "12"}])
+        b.doc(
+            "goods_receipt",
+            [{"variant_id": b.fabric, "unit": "pcs", "qty": "10", "unit_price": "12", "vat_rate": "5"}],
+        )
     )
     unbilled = await b.post(
         b.doc(
@@ -260,6 +264,8 @@ async def test_returns_against_a_bill_and_against_an_unbilled_receipt(client: As
             [{"variant_id": b.fabric, "unit": "pcs", "qty": "4", "source_line_id": later["lines"][0]["id"]}],
         )
     )
+    # Nothing was billed, so nothing is owed and no VAT shows: the 5 % only waits for the bill.
+    assert (Decimal(unbilled["tax_total"]), unbilled["total"]) == (0, "48.0000")
     lines = await b.journal(unbilled["id"])
     assert ("2120", "48.0000", "0.0000") in lines
     open_lines = await ok(await client.get(f"/purchase-documents/{later['id']}/open-lines", headers=b.h))

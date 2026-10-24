@@ -872,5 +872,136 @@
       "invalid_product": "تحقق من الكمية والوحدة.",
       "permission_denied": "ليست لديك صلاحية لذلك."
     }
+  },
+  "purchasing": {
+    "title": "المشتريات",
+    "back": "→ المشتريات",
+    "new": "مستند شراء جديد",
+    "flowHint": "أمر شراء ← استلام البضاعة ← فاتورة المورد. يبدأ المرتجع من الفاتورة أو سند الاستلام الذي يُرجع منه.",
+    "type": "النوع",
+    "status": "الحالة",
+    "all": "الكل",
+    "none": "لا توجد مستندات شراء بعد.",
+    "nextSteps": "الخطوة التالية",
+    "types": {
+      "purchase_order": "أمر شراء",
+      "goods_receipt": "استلام بضاعة",
+      "purchase_bill": "فاتورة مورد",
+      "purchase_return": "مرتجع إلى المورد"
+    },
+    "newTypes": {
+      "purchase_order": "أمر جديد",
+      "goods_receipt": "استلام بضاعة",
+      "purchase_bill": "إدخال فاتورة"
+    },
+    "plural": {
+      "purchase_order": "الأوامر",
+      "goods_receipt": "الاستلامات",
+      "purchase_bill": "الفواتير",
+      "purchase_return": "المرتجعات"
+    },
+    "progress": {
+      "open": "مفتوح",
+      "partly_received": "مستلم جزئياً",
+      "received": "مستلم",
+      "partly_billed": "مفوتر جزئياً",
+      "billed": "مفوتر"
+    },
+    "next": {
+      "purchase_order": {
+        "goods_receipt": "استلام البضاعة"
+      },
+      "goods_receipt": {
+        "purchase_bill": "إدخال الفاتورة",
+        "purchase_return": "إرجاع بضاعة"
+      },
+      "purchase_bill": {
+        "purchase_return": "إرجاع بضاعة"
+      }
+    },
+    "doc": {
+      "date": "التاريخ",
+      "number": "الرقم",
+      "supplier": "المورد",
+      "supplierRef": "رقم فاتورة المورد",
+      "dueDate": "تاريخ الاستحقاق",
+      "lines": "البنود",
+      "totals": "الإجماليات",
+      "subtotal": "المجموع قبل الضريبة",
+      "vat": "ضريبة القيمة المضافة",
+      "total": "الإجمالي",
+      "price": "سعر الوحدة",
+      "net": "الصافي",
+      "vatRate": "الضريبة"
+    },
+    "entry": {
+      "noBranch": "اختر فرعاً أولاً.",
+      "needSupplier": "اختر المورد.",
+      "noWarehouse": "لا يوجد مستودع لهذا الفرع.",
+      "badQty": "أدخل كمية أكبر من صفر (حتى 6 منازل عشرية).",
+      "badPrice": "أدخل سعراً حتى 6 منازل عشرية.",
+      "needAccount": "اختر حساب المصروف.",
+      "needPrice": "أدخل السعر.",
+      "needItem": "اختر صنفاً ووحدته.",
+      "needBatch": "أدخل رقم الدفعة.",
+      "returnNeedsSource": "يبدأ المرتجع من الفاتورة أو سند الاستلام الذي يُرجع منه: افتحه واختر «إرجاع بضاعة».",
+      "noLines": "أضف بنداً واحداً على الأقل.",
+      "from": "تابع لـ",
+      "findSupplier": "ابحث عن مورد",
+      "supplierRefHint": "كما هو مطبوع على فاتورته",
+      "dueHint": "فارغ: شروط الدفع لدى المورد",
+      "nothingOpen": "لم يبقَ شيء مفتوح في ذلك المستند.",
+      "addItem": "إضافة صنف",
+      "addExpense": "إضافة مصروف",
+      "number": "الرقم",
+      "numberHint": "يمكن إعادة استخدام رقم حرّره مستند ملغى.",
+      "nextNumber": "الرقم التالي",
+      "reuse": "إعادة استخدام {{number}}",
+      "expenseAccount": "حساب المصروف",
+      "amount": "المبلغ",
+      "stillOpen": "المفتوح: {{qty}} {{unit}}"
+    },
+    "errors": {
+      "generic": "لم تنجح العملية. راجع المستند وحاول مرة أخرى.",
+      "more_than_open": "الكمية أكبر مما بقي مفتوحاً في البند الذي يتبعه.",
+      "invalid_purchase_document": "المستند غير مكتمل: راجع بنوده.",
+      "purchase_document_not_draft": "لا يمكن تعديل أو حذف إلا المسودة.",
+      "purchase_document_not_found": "مستند الشراء هذا لم يعد موجوداً.",
+      "number_not_available": "أُخذ هذا الرقم للتو: اختر الرقم التالي.",
+      "invalid_batch": "راجع الدفعة: لا تناسب هذا الصنف.",
+      "permission_denied": "ليست لديك صلاحية لهذا الإجراء."
+    }
+  },
+  "corrections": {
+    "title": "إلغاء أو عكس",
+    "cancel": "إلغاء",
+    "reverse": "عكس",
+    "cancelTitle": "إلغاء {{number}}",
+    "reverseTitle": "عكس {{number}}",
+    "cancelHint": "لخطأ في فترة مفتوحة: يُزال من الحسابات والمخزون كأنه لم يكن، ويُحرَّر رقمه للمستند التالي.",
+    "reverseHint": "عندما تكون الفترة مقفلة أو استلمه المورد: مستند عكسي برقمه الخاص وبالتاريخ الذي تختاره.",
+    "reason": "السبب",
+    "date": "تاريخ العكس",
+    "dateHint": "ليس قبل تاريخ المستند",
+    "back": "رجوع",
+    "confirm": {
+      "cancel": "إلغاء المستند",
+      "reverse": "عكس المستند"
+    },
+    "cancelledOn": "أُلغي في {{date}}",
+    "reversedBy": "عُكس بالمستند",
+    "reverses": "هذا المستند يعكس",
+    "reissueOf": "أُعيد إصداره برقم المستند الملغى",
+    "errors": {
+      "generic": "لم تنجح العملية. حاول مرة أخرى.",
+      "document_has_dependants": "مستندات لاحقة تتبع هذا المستند: ألغِ أو اعكس {{documents}} أولاً.",
+      "cancel_period_locked": "فترته مقفلة فلا يمكن إلغاؤه: اعكسه بدلاً من ذلك.",
+      "cancel_only": "ليس لهذا المستند أثر في الحسابات ليُعكس: ألغِه بدلاً من ذلك.",
+      "document_is_a_reversal": "لا يمكن إلغاء المستند العكسي أو عكسه.",
+      "document_not_posted": "لا يمكن إلغاء أو عكس إلا مستند مُرحَّل.",
+      "invalid_reversal": "لا يمكن أن يسبق تاريخ العكس تاريخ المستند.",
+      "recost_into_locked_period": "توجد حركة مخزون لاحقة في فترة مقفلة، فلا يمكن ذلك.",
+      "permission_denied": "ليست لديك صلاحية لهذا الإجراء."
+    }
   }
 }

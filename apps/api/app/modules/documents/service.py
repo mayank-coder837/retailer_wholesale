@@ -27,7 +27,7 @@ from app.core.numbering import NotNumberOwnerError
 from app.modules.accounting import service as accounting
 from app.modules.accounting.models import EntryKind
 from app.modules.documents.models import Document, DocumentLine, DocumentStatus
-from app.modules.documents.schemas import CorrectedOut, ReleasedNumberOut
+from app.modules.documents.schemas import CorrectedOut, LinkedDocOut, ReleasedNumberOut
 from app.modules.inventory import service as inventory
 from app.modules.inventory.models import MoveType
 from app.modules.tenancy import service as tenancy
@@ -324,10 +324,18 @@ async def reverse(
     return doc
 
 
+async def _linked(session: AsyncSession, doc_id: uuid.UUID | None) -> Document | None:
+    return await session.get(Document, doc_id) if doc_id else None
+
+
+def _link(doc: Document | None) -> LinkedDocOut | None:
+    if doc is None:
+        return None
+    return LinkedDocOut(id=doc.id, doc_type=doc.doc_type, number=doc.number, doc_date=doc.doc_date)
+
+
 async def corrected_out(session: AsyncSession, doc: Document) -> CorrectedOut:
-    reversal = (
-        await session.get(Document, doc.reversed_by_document_id) if doc.reversed_by_document_id else None
-    )
+    reversal = await _linked(session, doc.reversed_by_document_id)
     return CorrectedOut(
         id=doc.id,
         doc_type=doc.doc_type,
@@ -335,10 +343,13 @@ async def corrected_out(session: AsyncSession, doc: Document) -> CorrectedOut:
         number=doc.number,
         doc_date=doc.doc_date,
         cancel_reason=doc.cancel_reason,
+        cancelled_at=doc.cancelled_at,
         reversal_id=reversal.id if reversal else None,
         reversal_doc_type=reversal.doc_type if reversal else None,
         reversal_number=reversal.number if reversal else None,
         reversal_date=reversal.doc_date if reversal else None,
+        reversal_of=_link(await _linked(session, doc.reversal_of_id)),
+        reissue_of=_link(await _linked(session, doc.reissue_of_id)),
     )
 
 

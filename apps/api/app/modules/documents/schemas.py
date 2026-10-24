@@ -2,7 +2,7 @@
 
 import datetime as dt
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -23,8 +23,16 @@ class ReverseIn(BaseModel):
     )
 
 
+class LinkedDocOut(BaseModel):
+    id: uuid.UUID
+    doc_type: str
+    number: str | None
+    doc_date: date
+
+
 class CorrectedOut(BaseModel):
-    """The cancelled or reversed document, and the reversal when there is one."""
+    """Where a document stands for Cancel and Reverse: its status, its reversal when there is one, the
+    document it reverses (a reversal), and the cancelled document whose number it reuses (a reissue)."""
 
     id: uuid.UUID
     doc_type: str
@@ -32,10 +40,13 @@ class CorrectedOut(BaseModel):
     number: str | None
     doc_date: date
     cancel_reason: str | None
+    cancelled_at: datetime | None = None
     reversal_id: uuid.UUID | None = None
     reversal_doc_type: str | None = None
     reversal_number: str | None = None
     reversal_date: date | None = None
+    reversal_of: LinkedDocOut | None = None
+    reissue_of: LinkedDocOut | None = None
 
 
 class ReleasedNumberOut(BaseModel):

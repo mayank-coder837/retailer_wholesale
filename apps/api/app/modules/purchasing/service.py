@@ -298,7 +298,12 @@ async def _check(session: AsyncSession, data: PurchaseDocIn, *, lock_sources: bo
                 raise _invalid(str(exc.detail or exc.title), field=f"{where}.batch_id") from exc
 
         net = fils(raw.qty * unit_price)
-        vat = vat_of(net, vat_rate) if kind is not PurchaseDocType.GOODS_RECEIPT else ZERO
+        # No VAT where nothing is owed yet: a receipt, and a return of goods not yet billed (rule 9: GRNI).
+        # The rate is still kept: it is the default for the bill that follows.
+        unbilled = kind is PurchaseDocType.GOODS_RECEIPT or (
+            kind is PurchaseDocType.PURCHASE_RETURN and source_type == PurchaseDocType.GOODS_RECEIPT.value
+        )
+        vat = ZERO if unbilled else vat_of(net, vat_rate)
         checked.append(
             CheckedLine(
                 raw,

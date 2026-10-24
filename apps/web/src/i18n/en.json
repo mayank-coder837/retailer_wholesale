@@ -868,5 +868,136 @@
       "invalid_product": "Check the quantity and unit.",
       "permission_denied": "You do not have permission for this."
     }
+  },
+  "purchasing": {
+    "title": "Purchases",
+    "back": "← Purchases",
+    "new": "New purchase document",
+    "flowHint": "Order → goods received → supplier bill. A return starts from the bill or receipt it returns.",
+    "type": "Type",
+    "status": "Status",
+    "all": "All",
+    "none": "No purchase documents yet.",
+    "nextSteps": "Next step",
+    "types": {
+      "purchase_order": "Purchase order",
+      "goods_receipt": "Goods received",
+      "purchase_bill": "Supplier bill",
+      "purchase_return": "Return to supplier"
+    },
+    "newTypes": {
+      "purchase_order": "New order",
+      "goods_receipt": "Receive goods",
+      "purchase_bill": "Enter a bill"
+    },
+    "plural": {
+      "purchase_order": "Orders",
+      "goods_receipt": "Goods received",
+      "purchase_bill": "Bills",
+      "purchase_return": "Returns"
+    },
+    "progress": {
+      "open": "Open",
+      "partly_received": "Partly received",
+      "received": "Received",
+      "partly_billed": "Partly billed",
+      "billed": "Billed"
+    },
+    "next": {
+      "purchase_order": {
+        "goods_receipt": "Receive goods"
+      },
+      "goods_receipt": {
+        "purchase_bill": "Enter the bill",
+        "purchase_return": "Return goods"
+      },
+      "purchase_bill": {
+        "purchase_return": "Return goods"
+      }
+    },
+    "doc": {
+      "date": "Date",
+      "number": "Number",
+      "supplier": "Supplier",
+      "supplierRef": "Supplier's bill no.",
+      "dueDate": "Due date",
+      "lines": "Lines",
+      "totals": "Totals",
+      "subtotal": "Subtotal",
+      "vat": "VAT",
+      "total": "Total",
+      "price": "Price per unit",
+      "net": "Net",
+      "vatRate": "VAT"
+    },
+    "entry": {
+      "noBranch": "Choose a branch first.",
+      "needSupplier": "Choose the supplier.",
+      "noWarehouse": "This branch has no warehouse.",
+      "badQty": "Enter a quantity above zero (up to 6 decimals).",
+      "badPrice": "Enter a price of up to 6 decimals.",
+      "needAccount": "Choose the expense account.",
+      "needPrice": "Enter the price.",
+      "needItem": "Choose an item and its unit.",
+      "needBatch": "Enter the batch number.",
+      "returnNeedsSource": "A return starts from the bill or goods receipt it returns: open it and choose “Return goods”.",
+      "noLines": "Add at least one line.",
+      "from": "Following",
+      "findSupplier": "Find supplier",
+      "supplierRefHint": "As printed on their bill",
+      "dueHint": "Empty: the supplier's payment terms",
+      "nothingOpen": "Nothing is left open on that document.",
+      "addItem": "Add item",
+      "addExpense": "Add expense",
+      "number": "Number",
+      "numberHint": "A number freed by a cancelled document can be used again.",
+      "nextNumber": "Next number",
+      "reuse": "Reuse {{number}}",
+      "expenseAccount": "Expense account",
+      "amount": "Amount",
+      "stillOpen": "Still open: {{qty}} {{unit}}"
+    },
+    "errors": {
+      "generic": "That didn't work. Check the document and try again.",
+      "more_than_open": "That is more than is still open on the line it follows.",
+      "invalid_purchase_document": "This document is not complete: check its lines.",
+      "purchase_document_not_draft": "Only a draft can be changed or deleted.",
+      "purchase_document_not_found": "That purchase document no longer exists.",
+      "number_not_available": "That number has just been taken: choose the next number.",
+      "invalid_batch": "Check the batch: it does not fit this item.",
+      "permission_denied": "You don't have permission to do that."
+    }
+  },
+  "corrections": {
+    "title": "Cancel or reverse",
+    "cancel": "Cancel",
+    "reverse": "Reverse",
+    "cancelTitle": "Cancel {{number}}",
+    "reverseTitle": "Reverse {{number}}",
+    "cancelHint": "For a mistake in an open period: it is taken out of the books and the stock as if it never happened, and its number is freed for the next document.",
+    "reverseHint": "When the period is closed or the supplier already has it: a reversal with its own number, dated on the day you choose.",
+    "reason": "Reason",
+    "date": "Reversal date",
+    "dateHint": "Not before the document's date",
+    "back": "Back",
+    "confirm": {
+      "cancel": "Cancel the document",
+      "reverse": "Reverse the document"
+    },
+    "cancelledOn": "Cancelled on {{date}}",
+    "reversedBy": "Reversed by",
+    "reverses": "This reverses",
+    "reissueOf": "Reissued with the number of the cancelled",
+    "errors": {
+      "generic": "That didn't work. Try again.",
+      "document_has_dependants": "Later documents follow this one: undo {{documents}} first.",
+      "cancel_period_locked": "Its period is locked, so it cannot be cancelled: reverse it instead.",
+      "cancel_only": "This document has nothing in the books to reverse: cancel it instead.",
+      "document_is_a_reversal": "A reversal cannot itself be cancelled or reversed.",
+      "document_not_posted": "Only a posted document can be cancelled or reversed.",
+      "invalid_reversal": "A reversal cannot be dated before the document.",
+      "recost_into_locked_period": "A later stock movement is in a locked period, so this cannot be done.",
+      "permission_denied": "You don't have permission to do that."
+    }
   }
 }
