@@ -117,6 +117,14 @@ class Direction(StrEnum):
     CREDIT = "credit"
 
 
+class EntryKind(StrEnum):
+    """Why a journal entry exists. Cancel and Reverse mirror a document's ``posting`` entries only."""
+
+    POSTING = "posting"  # the document's own entry, written when it was posted
+    RECOST = "recost"  # rule 28: later stock moves taking new costs after a backdated move
+    UNDO = "undo"  # Cancel / Reverse: a mirror of a posting entry, or the stock value it did not cover
+
+
 class AllocationType(StrEnum):
     """Tally's bill-wise choices for a party line."""
 
@@ -240,7 +248,10 @@ class JournalEntry(TenantScoped, Base):
         _business_fk("fiscal_period_id", "fiscal_period"),
         _business_fk("source_document_id", "document"),
         _tenant_fk("reversal_of_id", "journal_entry"),
+        CheckConstraint(_in("kind", EntryKind), name="kind"),
+        CheckConstraint("reversal_of_id IS NULL OR kind = 'undo'", name="mirror_is_undo"),
         Index("ix_journal_entry_source", "source_document_id"),
+        Index("uq_journal_entry_mirrored_once", "reversal_of_id", unique=True),
     )
 
     business_id: Mapped[uuid.UUID]
@@ -250,7 +261,8 @@ class JournalEntry(TenantScoped, Base):
     number: Mapped[str | None] = mapped_column(String(40))
     narration: Mapped[str | None] = mapped_column(Text)
     source_document_id: Mapped[uuid.UUID | None]
-    reversal_of_id: Mapped[uuid.UUID | None]
+    reversal_of_id: Mapped[uuid.UUID | None]  # undo entries: the posting entry they mirror
+    kind: Mapped[str] = mapped_column(String(10), server_default=EntryKind.POSTING.value)
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
 
 
@@ -328,20 +340,26 @@ class Bill(TenantScoped, Base):
 
 
 class BillAllocation(TenantScoped, Base):
-    """A posted line settling part of a bill. Insert-only."""
+    """A posted line settling part of a bill. Insert-only. A cancelled or reversed document's allocations are
+    undone by negative copies (``reversal_of_id``), never by changing them."""
 
     __tablename__ = "bill_allocation"
     __audit__ = False
     __table_args__ = (
+        UniqueConstraint("tenant_id", "id"),
         _tenant_fk("bill_id", "bill"),
         _tenant_fk("journal_line_id", "journal_line"),
-        CheckConstraint("amount > 0", name="amount_positive"),
+        _tenant_fk("reversal_of_id", "bill_allocation"),
+        CheckConstraint("amount <> 0", name="amount_not_zero"),
+        CheckConstraint("(amount < 0) = (reversal_of_id IS NOT NULL)", name="negative_only_to_undo"),
         Index("ix_bill_allocation_bill", "bill_id"),
+        Index("uq_bill_allocation_undone_once", "reversal_of_id", unique=True),
     )
 
     bill_id: Mapped[uuid.UUID]
     journal_line_id: Mapped[uuid.UUID]
     amount: Mapped[Decimal] = mapped_column(Numeric(19, 4))
+    reversal_of_id: Mapped[uuid.UUID | None]  # the allocation this negative copy undoes
 
 
 class VoucherLine(TenantScoped, Base):

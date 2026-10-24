@@ -39,6 +39,8 @@ class MoveType(StrEnum):
     OPENING = "opening"
     NEGATIVE_REVALUATION = "negative_revaluation"  # value only: rule 27
     RECOST = "recost"  # value only: rule 28
+    CANCEL = "cancel"  # undoes a move of a cancelled document, on its own date (rule 32)
+    REVERSAL = "reversal"  # undoes a move of a reversed document, on the reversal's date (rule 33)
 
 
 INBOUND = frozenset(
@@ -61,6 +63,7 @@ OUTBOUND = frozenset(
     }
 )
 VALUE_ONLY = frozenset({MoveType.NEGATIVE_REVALUATION, MoveType.RECOST})
+UNDO = frozenset({MoveType.CANCEL, MoveType.REVERSAL})  # copies of an earlier move with the signs flipped
 
 
 def _in(column: str, values: type[StrEnum]) -> str:
@@ -110,9 +113,18 @@ class StockMove(TenantScoped, Base):
         _tenant_fk("adjusts_move_id", "stock_move"),
         CheckConstraint(_in("move_type", MoveType), name="move_type"),
         CheckConstraint(
-            "(move_type IN ('negative_revaluation', 'recost')) = (qty_base = 0)",
+            "move_type NOT IN ('negative_revaluation', 'recost') OR qty_base = 0",
             name="value_only_has_no_quantity",
         ),
+        CheckConstraint(
+            "move_type IN ('negative_revaluation', 'recost', 'cancel', 'reversal') OR qty_base <> 0",
+            name="quantity_moves_move_quantity",
+        ),
+        CheckConstraint(
+            "(move_type IN ('cancel', 'reversal')) = (reversal_of_id IS NOT NULL)", name="undo_names_its_move"
+        ),
+        _tenant_fk("reversal_of_id", "stock_move"),
+        Index("uq_stock_move_undone_once", "reversal_of_id", unique=True),
         CheckConstraint(
             "move_type NOT IN ('negative_revaluation', 'recost') OR adjusts_move_id IS NOT NULL",
             name="value_only_adjusts_a_move",
@@ -135,6 +147,7 @@ class StockMove(TenantScoped, Base):
     document_line_id: Mapped[uuid.UUID | None]
     counter_account_id: Mapped[uuid.UUID | None]  # where the other side of the value posted (recost uses it)
     adjusts_move_id: Mapped[uuid.UUID | None]  # value-only moves: the quantity move they belong to
+    reversal_of_id: Mapped[uuid.UUID | None]  # cancel / reversal rows: the move they undo
 
 
 class AverageCost(TenantScoped, Base):

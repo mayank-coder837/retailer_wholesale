@@ -7,6 +7,7 @@ with numbers.
 - In (``inbound``): at a stated unit cost. Into negative stock, the units issued below zero are revalued at
   the incoming cost and the difference is returned as ``revaluation`` (rule 27).
 - Out (``outbound``): at the current average; the whole quantity takes the whole value, so no fils are left.
+- Taken out at a stated value (``take_out``): a reversed transfer.
   With no stock, at the last average, else the last purchase cost, else zero (``no_cost`` warning).
 """
 
@@ -98,6 +99,16 @@ def outbound(state: State, qty: Decimal) -> Outbound:
     new_value = ZERO if new_qty == 0 else state.value - value
     new = replace(state, qty=new_qty, value=new_value, avg=unit if not no_cost else state.avg)
     return Outbound(value, unit, new, no_cost, new_qty < 0)
+
+
+def take_out(state: State, qty: Decimal, value: Decimal) -> State:
+    """``qty`` (> 0) leaves at a stated ``value``: a reversed transfer takes back exactly what it brought."""
+    if qty <= 0:
+        raise ValueError("a quantity taken out is above zero")
+    new_qty = state.qty - qty
+    new_value = state.value - value
+    avg = cost(new_value / new_qty) if new_qty > 0 else state.avg
+    return replace(state, qty=new_qty, value=new_value, avg=avg)
 
 
 def split(total: Decimal, weights: list[Decimal]) -> list[Decimal]:

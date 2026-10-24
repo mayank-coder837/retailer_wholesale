@@ -15,10 +15,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import UnprocessableError
+from app.modules.accounting import posting
 from app.modules.accounting import service as accounting
 from app.modules.accounting.models import Role
 from app.modules.catalog import products as catalog
 from app.modules.documents.models import Document, DocumentLine
+from app.modules.inventory import posting as inventory_posting
 from app.modules.inventory import stock
 from app.modules.inventory.models import AverageCost, Batch, MoveType, StockBalance, StockMove
 from app.modules.inventory.posting import batch_by_no, ensure_batch, recost
@@ -303,11 +305,41 @@ async def finish_posting(
     branch_id: uuid.UUID,
     document_id: uuid.UUID,
     number: str,
+    narration: str | None = None,
 ) -> None:
     """After the document's own moves: recost later moves when it was backdated (rule 28)."""
     if ctx.backdated:
         roles = await accounting.role_accounts(session, business.id)
-        await recost(session, ctx, business, branch_id, document_id, number, roles)
+        await recost(session, ctx, business, branch_id, document_id, number, roles, narration)
+
+
+async def undo_moves(
+    session: AsyncSession, ctx: stock.Context, document_id: uuid.UUID, kind: MoveType
+) -> list[posting.JournalLine]:
+    """Rules 32 / 33 for the goods: a ``cancel`` / ``reversal`` row for each quantity move of the document.
+
+    Returns the inventory lines the mirror of the document's posting entries does not cover (recosts it
+    took since, rule 27, cost differences); post them dated ``ctx.day``, then call ``finish_posting``.
+    """
+    roles = await accounting.role_accounts(session, ctx.business_id)
+    moves = (
+        await session.scalars(
+            select(StockMove)
+            .where(StockMove.document_id == document_id, StockMove.move_type.in_(stock.QUANTITY_TYPES))
+            .order_by(StockMove.seq)
+        )
+    ).all()
+    journal = inventory_posting.ValueJournal(roles[Role.INVENTORY])
+    for m in moves:
+        undone = await stock.undo(session, ctx, m, kind, roles.get(Role.STOCK_COST_ADJUSTMENT))
+        for amount, counter in undone.journal:
+            journal.add(amount, counter)
+    return journal.lines()
+
+
+async def has_moves(session: AsyncSession, document_id: uuid.UUID) -> bool:
+    found = await session.scalar(select(StockMove.id).where(StockMove.document_id == document_id).limit(1))
+    return found is not None
 
 
 async def check_batch(

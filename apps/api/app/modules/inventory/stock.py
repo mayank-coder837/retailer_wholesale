@@ -8,6 +8,14 @@ transaction-level advisory lock, so ``seq`` (the order moves happened in) is gap
 ``replay`` recomputes a variant from its moves in date order. Run after a backdated move, it returns the value
 differences of later moves (``Correction``) — written as new ``recost`` / ``negative_revaluation`` rows, never
 by changing posted ones.
+
+``undo`` writes the row that takes a quantity move back out of the ledger (rules 32 and 33):
+
+- ``cancel``, dated on the original's date, takes back its whole value (own, recosts, revaluations). Replay
+  skips the pair, so later moves are recosted as if the original never happened.
+- ``reversal``, dated on its own day, works where it stands: goods that left come back at the value they
+  left at (rule 27 if stock is below zero); goods that came in leave at the average, and the difference to
+  what they came in at is a cost adjustment; a transfer's goods leave at exactly what they brought.
 """
 
 import uuid
@@ -22,6 +30,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.inventory import costing
 from app.modules.inventory.models import INBOUND, OUTBOUND, AverageCost, MoveType, StockBalance, StockMove
+
+QUANTITY_TYPES = frozenset(t.value for t in INBOUND | OUTBOUND)
 
 ZERO = Decimal(0)
 
@@ -274,11 +284,14 @@ async def replay(session: AsyncSession, business_id: uuid.UUID, variant_id: uuid
     ).all()
     own_adjust: dict[uuid.UUID, Decimal] = defaultdict(lambda: ZERO)
     reval: dict[uuid.UUID, Decimal] = defaultdict(lambda: ZERO)
+    cancelled: set[uuid.UUID] = set()
     for r in rows:
         if r.move_type == MoveType.RECOST and r.adjusts_move_id:
             own_adjust[r.adjusts_move_id] += r.value
         elif r.move_type == MoveType.NEGATIVE_REVALUATION and r.adjusts_move_id:
             reval[r.adjusts_move_id] += r.value
+        elif r.move_type == MoveType.CANCEL and r.reversal_of_id:
+            cancelled.add(r.reversal_of_id)
 
     state = costing.State()
     corrections: list[Correction] = []
@@ -287,12 +300,16 @@ async def replay(session: AsyncSession, business_id: uuid.UUID, variant_id: uuid
         uuid.UUID | None, Decimal
     ] = {}  # transfer_out value by document line, for its transfer_in
     for m in rows:
-        if m.move_type not in {t.value for t in INBOUND | OUTBOUND}:
+        if m.move_type == MoveType.CANCEL or m.id in cancelled:
+            continue  # a cancelled move and its cancel row never happened
+        if m.move_type != MoveType.REVERSAL and m.move_type not in QUANTITY_TYPES:
             continue
         recorded_own = m.value + own_adjust[m.id]
         recorded_rev = reval[m.id]
         expected_rev = ZERO
-        if m.move_type in {t.value for t in OUTBOUND}:
+        if m.move_type == MoveType.REVERSAL:
+            expected_own, expected_rev, state = _reversal(state, m, recorded_own)
+        elif m.move_type in {t.value for t in OUTBOUND}:
             out = costing.outbound(state, -m.qty_base)
             expected_own = -out.value
             state = out.state
@@ -318,6 +335,130 @@ async def replay(session: AsyncSession, business_id: uuid.UUID, variant_id: uuid
         if expected_rev != recorded_rev:
             corrections.append(Correction(m, MoveType.NEGATIVE_REVALUATION, expected_rev - recorded_rev))
     return Replayed(state, corrections, transfer_deltas)
+
+
+def _reversal(
+    state: costing.State, m: StockMove, recorded: Decimal
+) -> tuple[Decimal, Decimal, costing.State]:
+    """A reversal row's own value, its rule 27 revaluation, and the pool after it (see ``undo``)."""
+    if m.qty_base > 0:
+        result = costing.inbound(state, m.qty_base, m.unit_cost, value=recorded)
+        return recorded, result.revaluation, result.state
+    if m.counter_account_id is None:
+        return recorded, ZERO, costing.take_out(state, -m.qty_base, -recorded)
+    out = costing.outbound(state, -m.qty_base)
+    return -out.value, ZERO, out.state
+
+
+# --- undo (rules 32 and 33) --------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Undone:
+    move: StockMove
+    # Changes to the inventory account the mirror of the original's posting entry does not make, each against
+    # its counter account (None: a transfer, nothing to post).
+    journal: list[tuple[Decimal, uuid.UUID | None]]
+
+
+async def undo(
+    session: AsyncSession,
+    ctx: Context,
+    m: StockMove,
+    kind: MoveType,
+    cost_adjustment_id: uuid.UUID | None,
+) -> Undone:
+    """Writes the ``cancel`` / ``reversal`` row of quantity move ``m``; keeps the caches (module docstring).
+
+    A cancel always needs a replay of the variant (``ctx.backdated``): the pool is set from it.
+    """
+    adjusters = (
+        await session.scalars(
+            select(StockMove).where(StockMove.adjusts_move_id == m.id).order_by(StockMove.seq)
+        )
+    ).all()
+    recosts = sum((a.value for a in adjusters if a.move_type == MoveType.RECOST), ZERO)
+    # rule 27 at the move's own posting is the row right after it (``apply``); its entry posted it
+    at_post = sum(
+        (a.value for a in adjusters if a.move_type == MoveType.NEGATIVE_REVALUATION and a.seq == m.seq + 1),
+        ZERO,
+    )
+    later_reval = (
+        sum((a.value for a in adjusters if a.move_type == MoveType.NEGATIVE_REVALUATION), ZERO) - at_post
+    )
+    row = await pool(session, ctx.tenant_id, ctx.business_id, m.variant_id)
+    state = state_of(row)
+    counter = m.counter_account_id
+    revaluation = ZERO
+    new_state: costing.State | None = None
+    journal: list[tuple[Decimal, uuid.UUID | None]]
+    if kind is MoveType.CANCEL:
+        value = -(m.value + recosts + at_post + later_reval)
+        journal = [(-recosts, counter), (-later_reval, cost_adjustment_id)]
+    elif m.qty_base < 0:  # goods that left come back at what they left at
+        value = -(m.value + recosts)
+        result = costing.inbound(state, -m.qty_base, costing.cost(value / -m.qty_base), value=value)
+        revaluation, new_state = result.revaluation, result.state
+        journal = [(-recosts, counter), (revaluation, cost_adjustment_id)]
+    elif counter is None:  # a transfer's goods leave at exactly what they brought; the pool keeps rule 27
+        value = -(m.value + recosts)
+        new_state = costing.take_out(state, m.qty_base, -value)
+        journal = [(at_post, cost_adjustment_id)]
+    else:  # goods that came in leave at the average; the difference is a cost adjustment
+        out = costing.outbound(state, m.qty_base)
+        value, new_state, counter = -out.value, out.state, cost_adjustment_id
+        journal = [(value + m.value + at_post, cost_adjustment_id)]
+
+    qty = -m.qty_base
+    move = await _write(
+        session,
+        ctx,
+        warehouse_id=m.warehouse_id,
+        variant_id=m.variant_id,
+        batch_id=m.batch_id,
+        move_type=kind.value,
+        qty_base=qty,
+        unit_cost=costing.cost(abs(value / qty)),
+        value=value,
+        document_line_id=m.document_line_id,
+        counter_account_id=counter,
+        reversal_of_id=m.id,
+    )
+    if revaluation:
+        await _write(
+            session,
+            ctx,
+            warehouse_id=m.warehouse_id,
+            variant_id=m.variant_id,
+            batch_id=m.batch_id,
+            move_type=MoveType.NEGATIVE_REVALUATION.value,
+            qty_base=ZERO,
+            unit_cost=ZERO,
+            value=revaluation,
+            document_line_id=m.document_line_id,
+            counter_account_id=cost_adjustment_id,
+            adjusts_move_id=move.id,
+        )
+    backdated = kind is MoveType.CANCEL or (row.last_move_date is not None and ctx.day < row.last_move_date)
+    if new_state is not None:
+        _store(row, new_state)
+        if row.last_move_date is None or ctx.day > row.last_move_date:
+            row.last_move_date = ctx.day
+    await add_balance(
+        session,
+        tenant_id=ctx.tenant_id,
+        business_id=ctx.business_id,
+        warehouse_id=m.warehouse_id,
+        variant_id=m.variant_id,
+        batch_id=m.batch_id,
+        qty=qty,
+        value=value + revaluation,
+    )
+    await session.flush()
+    ctx.touched.add(m.variant_id)
+    if backdated:
+        ctx.backdated.add(m.variant_id)
+    return Undone(move, journal)
 
 
 async def write_correction(
