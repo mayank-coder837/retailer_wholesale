@@ -17,6 +17,14 @@ type Linked = components["schemas"]["LinkedDocOut"];
 
 const PURCHASE = ["purchase_order", "goods_receipt", "purchase_bill", "purchase_return"];
 const STOCK = ["stock_adjustment", "stock_transfer", "item_transfer"];
+const SALES = [
+  "quotation",
+  "proforma_invoice",
+  "sales_order",
+  "delivery_note",
+  "sales_invoice",
+  "sales_return",
+];
 /** Commitments: nothing in the books to reverse, so they are only cancelled (as the API decides). */
 const CANCEL_ONLY = ["quotation", "sales_order", "proforma_invoice", "purchase_order"];
 
@@ -31,6 +39,12 @@ export function DocLink({ doc }: { doc: Pick<Linked, "id" | "doc_type" | "number
   if (PURCHASE.includes(doc.doc_type))
     return (
       <Link to="/purchases/$docId" params={{ docId: doc.id }} className={className}>
+        {label}
+      </Link>
+    );
+  if (SALES.includes(doc.doc_type))
+    return (
+      <Link to="/sales/$docId" params={{ docId: doc.id }} className={className}>
         {label}
       </Link>
     );
@@ -122,6 +136,11 @@ export function CorrectionPanel({ docId }: { docId: string }) {
         >
           <h2 className="font-semibold">{t(`corrections.${mode}Title`, { number: s.number ?? "" })}</h2>
           <p className="text-sm text-muted-foreground">{t(`corrections.${mode}Hint`)}</p>
+          {mode === "cancel" && s.sent_at && (
+            <p role="status" className="rounded-lg border border-amber-500/60 bg-amber-500/10 p-3 text-sm">
+              {t("corrections.wasSent")}
+            </p>
+          )}
           <div className="grid items-start gap-3 sm:grid-cols-2">
             <Field label={t("corrections.reason")}>
               {(p) => (

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 
 import { AccountPage } from "@/routes/accounts/account";
+import { AgeingPage } from "@/routes/accounts/ageing";
 import { ChartPage } from "@/routes/accounts/chart";
 import { PeriodsPage } from "@/routes/accounts/periods";
 import { TrialBalancePage } from "@/routes/accounts/trial-balance";
@@ -25,6 +26,9 @@ import { PricingSettingsPage } from "@/routes/pricing/pricing-settings";
 import { PurchaseDocumentPage } from "@/routes/purchasing/purchase-document";
 import { PurchaseEntryRoute } from "@/routes/purchasing/purchase-entry";
 import { PurchasesPage } from "@/routes/purchasing/purchases";
+import { SalesDocumentPage } from "@/routes/sales/sales-document";
+import { SalesEntryRoute } from "@/routes/sales/sales-entry";
+import { SalesPage } from "@/routes/sales/sales";
 import { DashboardPage } from "@/routes/dashboard";
 import { IndexRedirect } from "@/routes/index-redirect";
 import { StockDocumentsPage } from "@/routes/inventory/documents";
@@ -142,6 +146,24 @@ const voucherRoute = createRoute({
   path: "/vouchers/$kind",
   component: VoucherRoute,
 });
+const salesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sales",
+  component: SalesPage,
+});
+/** ``from``: start from an earlier document (a quotation to order, an order to deliver or invoice…). */
+const newSalesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sales/new/$kind",
+  validateSearch: (search: Record<string, unknown>): { from?: string } =>
+    typeof search.from === "string" ? { from: search.from } : {},
+  component: SalesEntryRoute,
+});
+const salesDocRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sales/$docId",
+  component: SalesDocumentPage,
+});
 const purchasesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/purchases",
@@ -180,6 +202,11 @@ const trialBalanceRoute = createRoute({
   path: "/accounts/trial-balance",
   component: TrialBalancePage,
 });
+const ageingRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/ageing",
+  component: AgeingPage,
+});
 const periodsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/accounts/periods",
@@ -213,6 +240,9 @@ const routeTree = rootRoute.addChildren([
     partyRoute,
     catalogSettingsRoute,
     pricingSettingsRoute,
+    salesRoute,
+    newSalesRoute,
+    salesDocRoute,
     purchasesRoute,
     newPurchaseRoute,
     purchaseRoute,
@@ -221,9 +251,9 @@ const routeTree = rootRoute.addChildren([
     vouchersRoute,
     voucherViewRoute,
     trialBalanceRoute,
+    ageingRoute,
     periodsRoute,
     accountRoute,
-    page("/sales", "nav.sales"),
     page("/reports", "nav.reports"),
   ]),
 ]);

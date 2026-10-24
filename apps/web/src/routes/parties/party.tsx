@@ -22,6 +22,8 @@ import { showMoney, usePriceLists } from "@/routes/pricing/queries";
 import { PartyStatement } from "@/routes/accounts/statement";
 import { useBusiness } from "@/shell/use-business";
 import { cn } from "@/lib/utils";
+import { AgeingTable } from "@/routes/accounts/ageing";
+import { useAgeing } from "@/routes/sales/queries";
 
 /** Customers & suppliers → one party (M1.4): details, addresses, contacts, this business's terms, credit. */
 export function PartyPage() {
@@ -72,6 +74,7 @@ export function PartyPage() {
       {current && p.is_customer && (
         <CreditCheckPanel key={`k-${current.id}`} party={p} businessId={current.id} />
       )}
+      {current && p.is_customer && <PartyAgeing businessId={current.id} partyId={p.id} />}
       {current && <PartyStatement key={`l-${current.id}`} businessId={current.id} partyId={p.id} />}
     </div>
   );
@@ -825,6 +828,23 @@ function CreditCheckPanel({ party, businessId }: { party: Party; businessId: str
         </div>
       )}
       {check.isError && <ErrorText error={check.error} />}
+    </Section>
+  );
+}
+
+/** This customer's row of the receivables ageing (shown to those who may see reports). */
+function PartyAgeing({ businessId, partyId }: { businessId: string; partyId: string }) {
+  const { t } = useTranslation();
+  const ageing = useAgeing(businessId, "receivables");
+  const row = ageing.data?.rows.find((r) => r.party_id === partyId);
+  if (!ageing.data) return null;
+  return (
+    <Section title={t("ageing.title")}>
+      {row ? (
+        <AgeingTable rows={[row]} />
+      ) : (
+        <p className="text-sm text-muted-foreground">{t("ageing.nothingOpen")}</p>
+      )}
     </Section>
   );
 }
