@@ -93,6 +93,22 @@ class Document(TenantScoped, Base):
         ),
         Index("ix_document_list", "business_id", "doc_type", "doc_date"),
         Index("ix_document_party", "party_id", "doc_date"),
+        CheckConstraint(
+            "price_mode IS NULL OR price_mode IN ('vat_exclusive', 'vat_inclusive', 'no_vat')",
+            name="price_mode",
+        ),
+        CheckConstraint(
+            "(price_mode = 'no_vat') = (no_vat_reason IS NOT NULL) OR price_mode IS NULL",
+            name="no_vat_reason",
+        ),
+        CheckConstraint(
+            "no_vat_reason IS NULL OR no_vat_reason IN ('zero_rated', 'exempt', 'out_of_scope')",
+            name="no_vat_reason_kind",
+        ),
+        CheckConstraint(
+            "invoice_kind IS NULL OR invoice_kind IN ('tax_invoice', 'simplified', 'invoice')",
+            name="invoice_kind",
+        ),
     )
 
     doc_type: Mapped[str] = mapped_column(String(30))
@@ -126,6 +142,10 @@ class Document(TenantScoped, Base):
     subtotal: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))  # net of VAT
     tax_total: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))  # VAT: the sum of the lines' VAT (A3)
     valid_until: Mapped[date | None] = mapped_column(Date)  # quotations and proformas
+    # VAT (M1.10, A10): how prices were typed on a priced document, and what a posted invoice prints as.
+    price_mode: Mapped[str | None] = mapped_column(String(15))
+    no_vat_reason: Mapped[str | None] = mapped_column(String(15))
+    invoice_kind: Mapped[str | None] = mapped_column(String(15))
 
 
 class LineDirection(StrEnum):
@@ -195,6 +215,7 @@ class DocumentLine(TenantScoped, Base):
     vat_rate: Mapped[Decimal | None] = mapped_column(Numeric(19, 6))
     vat_amount: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
     line_total: Mapped[Decimal | None] = mapped_column(Numeric(19, 4))
+    tax_code: Mapped[str | None] = mapped_column(String(8))  # M1.10: decides the VAT 201 box; rate kept above
     account_id: Mapped[uuid.UUID | None]  # expense and service lines: the account debited
     source_line_id: Mapped[uuid.UUID | None]  # the order / receipt / bill line this line follows
     price_source: Mapped[str | None] = mapped_column(String(80))  # sales: where the price came from (A9)

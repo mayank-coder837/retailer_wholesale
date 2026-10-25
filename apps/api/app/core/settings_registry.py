@@ -45,6 +45,12 @@ SETTINGS: dict[str, SettingDef] = {
     "sales.default_price_mode": SettingDef(
         str, "vat_exclusive", ("tenant", "business", "branch", "user"), PRICE_MODES, "Price entry mode (A10)"
     ),
+    "vat.simplified_for_unregistered": SettingDef(
+        bool,
+        True,
+        ("tenant", "business", "branch"),
+        description="Invoices to customers without a TRN print as simplified tax invoices (M1.10, R7)",
+    ),
     "documents.offer_released_numbers": SettingDef(
         bool, True, ("tenant", "business", "branch"), description="Offer cancelled numbers for reuse (A7)"
     ),

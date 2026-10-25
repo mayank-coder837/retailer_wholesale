@@ -67,6 +67,10 @@ class Party(TenantScoped, Base):
     whatsapp: Mapped[str | None] = mapped_column(String(30))
     email: Mapped[str | None] = mapped_column(String(200))
     default_currency: Mapped[str] = mapped_column(String(3), server_default="AED")
+    # Tax code overrides for this party's lines (M1.10), e.g. an export customer ZR, an overseas service
+    # supplier RC-S.
+    sales_tax_code: Mapped[str | None] = mapped_column(String(8))
+    purchase_tax_code: Mapped[str | None] = mapped_column(String(8))
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

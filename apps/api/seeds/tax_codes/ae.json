@@ -1,0 +1,28 @@
+{
+  "country": "AE",
+  "source": "docs/decisions-round-1.md, VAT 201 box mapping (A10); accountant review open (R3)",
+  "codes": [
+    {"code": "SR", "side": "sales", "rate": "5", "treatment": "output", "net_box": "1", "vat_box": "1",
+     "name_en": "Standard rated 5%", "name_ar": "خاضع للنسبة الأساسية 5%"},
+    {"code": "ZR", "side": "sales", "rate": "0", "treatment": "none", "net_box": "4", "vat_box": null,
+     "name_en": "Zero rated", "name_ar": "خاضع لنسبة الصفر"},
+    {"code": "EX", "side": "sales", "rate": "0", "treatment": "none", "net_box": "5", "vat_box": null,
+     "name_en": "Exempt", "name_ar": "معفى"},
+    {"code": "OS", "side": "sales", "rate": "0", "treatment": "none", "net_box": null, "vat_box": null,
+     "name_en": "Out of scope", "name_ar": "خارج النطاق"},
+    {"code": "SR", "side": "purchase", "rate": "5", "treatment": "recoverable", "net_box": "9", "vat_box": "9",
+     "name_en": "Standard rated 5%, recoverable", "name_ar": "خاضع للنسبة الأساسية 5%، قابل للاسترداد"},
+    {"code": "SR-B", "side": "purchase", "rate": "5", "treatment": "blocked", "net_box": null, "vat_box": null,
+     "name_en": "5%, input VAT blocked", "name_ar": "5%، ضريبة مدخلات غير قابلة للاسترداد"},
+    {"code": "ZR", "side": "purchase", "rate": "0", "treatment": "none", "net_box": null, "vat_box": null,
+     "name_en": "Zero rated", "name_ar": "خاضع لنسبة الصفر"},
+    {"code": "EX", "side": "purchase", "rate": "0", "treatment": "none", "net_box": null, "vat_box": null,
+     "name_en": "Exempt", "name_ar": "معفى"},
+    {"code": "OS", "side": "purchase", "rate": "0", "treatment": "none", "net_box": null, "vat_box": null,
+     "name_en": "Out of scope", "name_ar": "خارج النطاق"},
+    {"code": "RC-S", "side": "purchase", "rate": "5", "treatment": "reverse_charge", "net_box": "3", "vat_box": "3",
+     "recovered_box": "10", "name_en": "Reverse charge, imported services", "name_ar": "احتساب عكسي، خدمات مستوردة"},
+    {"code": "RC-G", "side": "purchase", "rate": "5", "treatment": "reverse_charge", "net_box": "6", "vat_box": "6",
+     "recovered_box": "10", "name_en": "Reverse charge, imported goods", "name_ar": "احتساب عكسي، بضائع مستوردة"}
+  ]
+}

@@ -1,5 +1,5 @@
-"""Sales API shapes (M1.8). Quantities are typed in one of the product's units; prices are per unit typed and
-VAT-exclusive (price modes arrive with tax, M1.10); money and quantities are exact Decimal."""
+"""Sales API shapes (M1.8, VAT M1.10). Quantities are typed in one of the product's units; prices are per unit
+typed, in the document's price mode; money and quantities are exact Decimal."""
 
 import datetime as dt
 import uuid
@@ -8,9 +8,11 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.modules.documents.models import DocumentStatus
+from app.modules.tax.codes import NoVatReason, PriceMode
+from app.modules.tax.fields import SalesTaxCode
 
 Quantity = Annotated[Decimal, Field(gt=0, max_digits=19, decimal_places=6)]
 Price = Annotated[Decimal, Field(ge=0, max_digits=19, decimal_places=6)]
@@ -33,10 +35,15 @@ class SalesLineIn(BaseModel):
     qty: Quantity
     unit_price: Price | None = Field(
         default=None,
-        description="Per unit typed, VAT-exclusive (default: the order line it follows); none on deliveries",
+        description="Per unit typed, in the document's price mode (default: the line it follows); none on "
+        "deliveries",
+    )
+    tax_code: SalesTaxCode | None = Field(
+        default=None,
+        description="SR, ZR, EX or OS; default: the line it follows, the customer's, the item's, else SR",
     )
     vat_rate: Decimal | None = Field(
-        default=None, description="0 or 5 (%); default: the line it follows, else 5"
+        default=None, description="Deprecated (before tax codes): 5 means SR, 0 means ZR"
     )
     price_source: str | None = Field(
         default=None,
@@ -70,7 +77,20 @@ class SalesDocIn(BaseModel):
     )
     reference: str | None = Field(default=None, max_length=100, description="The customer's order number")
     narration: str | None = Field(default=None, max_length=2000)
+    price_mode: PriceMode = Field(
+        default=PriceMode.VAT_EXCLUSIVE,
+        description="How prices are typed: VAT-exclusive, VAT-inclusive, or no VAT (with the reason)",
+    )
+    no_vat_reason: NoVatReason | None = Field(
+        default=None, description="With no_vat: zero_rated (ZR), exempt (EX) or out_of_scope (OS)"
+    )
     lines: list[SalesLineIn] = Field(min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def _reason(self) -> "SalesDocIn":
+        if (self.price_mode is PriceMode.NO_VAT) != (self.no_vat_reason is not None):
+            raise ValueError("no_vat needs its reason, and only no_vat has one")
+        return self
 
 
 class PostSalesIn(BaseModel):
@@ -98,6 +118,7 @@ class SalesLineOut(BaseModel):
     price_source: str | None
     below_min: bool
     net_amount: Decimal
+    tax_code: str | None
     vat_rate: Decimal
     vat_amount: Decimal
     line_total: Decimal
@@ -124,6 +145,11 @@ class SalesDocSummary(BaseModel):
     due_date: date | None
     reference: str | None
     narration: str | None
+    price_mode: PriceMode | None
+    no_vat_reason: NoVatReason | None
+    invoice_kind: str | None = Field(
+        description="Posted invoices and returns: tax_invoice, simplified, or invoice (not VAT-registered)"
+    )
     subtotal: Decimal
     tax_total: Decimal
     round_off: Decimal
@@ -161,6 +187,8 @@ class OpenSalesLineOut(BaseModel):
         description="In the line's own unit (when it divides exactly, else the base unit)"
     )
     unit_price: Decimal | None = Field(description="Delivery lines: the price of the order line they follow")
+    price_mode: PriceMode | None = Field(description="The mode that price was typed in")
+    tax_code: str | None
     vat_rate: Decimal
 
 

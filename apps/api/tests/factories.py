@@ -102,7 +102,9 @@ class TenantSeed:
 
 
 def business_in(name: str = "Al Noor Trading LLC") -> BusinessIn:
-    return BusinessIn(legal_name_en=name, legal_name_ar="شركة النور للتجارة")
+    return BusinessIn(
+        legal_name_en=name, legal_name_ar="شركة النور للتجارة", vat_registered=True, trn="100000000000003"
+    )
 
 
 def branch_in(code: str = "HO", emirate: Emirate = Emirate.DUBAI) -> BranchIn:

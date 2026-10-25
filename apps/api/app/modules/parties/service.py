@@ -119,6 +119,8 @@ async def get_party(session: AsyncSession, party_id: uuid.UUID) -> PartyOut:
         whatsapp=party.whatsapp,
         email=party.email,
         default_currency=party.default_currency,
+        sales_tax_code=party.sales_tax_code,
+        purchase_tax_code=party.purchase_tax_code,
         addresses=[AddressOut.model_validate(a) for a in addresses],
         contacts=[ContactOut.model_validate(c) for c in contacts],
         customer_profiles=[CustomerProfileOut.model_validate(p) for p in customers],

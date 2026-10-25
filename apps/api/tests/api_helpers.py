@@ -11,7 +11,12 @@ def signup_body(email: str, tenant_name: str = "Al Noor Trading", client: str = 
         "password": PASSWORD,
         "full_name": "Test Owner",
         "tenant_name": tenant_name,
-        "business": {"legal_name_en": f"{tenant_name} LLC", "legal_name_ar": "شركة تجريبية"},
+        "business": {
+            "legal_name_en": f"{tenant_name} LLC",
+            "legal_name_ar": "شركة تجريبية",
+            "vat_registered": True,  # like the traders we serve; sales charge VAT (M1.10)
+            "trn": "100000000000003",
+        },
         "head_office": {
             "code": "HO",
             "name_en": "Head office",
