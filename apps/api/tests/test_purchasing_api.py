@@ -308,7 +308,7 @@ async def test_expense_bills_debit_the_account_and_need_one(client: AsyncClient)
 
 async def test_a_direct_bill_brings_stock_in_and_needs_a_warehouse(client: AsyncClient) -> None:
     b = await buyer(client)
-    line = {"variant_id": b.fabric, "unit": "carton", "qty": "1", "unit_price": "288"}
+    line = {"variant_id": b.fabric, "unit": "carton", "qty": "1", "unit_price": "288", "tax_code": "ZR"}
     no_warehouse = await client.post("/purchase-documents", json=b.doc("purchase_bill", [line]), headers=b.h)
     assert no_warehouse.status_code == 422
     direct = await b.post(b.doc("purchase_bill", [line], warehouse_id=b.warehouse, supplier_ref="GM-9"))

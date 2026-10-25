@@ -15,7 +15,12 @@ async function seller(request: APIRequestContext) {
       password: PASSWORD,
       full_name: "Seller Owner",
       tenant_name: "Seller Trading",
-      business: { legal_name_en: "Seller Trading LLC", legal_name_ar: "شركة البائع" },
+      business: {
+        legal_name_en: "Seller Trading LLC",
+        legal_name_ar: "شركة البائع",
+        vat_registered: true, // sales charge VAT only for a registered business (M1.10)
+        trn: "100000000000003",
+      },
       head_office: { code: "HO", name_en: "Head office", name_ar: "الرئيسي", emirate: "dubai" },
       client: "web",
     },

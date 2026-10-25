@@ -53,6 +53,8 @@ from app.modules.accounting.schemas import (
 from app.modules.documents.models import Document, DocumentStatus
 from app.modules.parties import service as parties
 from app.modules.platform import settings as settings_service
+from app.modules.tax import codes as tax
+from app.modules.tax.codes import Treatment
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
@@ -201,16 +203,24 @@ async def _check(session: AsyncSession, data: VoucherIn) -> Checked:
         elif raw.party_id is not None:
             raise _invalid("Only receivable and payable lines name a party.", field=f"{where}.party_id")
 
-        if raw.vat_rate not in VAT_RATES:
-            raise _invalid("The VAT rate is 0 or 5 percent.", field=f"{where}.vat_rate")
-        if raw.vat_rate and kind not in WITH_VAT:
-            raise _invalid(f"A {kind.value} carries no VAT.", field=f"{where}.vat_rate")
+        code = _line_code(kind, raw, where)
         if raw.allocations:
             if raw.party_id is None:
                 raise _invalid("Only party lines are settled bill-wise.", field=f"{where}.allocations")
             _check_allocations(raw.allocations, debit or credit, currency, f"{where}.allocations")
             allocations[i] = raw.allocations
-        lines.append(posting.Line(account.id, debit, credit, raw.party_id, raw.vat_rate, raw.description))
+        lines.append(
+            posting.Line(
+                account.id,
+                debit,
+                credit,
+                raw.party_id,
+                code.rate if code else ZERO,
+                raw.description,
+                code.code if code else None,
+                code.treatment if code else Treatment.NONE,
+            )
+        )
 
     if kind in DOUBLE_ENTRY and len(lines) < 2:
         raise _invalid(f"A {kind.value} has at least two lines.", field="lines")
@@ -231,6 +241,26 @@ async def _check(session: AsyncSession, data: VoucherIn) -> Checked:
         _check_allocations(data.allocations, posted.total, currency, "allocations")
         allocations[HEADER] = data.allocations
     return Checked(business, voucher, posted, allocations)
+
+
+def _line_code(kind: VoucherType, raw: VoucherLineIn, where: str) -> tax.TaxCode | None:
+    """A voucher line's tax code (M1.10): expense vouchers and debit notes take purchase codes, credit notes
+    sales
+    codes. A line sent with only a VAT rate (before tax codes): 5 is SR, 0 no code."""
+    typed = raw.tax_code
+    if typed is None:
+        if raw.vat_rate not in VAT_RATES:
+            raise _invalid("The VAT rate is 0 or 5 percent.", field=f"{where}.vat_rate")
+        typed = tax.STANDARD if raw.vat_rate else None
+    if typed is None:
+        return None
+    if kind not in WITH_VAT:
+        raise _invalid(f"A {kind.value} carries no VAT.", field=f"{where}.tax_code")
+    side = tax.Side.SALES if kind is VoucherType.CREDIT_NOTE else tax.Side.PURCHASE
+    code = tax.get(side, typed)
+    if code is None:
+        raise _invalid(f"{typed} is not a {side.value} tax code.", field=f"{where}.tax_code")
+    return code
 
 
 def _role_accounts(roles: dict[Role, uuid.UUID]) -> posting.Accounts:
@@ -267,6 +297,7 @@ async def _write_lines(session: AsyncSession, doc: Document, data: VoucherIn, ch
             party_id=line.party_id,
             debit=line.debit,
             credit=line.credit,
+            tax_code=line.tax_code,
             vat_rate=line.vat_rate,
             vat_amount=checked.posted.line_vat[i],
             description=line.description,
@@ -406,7 +437,8 @@ async def _stored_input(session: AsyncSession, doc: Document) -> VoucherIn:
             amount=None if kind in DOUBLE_ENTRY else (r.debit or r.credit),
             debit=r.debit if kind in DOUBLE_ENTRY and r.debit else None,
             credit=r.credit if kind in DOUBLE_ENTRY and r.credit else None,
-            vat_rate=r.vat_rate.normalize() if r.vat_rate else ZERO,
+            tax_code=r.tax_code,
+            vat_rate=ZERO if r.tax_code else (r.vat_rate.normalize() if r.vat_rate else ZERO),
             description=r.description,
             allocations=by_line.get(r.id, []),
         )
@@ -615,6 +647,7 @@ async def get_voucher(session: AsyncSession, doc_id: uuid.UUID) -> VoucherOut:
                 party_id=r.party_id,
                 debit=r.debit,
                 credit=r.credit,
+                tax_code=r.tax_code,
                 vat_rate=r.vat_rate,
                 vat_amount=r.vat_amount,
                 description=r.description,

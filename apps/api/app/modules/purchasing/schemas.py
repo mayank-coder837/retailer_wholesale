@@ -1,5 +1,5 @@
-"""Purchasing API shapes (M1.7). Quantities are typed in one of the product's units; prices are per unit
-typed and VAT-exclusive; money and quantities are exact Decimal."""
+"""Purchasing API shapes (M1.7, VAT M1.10). Quantities are typed in one of the product's units; prices are
+per unit typed, in the document's price mode; money and quantities are exact Decimal."""
 
 import uuid
 from datetime import date, datetime
@@ -7,9 +7,11 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.modules.documents.models import DocumentStatus
+from app.modules.tax.codes import NoVatReason, PriceMode
+from app.modules.tax.fields import PurchaseTaxCode
 
 Quantity = Annotated[Decimal, Field(gt=0, max_digits=19, decimal_places=6)]
 Price = Annotated[Decimal, Field(ge=0, max_digits=19, decimal_places=6)]
@@ -32,10 +34,16 @@ class PurchaseLineIn(BaseModel):
     )
     qty: Quantity = Field(description="Expense lines: 1")
     unit_price: Price | None = Field(
-        default=None, description="Per unit typed, VAT-exclusive (default: the line it follows)"
+        default=None,
+        description="Per unit typed, in the document's price mode (default: the line it follows)",
+    )
+    tax_code: PurchaseTaxCode | None = Field(
+        default=None,
+        description="SR, SR-B, ZR, EX, OS, RC-S or RC-G; default: the line it follows, the supplier's, the "
+        "item's, else SR",
     )
     vat_rate: Decimal | None = Field(
-        default=None, description="0 or 5 (%); default: the line it follows, else 0"
+        default=None, description="Deprecated (before tax codes): 5 means SR, 0 means OS"
     )
     source_line_id: uuid.UUID | None = Field(
         default=None,
@@ -62,7 +70,20 @@ class PurchaseDocIn(BaseModel):
     due_date: date | None = Field(default=None, description="Bills: default the supplier's payment terms")
     reference: str | None = Field(default=None, max_length=100)
     narration: str | None = Field(default=None, max_length=2000)
+    price_mode: PriceMode = Field(
+        default=PriceMode.VAT_EXCLUSIVE,
+        description="How prices are typed: VAT-exclusive, VAT-inclusive, or no VAT (with the reason)",
+    )
+    no_vat_reason: NoVatReason | None = Field(
+        default=None, description="With no_vat: zero_rated (ZR), exempt (EX) or out_of_scope (OS)"
+    )
     lines: list[PurchaseLineIn] = Field(min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def _reason(self) -> "PurchaseDocIn":
+        if (self.price_mode is PriceMode.NO_VAT) != (self.no_vat_reason is not None):
+            raise ValueError("no_vat needs its reason, and only no_vat has one")
+        return self
 
 
 class PostPurchaseIn(BaseModel):
@@ -86,9 +107,12 @@ class PurchaseLineOut(BaseModel):
     base_unit: str | None
     unit_price: Decimal | None
     net_amount: Decimal
+    tax_code: str | None
     vat_rate: Decimal
-    vat_amount: Decimal
-    line_total: Decimal
+    vat_amount: Decimal = Field(
+        description="Reverse charge: the VAT self-assessed (not owed to the supplier)"
+    )
+    line_total: Decimal = Field(description="What the line adds to the bill")
     source_line_id: uuid.UUID | None
     batch_id: uuid.UUID | None
     batch_no: str | None
@@ -113,9 +137,11 @@ class PurchaseDocSummary(BaseModel):
     due_date: date | None
     reference: str | None
     narration: str | None
+    price_mode: PriceMode | None
+    no_vat_reason: NoVatReason | None
     subtotal: Decimal
     tax_total: Decimal
-    total: Decimal
+    total: Decimal = Field(description="What the supplier is owed (reverse-charge VAT is not)")
     posted_at: datetime | None
 
 
@@ -142,5 +168,7 @@ class OpenLineOut(BaseModel):
         description="In the line's own unit (when it divides exactly, else the base unit)"
     )
     unit_price: Decimal | None
+    price_mode: PriceMode | None = Field(default=None, description="The mode that price was typed in")
+    tax_code: str | None = None
     vat_rate: Decimal
     value_open: Decimal | None = Field(default=None, description="Receipt lines: GRNI still to clear")

@@ -14,6 +14,7 @@ from app.modules.catalog.models import (
     CustomFieldType,
     ProductType,
 )
+from app.modules.tax.fields import PurchaseTaxCode, SalesTaxCode
 
 Name = Field(min_length=1, max_length=100)
 
@@ -227,6 +228,12 @@ class ProductIn(Named):
     track_expiry: bool = False
     track_serial: bool = False
     custom_fields: dict[str, Any] = Field(default_factory=dict)
+    sales_tax_code: SalesTaxCode | None = Field(
+        default=None, description="Default VAT on sales lines; none: SR"
+    )
+    purchase_tax_code: PurchaseTaxCode | None = Field(
+        default=None, description="Default VAT on purchase lines; none: SR"
+    )
 
 
 class ProductPatch(BaseModel):
@@ -241,6 +248,8 @@ class ProductPatch(BaseModel):
     track_expiry: bool | None = None
     track_serial: bool | None = None
     custom_fields: dict[str, Any] | None = None
+    sales_tax_code: SalesTaxCode | None = Field(default=None, description="Send null to go back to SR")
+    purchase_tax_code: PurchaseTaxCode | None = Field(default=None, description="Send null to go back to SR")
     archived: bool | None = None
 
 
@@ -278,6 +287,8 @@ class ProductOut(Named):
     track_expiry: bool
     track_serial: bool
     custom_fields: dict[str, Any]
+    sales_tax_code: str | None
+    purchase_tax_code: str | None
     archived_at: datetime | None
     units: list[ProductUnitOut]
     attributes: list[str]

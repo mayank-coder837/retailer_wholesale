@@ -238,6 +238,8 @@ async def get_product(session: AsyncSession, product_id: uuid.UUID) -> ProductOu
         track_expiry=product.track_expiry,
         track_serial=product.track_serial,
         custom_fields=product.custom_fields,
+        sales_tax_code=product.sales_tax_code,
+        purchase_tax_code=product.purchase_tax_code,
         archived_at=product.archived_at,
         units=[
             ProductUnitOut(
@@ -419,6 +421,8 @@ async def create_product(session: AsyncSession, tenant_id: uuid.UUID, data: Prod
         track_expiry=data.track_expiry,
         track_serial=data.track_serial,
         custom_fields=custom,
+        sales_tax_code=data.sales_tax_code,
+        purchase_tax_code=data.purchase_tax_code,
     )
     try:
         async with session.begin_nested():
@@ -479,6 +483,9 @@ async def update_product(session: AsyncSession, product_id: uuid.UUID, data: Pro
     for field in ("name_en", "name_ar", "description", "track_batch", "track_expiry", "track_serial"):
         if field in fields and (value := getattr(data, field)) is not None:
             setattr(product, field, value)
+    for field in ("sales_tax_code", "purchase_tax_code"):  # null clears: back to standard rated
+        if field in fields:
+            setattr(product, field, getattr(data, field))
     if data.archived is not None:
         product.archived_at = datetime.now(UTC) if data.archived else None
     await session.flush()
@@ -803,6 +810,8 @@ class StockItem:
     track_expiry: bool
     base_unit: str
     units: dict[str, StockUnit]  # unit code → factor and allowed decimals
+    sales_tax_code: str | None = None  # M1.10 defaults; none: standard rated
+    purchase_tax_code: str | None = None
 
     def quantity(self, qty_entered: Decimal, unit_code: str) -> tuple[StockUnit, uom.LineQuantity]:
         """A typed quantity in one of the product's units, converted to the base unit exactly (rule 6)."""
@@ -844,4 +853,6 @@ async def stock_item(session: AsyncSession, variant_id: uuid.UUID) -> StockItem:
         track_expiry=product.track_expiry,
         base_unit=base,
         units=units,
+        sales_tax_code=product.sales_tax_code,
+        purchase_tax_code=product.purchase_tax_code,
     )

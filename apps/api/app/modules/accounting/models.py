@@ -387,6 +387,7 @@ class VoucherLine(TenantScoped, Base):
     credit: Mapped[Decimal] = mapped_column(Numeric(19, 4), server_default=text("0"))
     vat_rate: Mapped[Decimal] = mapped_column(Numeric(19, 6), server_default=text("0"))
     vat_amount: Mapped[Decimal] = mapped_column(Numeric(19, 4), server_default=text("0"))
+    tax_code: Mapped[str | None] = mapped_column(String(8))  # M1.10; none on lines without VAT treatment
     description: Mapped[str | None] = mapped_column(String(500))
 
 

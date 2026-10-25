@@ -3632,6 +3632,11 @@ export interface components {
          */
         Nature: "asset" | "liability" | "equity" | "income" | "expense";
         /**
+         * NoVatReason
+         * @enum {string}
+         */
+        NoVatReason: "zero_rated" | "exempt" | "out_of_scope";
+        /**
          * OpenLineOut
          * @description What is still to do on a posted line: to receive (an order line) or to bill (a receipt line).
          */
@@ -3662,6 +3667,10 @@ export interface components {
             qty_open: string;
             /** Unit Price */
             unit_price: string | null;
+            /** @description The mode that price was typed in */
+            price_mode?: components["schemas"]["PriceMode"] | null;
+            /** Tax Code */
+            tax_code?: string | null;
             /** Vat Rate */
             vat_rate: string;
             /**
@@ -3704,6 +3713,10 @@ export interface components {
              * @description Delivery lines: the price of the order line they follow
              */
             unit_price: string | null;
+            /** @description The mode that price was typed in */
+            price_mode: components["schemas"]["PriceMode"] | null;
+            /** Tax Code */
+            tax_code: string | null;
             /** Vat Rate */
             vat_rate: string;
         };
@@ -3763,6 +3776,16 @@ export interface components {
              * @default AED
              */
             default_currency: string;
+            /**
+             * Sales Tax Code
+             * @description Overrides the product's code on sales to this customer, e.g. ZR for exports
+             */
+            sales_tax_code?: string | null;
+            /**
+             * Purchase Tax Code
+             * @description Overrides the product's code on purchases, e.g. RC-S for overseas services
+             */
+            purchase_tax_code?: string | null;
             /** Addresses */
             addresses?: components["schemas"]["AddressIn"][];
             /** Contacts */
@@ -3841,6 +3864,10 @@ export interface components {
             email: string | null;
             /** Default Currency */
             default_currency: string;
+            /** Sales Tax Code */
+            sales_tax_code: string | null;
+            /** Purchase Tax Code */
+            purchase_tax_code: string | null;
             /** Addresses */
             addresses: components["schemas"]["AddressOut"][];
             /** Contacts */
@@ -3872,6 +3899,16 @@ export interface components {
             whatsapp?: string | null;
             /** Email */
             email?: string | null;
+            /**
+             * Sales Tax Code
+             * @description Send null to remove the override
+             */
+            sales_tax_code?: string | null;
+            /**
+             * Purchase Tax Code
+             * @description Send null to remove it
+             */
+            purchase_tax_code?: string | null;
             /** Archived */
             archived?: boolean | null;
         };
@@ -4186,6 +4223,11 @@ export interface components {
             archived?: boolean | null;
         };
         /**
+         * PriceMode
+         * @enum {string}
+         */
+        PriceMode: "vat_exclusive" | "vat_inclusive" | "no_vat";
+        /**
          * PriceSource
          * @enum {string}
          */
@@ -4240,6 +4282,16 @@ export interface components {
             custom_fields?: {
                 [key: string]: unknown;
             };
+            /**
+             * Sales Tax Code
+             * @description Default VAT on sales lines; none: SR
+             */
+            sales_tax_code?: string | null;
+            /**
+             * Purchase Tax Code
+             * @description Default VAT on purchase lines; none: SR
+             */
+            purchase_tax_code?: string | null;
         };
         /** ProductOut */
         ProductOut: {
@@ -4273,6 +4325,10 @@ export interface components {
             custom_fields: {
                 [key: string]: unknown;
             };
+            /** Sales Tax Code */
+            sales_tax_code: string | null;
+            /** Purchase Tax Code */
+            purchase_tax_code: string | null;
             /** Archived At */
             archived_at: string | null;
             /** Units */
@@ -4309,6 +4365,16 @@ export interface components {
             custom_fields?: {
                 [key: string]: unknown;
             } | null;
+            /**
+             * Sales Tax Code
+             * @description Send null to go back to SR
+             */
+            sales_tax_code?: string | null;
+            /**
+             * Purchase Tax Code
+             * @description Send null to go back to SR
+             */
+            purchase_tax_code?: string | null;
             /** Archived */
             archived?: boolean | null;
         };
@@ -4530,6 +4596,13 @@ export interface components {
             reference?: string | null;
             /** Narration */
             narration?: string | null;
+            /**
+             * @description How prices are typed: VAT-exclusive, VAT-inclusive, or no VAT (with the reason)
+             * @default vat_exclusive
+             */
+            price_mode: components["schemas"]["PriceMode"];
+            /** @description With no_vat: zero_rated (ZR), exempt (EX) or out_of_scope (OS) */
+            no_vat_reason?: components["schemas"]["NoVatReason"] | null;
             /** Lines */
             lines: components["schemas"]["PurchaseLineIn"][];
         };
@@ -4571,11 +4644,16 @@ export interface components {
             reference: string | null;
             /** Narration */
             narration: string | null;
+            price_mode: components["schemas"]["PriceMode"] | null;
+            no_vat_reason: components["schemas"]["NoVatReason"] | null;
             /** Subtotal */
             subtotal: string;
             /** Tax Total */
             tax_total: string;
-            /** Total */
+            /**
+             * Total
+             * @description What the supplier is owed (reverse-charge VAT is not)
+             */
             total: string;
             /** Posted At */
             posted_at: string | null;
@@ -4625,11 +4703,16 @@ export interface components {
             reference: string | null;
             /** Narration */
             narration: string | null;
+            price_mode: components["schemas"]["PriceMode"] | null;
+            no_vat_reason: components["schemas"]["NoVatReason"] | null;
             /** Subtotal */
             subtotal: string;
             /** Tax Total */
             tax_total: string;
-            /** Total */
+            /**
+             * Total
+             * @description What the supplier is owed (reverse-charge VAT is not)
+             */
             total: string;
             /** Posted At */
             posted_at: string | null;
@@ -4663,12 +4746,17 @@ export interface components {
             qty: number | string;
             /**
              * Unit Price
-             * @description Per unit typed, VAT-exclusive (default: the line it follows)
+             * @description Per unit typed, in the document's price mode (default: the line it follows)
              */
             unit_price?: number | string | null;
             /**
+             * Tax Code
+             * @description SR, SR-B, ZR, EX, OS, RC-S or RC-G; default: the line it follows, the supplier's, the item's, else SR
+             */
+            tax_code?: string | null;
+            /**
              * Vat Rate
-             * @description 0 or 5 (%); default: the line it follows, else 0
+             * @description Deprecated (before tax codes): 5 means SR, 0 means OS
              */
             vat_rate?: number | string | null;
             /**
@@ -4716,11 +4804,19 @@ export interface components {
             unit_price: string | null;
             /** Net Amount */
             net_amount: string;
+            /** Tax Code */
+            tax_code: string | null;
             /** Vat Rate */
             vat_rate: string;
-            /** Vat Amount */
+            /**
+             * Vat Amount
+             * @description Reverse charge: the VAT self-assessed (not owed to the supplier)
+             */
             vat_amount: string;
-            /** Line Total */
+            /**
+             * Line Total
+             * @description What the line adds to the bill
+             */
             line_total: string;
             /** Source Line Id */
             source_line_id: string | null;
@@ -4927,6 +5023,13 @@ export interface components {
             reference?: string | null;
             /** Narration */
             narration?: string | null;
+            /**
+             * @description How prices are typed: VAT-exclusive, VAT-inclusive, or no VAT (with the reason)
+             * @default vat_exclusive
+             */
+            price_mode: components["schemas"]["PriceMode"];
+            /** @description With no_vat: zero_rated (ZR), exempt (EX) or out_of_scope (OS) */
+            no_vat_reason?: components["schemas"]["NoVatReason"] | null;
             /** Lines */
             lines: components["schemas"]["SalesLineIn"][];
         };
@@ -4970,6 +5073,13 @@ export interface components {
             reference: string | null;
             /** Narration */
             narration: string | null;
+            price_mode: components["schemas"]["PriceMode"] | null;
+            no_vat_reason: components["schemas"]["NoVatReason"] | null;
+            /**
+             * Invoice Kind
+             * @description Posted invoices and returns: tax_invoice, simplified, or invoice (not VAT-registered)
+             */
+            invoice_kind: string | null;
             /** Subtotal */
             subtotal: string;
             /** Tax Total */
@@ -5034,6 +5144,13 @@ export interface components {
             reference: string | null;
             /** Narration */
             narration: string | null;
+            price_mode: components["schemas"]["PriceMode"] | null;
+            no_vat_reason: components["schemas"]["NoVatReason"] | null;
+            /**
+             * Invoice Kind
+             * @description Posted invoices and returns: tax_invoice, simplified, or invoice (not VAT-registered)
+             */
+            invoice_kind: string | null;
             /** Subtotal */
             subtotal: string;
             /** Tax Total */
@@ -5102,12 +5219,17 @@ export interface components {
             qty: number | string;
             /**
              * Unit Price
-             * @description Per unit typed, VAT-exclusive (default: the order line it follows); none on deliveries
+             * @description Per unit typed, in the document's price mode (default: the line it follows); none on deliveries
              */
             unit_price?: number | string | null;
             /**
+             * Tax Code
+             * @description SR, ZR, EX or OS; default: the line it follows, the customer's, the item's, else SR
+             */
+            tax_code?: string | null;
+            /**
              * Vat Rate
-             * @description 0 or 5 (%); default: the line it follows, else 5
+             * @description Deprecated (before tax codes): 5 means SR, 0 means ZR
              */
             vat_rate?: number | string | null;
             /**
@@ -5161,6 +5283,8 @@ export interface components {
             below_min: boolean;
             /** Net Amount */
             net_amount: string;
+            /** Tax Code */
+            tax_code: string | null;
             /** Vat Rate */
             vat_rate: string;
             /** Vat Amount */
@@ -5842,8 +5966,13 @@ export interface components {
              */
             credit?: number | string | null;
             /**
+             * Tax Code
+             * @description Expense and debit notes: a purchase code (SR, SR-B, RC-S…); credit notes: a sales code
+             */
+            tax_code?: string | null;
+            /**
              * Vat Rate
-             * @description 0 or 5 (%), expense and credit / debit notes
+             * @description Deprecated (before tax codes): 5 means SR; ignored with a tax code
              * @default 0
              */
             vat_rate: number | string;
@@ -5872,6 +6001,8 @@ export interface components {
             debit: string;
             /** Credit */
             credit: string;
+            /** Tax Code */
+            tax_code: string | null;
             /** Vat Rate */
             vat_rate: string;
             /** Vat Amount */

@@ -31,7 +31,7 @@ from app.core.money import RoundOffMode, round_off
 from app.core.numbering import NotNumberOwnerError
 from app.modules.accounting import service as accounting
 from app.modules.accounting.models import JournalLine, Role
-from app.modules.accounting.posting import VAT_RATES, vat_of
+from app.modules.accounting.posting import VAT_RATES
 from app.modules.catalog import products as catalog
 from app.modules.catalog.models import ProductType
 from app.modules.documents.models import Document, DocumentLine, DocumentStatus
@@ -39,6 +39,7 @@ from app.modules.inventory import service as inventory
 from app.modules.inventory.models import MoveType
 from app.modules.parties import service as parties
 from app.modules.parties.credit import CreditDecision
+from app.modules.parties.models import Party
 from app.modules.parties.schemas import CreditCheckIn, CreditCheckOut
 from app.modules.platform import settings as settings_service
 from app.modules.pricing import service as pricing
@@ -55,10 +56,19 @@ from app.modules.sales.schemas import (
     SalesLineOut,
     SalesWarningOut,
 )
+from app.modules.tax import codes as tax
+from app.modules.tax.codes import PriceMode
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
 ZERO = Decimal(0)
+
+
+def _or_zero(amount: Decimal | None) -> Decimal:
+    """A stored amount for output: a stored zero stays 0.0000 (``or`` would swap it for a bare 0)."""
+    return Decimal("0.0000") if amount is None else amount
+
+
 TYPES = frozenset(t.value for t in SalesDocType)
 PRICE_PLACES = Decimal("0.000001")
 DEFAULT_VAT = Decimal(5)
@@ -202,6 +212,7 @@ class CheckedLine:
     qty_base: Decimal
     factor: Decimal
     unit_price: Decimal | None  # delivery notes: none
+    tax_code: str | None  # delivery notes: none
     vat_rate: Decimal | None
     net: Decimal
     vat: Decimal
@@ -220,6 +231,7 @@ class CheckedLine:
 class Checked:
     business: Business
     lines: list[CheckedLine]
+    mode: PriceMode | None = None  # priced documents
 
     @property
     def subtotal(self) -> Decimal:
@@ -305,30 +317,27 @@ async def _check(session: AsyncSession, data: SalesDocIn, *, lock_sources: bool 
         # Prices: a delivery note has none; a return takes its invoice's; others default from what they
         # follow.
         unit_price: Decimal | None = None
-        vat_rate: Decimal | None = None
+        code: tax.TaxCode | None = None
         if kind is SalesDocType.DELIVERY_NOTE:
-            if raw.unit_price is not None or raw.vat_rate is not None:
+            if raw.unit_price is not None or raw.vat_rate is not None or raw.tax_code is not None:
                 raise _invalid("A delivery note carries no prices.", field=f"{where}.unit_price")
         else:
             priced = await _priced_line(session, source, source_type) if source and source_type else None
-            if kind is SalesDocType.SALES_RETURN and raw.unit_price is not None:
-                raise _invalid("A return takes the invoice's price.", field=f"{where}.unit_price")
+            if kind is SalesDocType.SALES_RETURN and (raw.unit_price is not None or raw.tax_code is not None):
+                raise _invalid("A return takes the invoice's price and VAT.", field=f"{where}.unit_price")
             unit_price = raw.unit_price
             if unit_price is None and priced is not None and priced.unit_price is not None:
+                if await _mode_of(session, priced) != data.price_mode.value:
+                    raise _invalid(
+                        "This line takes its price from a document in another price mode; use that mode.",
+                        field="price_mode",
+                    )
                 unit_price = (priced.unit_price / priced.factor_to_base * unit.factor_to_base).quantize(
                     PRICE_PLACES
                 )
             if unit_price is None:
                 raise _invalid("Enter the price.", field=f"{where}.unit_price")
-            default_rate = (
-                priced.vat_rate if priced is not None and priced.vat_rate is not None else DEFAULT_VAT
-            )
-            vat_rate = (
-                raw.vat_rate if raw.vat_rate is not None and kind is not SalesDocType.SALES_RETURN else None
-            )
-            vat_rate = default_rate if vat_rate is None else vat_rate
-            if vat_rate not in VAT_RATES:
-                raise _invalid("The VAT rate is 0 or 5 percent.", field=f"{where}.vat_rate")
+            code = _line_code(data, business, customer, item, raw, priced, where)
 
         # Batches: goods leaving name their batch; returned goods come back into the batch they left from.
         batch_id = None
@@ -349,8 +358,9 @@ async def _check(session: AsyncSession, data: SalesDocIn, *, lock_sources: bool 
         elif raw.batch_id is not None:
             raise _invalid("Only goods moving now name a batch.", field=f"{where}.batch_id")
 
-        net = fils(raw.qty * unit_price) if unit_price is not None else ZERO
-        vat = vat_of(net, vat_rate) if vat_rate is not None else ZERO
+        net, vat = ZERO, ZERO
+        if unit_price is not None and code is not None:
+            net, vat = tax.split(fils(raw.qty * unit_price), code.rate, data.price_mode)
         checked.append(
             CheckedLine(
                 raw,
@@ -359,7 +369,8 @@ async def _check(session: AsyncSession, data: SalesDocIn, *, lock_sources: bool 
                 quantity.qty_base,
                 unit.factor_to_base,
                 unit_price,
-                vat_rate,
+                code.code if code else None,
+                code.rate if code else None,
                 net,
                 vat,
                 source,
@@ -381,7 +392,52 @@ async def _check(session: AsyncSession, data: SalesDocIn, *, lock_sources: bool 
     for source_id, qty in wanted.items():
         if qty > opened[source_id].qty:
             raise OverQuantityError(line_id=str(source_id), open=str(opened[source_id].qty), asked=str(qty))
-    return Checked(business, checked)
+    return Checked(business, checked, None if kind is SalesDocType.DELIVERY_NOTE else data.price_mode)
+
+
+async def _mode_of(session: AsyncSession, line: DocumentLine) -> str | None:
+    doc = await session.get(Document, line.document_id)
+    return doc.price_mode if doc else None
+
+
+def _line_code(
+    data: SalesDocIn,
+    business: Business,
+    customer: Party,
+    item: catalog.StockItem,
+    raw: SalesLineIn,
+    priced: DocumentLine | None,
+    where: str,
+) -> tax.TaxCode:
+    """The line's tax code (M1.10, A10): see ``tax.resolve`` for the order of defaults."""
+    typed = raw.tax_code
+    if typed is None and raw.vat_rate is not None:
+        if raw.vat_rate not in VAT_RATES:
+            raise _invalid("The VAT rate is 0 or 5 percent.", field=f"{where}.vat_rate")
+        typed = tax.legacy_code(tax.Side.SALES, raw.vat_rate)
+    if data.price_mode is PriceMode.NO_VAT and raw.tax_code is not None:
+        assert data.no_vat_reason is not None
+        if raw.tax_code != tax.NO_VAT_CODE[data.no_vat_reason]:
+            raise _invalid("A document without VAT takes the code of its reason.", field=f"{where}.tax_code")
+    if data.doc_type is SalesDocType.SALES_RETURN:
+        typed = None  # the invoice line's code, below
+    followed = priced.tax_code if priced is not None else None
+    if priced is not None and followed is None and priced.vat_rate is not None:
+        followed = tax.legacy_code(tax.Side.SALES, priced.vat_rate)
+    resolved = tax.resolve(
+        tax.Side.SALES,
+        registered=business.vat_registered,
+        mode=data.price_mode,
+        no_vat_reason=data.no_vat_reason,
+        typed=typed,
+        followed=followed,
+        party=customer.sales_tax_code,
+        product=item.sales_tax_code,
+    )
+    code = tax.get(tax.Side.SALES, resolved)
+    if code is None:
+        raise _invalid(f"{resolved} is not a sales tax code.", field=f"{where}.tax_code")
+    return code
 
 
 # --- drafts ------------------------------------------------------------------------------------------------
@@ -404,6 +460,7 @@ async def _write_lines(session: AsyncSession, doc: Document, checked: Checked) -
                 unit_price=c.unit_price,
                 price_source=c.raw.price_source,
                 net_amount=c.net,
+                tax_code=c.tax_code,
                 vat_rate=c.vat_rate,
                 vat_amount=c.vat,
                 line_total=c.net + c.vat,
@@ -418,6 +475,7 @@ async def _write_lines(session: AsyncSession, doc: Document, checked: Checked) -
 
 
 def _totals(doc: Document, checked: Checked, round_off_adjustment: Decimal = ZERO) -> None:
+    doc.price_mode = checked.mode.value if checked.mode else None
     doc.subtotal = checked.subtotal
     doc.tax_total = checked.tax_total
     doc.total = checked.subtotal + checked.tax_total + round_off_adjustment
@@ -433,6 +491,7 @@ def _header(doc: Document, data: SalesDocIn) -> None:
     doc.due_date = data.due_date
     doc.reference = data.reference
     doc.narration = data.narration
+    doc.no_vat_reason = data.no_vat_reason.value if data.no_vat_reason else None
 
 
 async def create_draft(session: AsyncSession, tenant_id: uuid.UUID, data: SalesDocIn) -> Document:
@@ -509,7 +568,7 @@ async def _stored_input(session: AsyncSession, doc: Document) -> SalesDocIn:
                 unit=unit,
                 qty=row.qty_entered,
                 unit_price=None if doc.doc_type == SalesDocType.SALES_RETURN else row.unit_price,
-                vat_rate=None if doc.doc_type == SalesDocType.SALES_RETURN else row.vat_rate,
+                tax_code=None if doc.doc_type == SalesDocType.SALES_RETURN else row.tax_code,
                 price_source=row.price_source,
                 source_line_id=row.source_line_id,
                 batch_id=row.batch_id if row.warehouse_id is not None and row.direction == "out" else None,
@@ -529,6 +588,8 @@ async def _stored_input(session: AsyncSession, doc: Document) -> SalesDocIn:
         due_date=doc.due_date,
         reference=doc.reference,
         narration=doc.narration,
+        price_mode=PriceMode(doc.price_mode or PriceMode.VAT_EXCLUSIVE.value),
+        no_vat_reason=tax.NoVatReason(doc.no_vat_reason) if doc.no_vat_reason else None,
         lines=lines,
     )
 
@@ -578,13 +639,16 @@ async def _check_min_prices(session: AsyncSession, checked: Checked, *, may_over
         if c.unit_price is None or c.source_type == SalesDocType.SALES_INVOICE.value:
             continue
         minimum = await pricing.min_price(session, c.item.variant_id, c.unit.code)
-        if minimum is not None and c.unit_price < minimum:
+        price = c.unit_price  # minimum prices are VAT-exclusive: compare the net per unit
+        if checked.mode is PriceMode.VAT_INCLUSIVE and c.vat_rate:
+            price = (price * 100 / (100 + c.vat_rate)).quantize(PRICE_PLACES)
+        if minimum is not None and price < minimum:
             if not may_override:
                 raise BelowMinimumPriceError(
                     f"{c.item.sku}: {c.unit_price} is below the minimum {minimum}.",
                     line=i,
                     min_price=str(minimum),
-                    price=str(c.unit_price),
+                    price=str(price),
                 )
             c.below_min = True
 
@@ -694,6 +758,8 @@ async def post(
             reason=credit_override_reason or "",
         )
 
+    if kind in (SalesDocType.SALES_INVOICE, SalesDocType.SALES_RETURN):
+        doc.invoice_kind = await _invoice_kind(session, business, doc)
     doc.status = DocumentStatus.POSTED.value
     doc.series_id = number.series_id
     doc.number_seq = number.number
@@ -707,6 +773,19 @@ async def post(
         changes["below_min"] = [None, [str(v) for v in below]]
     await audit.record(session, doc, "post", changes=changes)
     return doc, warnings
+
+
+async def _invoice_kind(session: AsyncSession, business: Business, doc: Document) -> str:
+    """What the posted invoice prints as, fixed at post (M1.10; open question R7): a business that is not
+    registered issues a plain invoice; a customer with a TRN gets a tax invoice; one without, a simplified tax
+    invoice (setting ``vat.simplified_for_unregistered``)."""
+    if not business.vat_registered:
+        return "invoice"
+    assert doc.party_id is not None
+    if (await parties.get_party_row(session, doc.party_id)).trn:
+        return "tax_invoice"
+    values = await settings_service.effective(session, business_id=business.id, branch_id=doc.branch_id)
+    return "simplified" if values["vat.simplified_for_unregistered"].value else "tax_invoice"
 
 
 async def _post_effects(
@@ -859,8 +938,8 @@ async def _settle_return(
 
 
 def summary(doc: Document) -> SalesDocSummary:
-    subtotal = doc.subtotal or ZERO
-    tax = doc.tax_total or ZERO
+    subtotal = _or_zero(doc.subtotal)
+    vat = _or_zero(doc.tax_total)
     return SalesDocSummary(
         id=doc.id,
         doc_type=SalesDocType(doc.doc_type),
@@ -876,9 +955,12 @@ def summary(doc: Document) -> SalesDocSummary:
         due_date=doc.due_date,
         reference=doc.reference,
         narration=doc.narration,
+        price_mode=PriceMode(doc.price_mode) if doc.price_mode else None,
+        no_vat_reason=tax.NoVatReason(doc.no_vat_reason) if doc.no_vat_reason else None,
+        invoice_kind=doc.invoice_kind,
         subtotal=subtotal,
-        tax_total=tax,
-        round_off=doc.total - subtotal - tax,
+        tax_total=vat,
+        round_off=doc.total - subtotal - vat,
         total=doc.total,
         posted_at=doc.posted_at,
     )
@@ -900,10 +982,11 @@ async def _line_out(session: AsyncSession, row: DocumentLine) -> SalesLineOut:
         unit_price=row.unit_price,
         price_source=row.price_source,
         below_min=row.below_min,
-        net_amount=row.net_amount or ZERO,
-        vat_rate=row.vat_rate or ZERO,
-        vat_amount=row.vat_amount or ZERO,
-        line_total=row.line_total or ZERO,
+        net_amount=_or_zero(row.net_amount),
+        tax_code=row.tax_code,
+        vat_rate=_or_zero(row.vat_rate),
+        vat_amount=_or_zero(row.vat_amount),
+        line_total=_or_zero(row.line_total),
         source_line_id=row.source_line_id,
         batch_id=row.batch_id,
         description=row.description,
@@ -971,6 +1054,10 @@ async def open_lines(session: AsyncSession, doc_id: uuid.UUID) -> list[OpenSales
                 qty_open_base=left.qty,
                 qty_open=in_unit.quantize(PRICE_PLACES) if exact else left.qty,
                 unit_price=price,
+                price_mode=PriceMode(mode)
+                if (mode := await _mode_of(session, priced) if priced else None)
+                else None,
+                tax_code=priced.tax_code if priced is not None else None,
                 vat_rate=(
                     priced.vat_rate if priced is not None and priced.vat_rate is not None else DEFAULT_VAT
                 ),

@@ -73,6 +73,7 @@ async def test_signup_rejects_duplicate_email(client: AsyncClient) -> None:
 async def test_signup_requires_trn_when_vat_registered(client: AsyncClient) -> None:
     body = signup_body("vat@alnoor.ae")
     body["business"]["vat_registered"] = True
+    del body["business"]["trn"]
 
     response = await client.post("/auth/signup", json=body)
 

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.modules.accounting.models import AccountType, AllocationType, Direction, Nature, PeriodStatus, Role
 from app.modules.accounting.posting import VoucherType
 from app.modules.documents.models import DocumentStatus
+from app.modules.tax.fields import AnyTaxCode
 
 Money = Annotated[Decimal, Field(gt=0, max_digits=19, decimal_places=4)]
 Code = Annotated[str, Field(min_length=1, max_length=20, pattern=r"^[0-9A-Za-z][0-9A-Za-z.-]*$")]
@@ -150,7 +151,13 @@ class VoucherLineIn(BaseModel):
     )
     debit: Money | None = Field(default=None, description="Journal and contra")
     credit: Money | None = Field(default=None, description="Journal and contra")
-    vat_rate: Decimal = Field(default=Decimal(0), description="0 or 5 (%), expense and credit / debit notes")
+    tax_code: AnyTaxCode | None = Field(
+        default=None,
+        description="Expense and debit notes: a purchase code (SR, SR-B, RC-S…); credit notes: a sales code",
+    )
+    vat_rate: Decimal = Field(
+        default=Decimal(0), description="Deprecated (before tax codes): 5 means SR; ignored with a tax code"
+    )
     description: str | None = Field(default=None, max_length=500)
     allocations: list[AllocationIn] = Field(default_factory=list, max_length=100)
 
@@ -190,6 +197,7 @@ class VoucherLineOut(BaseModel):
     party_id: uuid.UUID | None
     debit: Decimal
     credit: Decimal
+    tax_code: str | None
     vat_rate: Decimal
     vat_amount: Decimal
     description: str | None

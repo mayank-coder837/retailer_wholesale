@@ -202,8 +202,8 @@ status `in_hand`/`deposited`).
 
 | Entity | Key fields | Relationships / rules |
 | --- | --- | --- |
-| tax_code | country (`AE`), code, side (`sales, purchase`), name_en/_ar, rate, recoverable, valid_from, output_role, input_role, vat201_net_box, vat201_tax_box | System seed per country (table below); businesses can't edit rates. Line default: product's tax code, overridden by the customer/supplier (e.g. export customer → ZR) |
-| line tax | `document_line.tax_code_id, taxable_amount, tax_amount` | Per line, half-up to 2 dp; document VAT = Σ line VAT (A3) |
+| tax_code (registry) | country (`AE`), code, side (`sales, purchase`), name_en/_ar, rate, treatment (`output, recoverable, blocked, reverse_charge, none`), net_box, vat_box, recovered_box | A fixed registry per country in `seeds/tax_codes/ae.json`, read by `app/modules/tax/codes.py` (M1.10a) — not a table: read-only, offline, nothing to sync; lines keep the code and the rate charged. Line default: the code of the line it follows, then the party's override (`party.sales_tax_code` / `purchase_tax_code`, e.g. export customer → ZR), then the product's (`product.sales_tax_code` / `purchase_tax_code`), then SR |
+| line tax | `document_line.tax_code, net_amount, vat_rate, vat_amount, line_total`; `voucher_line.tax_code` | Per line, half-up to 2 dp; document VAT = Σ line VAT (A3). Document: `price_mode`, `no_vat_reason`, `invoice_kind` (`tax_invoice, simplified, invoice`) |
 | vat_return_box | country, box, label_en/_ar, kind (`input, total, manual`) | Box 1 has one line per emirate; boxes 8 and 11–14 are calculated totals; Box 7 and the Adjustments column are manual |
 | vat_return (M1.10+) | business_id, period_from, period_to, box values (JSON), status (`draft, filed`) | Every figure drills down to source documents; filing locks the periods |
 

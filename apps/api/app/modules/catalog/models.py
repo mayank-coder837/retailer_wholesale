@@ -219,6 +219,9 @@ class Product(TenantScoped, Base):
     track_expiry: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     track_serial: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     custom_fields: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    # Default tax codes for lines of this product (M1.10); none: standard rated. A party's override wins.
+    sales_tax_code: Mapped[str | None] = mapped_column(String(8))
+    purchase_tax_code: Mapped[str | None] = mapped_column(String(8))
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
