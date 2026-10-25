@@ -14,12 +14,13 @@ A document that later documents follow (an order received, a receipt billed) nee
 
 import uuid
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import object_mapper
+from sqlalchemy.orm import aliased, object_mapper
 
 from app.core import audit, numbering
 from app.core.errors import ConflictError, NotFoundError, UnprocessableError
@@ -30,6 +31,8 @@ from app.modules.documents.models import Document, DocumentLine, DocumentStatus
 from app.modules.documents.schemas import CorrectedOut, LinkedDocOut, ReleasedNumberOut
 from app.modules.inventory import service as inventory
 from app.modules.inventory.models import MoveType
+from app.modules.tax.codes import Side
+from app.modules.tax.returns import VatFact
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
@@ -382,3 +385,87 @@ async def mark_sent(session: AsyncSession, doc_id: uuid.UUID) -> Document:
         doc.sent_at = datetime.now(UTC)
         await session.flush()  # audited as an update of the document, like any change
     return doc
+
+
+# --- VAT return (M1.10b) ------------------------------------------------------------------------------------
+
+# Documents whose lines reach the VAT return, by side and sign: returns reduce the box of what they return, in
+# their own period. A reversal counts the original's lines negatively, on the reversal's date.
+VAT_SIGN: dict[str, tuple[Side, int]] = {
+    "sales_invoice": (Side.SALES, 1),
+    "sales_return": (Side.SALES, -1),
+    "purchase_bill": (Side.PURCHASE, 1),
+    "purchase_return": (Side.PURCHASE, -1),
+}
+COUNTED = (DocumentStatus.POSTED.value, DocumentStatus.REVERSED.value)  # cancelled ones are gone everywhere
+
+
+async def vat_facts(
+    session: AsyncSession,
+    business_id: uuid.UUID,
+    date_from: date,
+    date_to: date,
+    emirate_of: dict[uuid.UUID, str],
+) -> list[VatFact]:
+    """Item lines of sales and purchase documents dated in the period, and reversals of them. A purchase
+    return
+    of goods never billed (against a receipt) carries no VAT and reaches no box."""
+    line, source, source_doc = DocumentLine, aliased(DocumentLine), aliased(Document)
+    billed = or_(Document.doc_type != "purchase_return", source_doc.doc_type == "purchase_bill")
+
+    out: list[VatFact] = []
+    direct = (
+        select(Document, line)
+        .join(line, line.document_id == Document.id)
+        .outerjoin(source, source.id == line.source_line_id)
+        .outerjoin(source_doc, source_doc.id == source.document_id)
+        .where(
+            Document.business_id == business_id,
+            Document.doc_type.in_(VAT_SIGN),
+            Document.status.in_(COUNTED),
+            Document.doc_date.between(date_from, date_to),
+            line.tax_code.is_not(None),
+            billed,
+        )
+    )
+    for doc, row in (await session.execute(direct)).all():
+        out.append(_fact(doc, doc, row, emirate_of, 1))
+
+    reversal = aliased(Document)
+    undone = (
+        select(reversal, Document, line)
+        .join(Document, Document.id == reversal.reversal_of_id)
+        .join(line, line.document_id == Document.id)
+        .outerjoin(source, source.id == line.source_line_id)
+        .outerjoin(source_doc, source_doc.id == source.document_id)
+        .where(
+            reversal.business_id == business_id,
+            reversal.status == DocumentStatus.POSTED.value,
+            reversal.doc_date.between(date_from, date_to),
+            Document.doc_type.in_(VAT_SIGN),
+            line.tax_code.is_not(None),
+            billed,
+        )
+    )
+    for rev, doc, row in (await session.execute(undone)).all():
+        out.append(_fact(rev, doc, row, emirate_of, -1))
+    return out
+
+
+def _fact(
+    shown: Document, original: Document, row: DocumentLine, emirate_of: dict[uuid.UUID, str], flip: int
+) -> VatFact:
+    side, sign = VAT_SIGN[original.doc_type]
+    sign *= flip
+    return VatFact(
+        document_id=shown.id,
+        number=shown.number,
+        doc_type=shown.doc_type,
+        doc_date=shown.doc_date,
+        party_id=shown.party_id,
+        side=side,
+        code=row.tax_code or "",
+        net=(row.net_amount or Decimal(0)) * sign,
+        vat=(row.vat_amount or Decimal(0)) * sign,
+        emirate=emirate_of[original.branch_id],
+    )

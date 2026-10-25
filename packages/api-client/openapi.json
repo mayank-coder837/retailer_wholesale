@@ -8319,6 +8319,161 @@
         }
       }
     },
+    "/vat-returns/draft": {
+      "get": {
+        "tags": [
+          "tax"
+        ],
+        "summary": "Vat Return Draft",
+        "description": "Every VAT 201 box for the period from posted documents; credit notes and reversals in their own\nperiod.",
+        "operationId": "vat_return_draft",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatReturnOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vat-returns/draft/lines": {
+      "get": {
+        "tags": [
+          "tax"
+        ],
+        "summary": "Vat Return Box Lines",
+        "description": "The documents behind one box figure; they add up to it.",
+        "operationId": "vat_return_box_lines",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          },
+          {
+            "name": "box",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 3,
+              "examples": [
+                "1b"
+              ],
+              "title": "Box"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VatBoxLineOut"
+                  },
+                  "title": "Response Vat Return Box Lines"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/{doc_id}/cancel": {
       "post": {
         "tags": [
@@ -19643,6 +19798,185 @@
           "value_ar"
         ],
         "title": "VariantValueOut"
+      },
+      "VatBoxLineOut": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "doc_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Doc Date"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "party_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Name En"
+          },
+          "party_name_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Name Ar"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "vat": {
+            "type": "string",
+            "title": "Vat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "number",
+          "doc_type",
+          "doc_date",
+          "party_id",
+          "party_name_en",
+          "party_name_ar",
+          "amount",
+          "vat"
+        ],
+        "title": "VatBoxLineOut",
+        "description": "One document behind a box figure (the drill-down)."
+      },
+      "VatBoxOut": {
+        "properties": {
+          "box": {
+            "type": "string",
+            "title": "Box",
+            "examples": [
+              "1b"
+            ]
+          },
+          "label_en": {
+            "type": "string",
+            "title": "Label En"
+          },
+          "label_ar": {
+            "type": "string",
+            "title": "Label Ar"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "amount_vat, amount (no VAT column), total (calculated), manual (Phase 2)"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "vat": {
+            "type": "string",
+            "title": "Vat"
+          },
+          "adjustment": {
+            "type": "string",
+            "title": "Adjustment",
+            "description": "Manual adjustments come with Phase 2",
+            "default": "0.0000"
+          }
+        },
+        "type": "object",
+        "required": [
+          "box",
+          "label_en",
+          "label_ar",
+          "kind",
+          "amount",
+          "vat"
+        ],
+        "title": "VatBoxOut"
+      },
+      "VatReturnOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Date From"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date",
+            "title": "Date To"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Saving and filing (which locks the period) come later",
+            "default": "draft"
+          },
+          "boxes": {
+            "items": {
+              "$ref": "#/components/schemas/VatBoxOut"
+            },
+            "type": "array",
+            "title": "Boxes"
+          },
+          "payable": {
+            "type": "string",
+            "title": "Payable",
+            "description": "Box 14: VAT due less VAT recoverable; negative is refundable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "date_from",
+          "date_to",
+          "boxes",
+          "payable"
+        ],
+        "title": "VatReturnOut"
       },
       "VoucherIn": {
         "properties": {

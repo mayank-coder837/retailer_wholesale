@@ -1841,6 +1841,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/vat-returns/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vat Return Draft
+         * @description Every VAT 201 box for the period from posted documents; credit notes and reversals in their own
+         *     period.
+         */
+        get: operations["vat_return_draft"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vat-returns/draft/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vat Return Box Lines
+         * @description The documents behind one box figure; they add up to it.
+         */
+        get: operations["vat_return_box_lines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -5900,6 +5941,94 @@ export interface components {
             value_en: string;
             /** Value Ar */
             value_ar: string;
+        };
+        /**
+         * VatBoxLineOut
+         * @description One document behind a box figure (the drill-down).
+         */
+        VatBoxLineOut: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Number */
+            number: string | null;
+            /** Doc Type */
+            doc_type: string;
+            /**
+             * Doc Date
+             * Format: date
+             */
+            doc_date: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Party Name En */
+            party_name_en: string | null;
+            /** Party Name Ar */
+            party_name_ar: string | null;
+            /** Amount */
+            amount: string;
+            /** Vat */
+            vat: string;
+        };
+        /** VatBoxOut */
+        VatBoxOut: {
+            /**
+             * Box
+             * @example 1b
+             */
+            box: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /**
+             * Kind
+             * @description amount_vat, amount (no VAT column), total (calculated), manual (Phase 2)
+             */
+            kind: string;
+            /** Amount */
+            amount: string;
+            /** Vat */
+            vat: string;
+            /**
+             * Adjustment
+             * @description Manual adjustments come with Phase 2
+             * @default 0.0000
+             */
+            adjustment: string;
+        };
+        /** VatReturnOut */
+        VatReturnOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /**
+             * Status
+             * @description Saving and filing (which locks the period) come later
+             * @default draft
+             */
+            status: string;
+            /** Boxes */
+            boxes: components["schemas"]["VatBoxOut"][];
+            /**
+             * Payable
+             * @description Box 14: VAT due less VAT recoverable; negative is refundable
+             */
+            payable: string;
         };
         /** VoucherIn */
         VoucherIn: {
@@ -10906,6 +11035,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vat_return_draft: {
+        parameters: {
+            query: {
+                business_id: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReturnOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vat_return_box_lines: {
+        parameters: {
+            query: {
+                business_id: string;
+                from: string;
+                to: string;
+                box: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatBoxLineOut"][];
                 };
             };
             /** @description Validation Error */
