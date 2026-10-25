@@ -1,0 +1,108 @@
+{#- A tax invoice or credit note, English and Arabic on one page (ADR 0014). Data: PrintDoc; labels in the
+    page's language order. Numbers are wrapped as LTR so they read correctly inside Arabic text. -#}
+{% macro both(key) -%}
+<span class="primary">{{ label[key][0] }}</span> <span class="secondary">{{ label[key][1] }}</span>
+{%- endmacro %}
+{% macro num(text) -%}<span dir="ltr">{{ text }}</span>{%- endmacro %}
+{% macro name(party) -%}
+{% if primary == 0 %}{{ party.name_en }}<br><span class="secondary">{{ party.name_ar }}</span>{% else %}{{ party.name_ar }}<br><span class="secondary">{{ party.name_en }}</span>{% endif %}
+{%- endmacro %}
+<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+<meta charset="utf-8">
+<title>{{ label[doc.kind][0] }} {{ doc.number }}</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  @media screen { body { max-width: 210mm; margin: 0 auto; padding: 12mm; } }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; font-size: 10.5pt; color: #111; margin: 0; }
+  h1 { font-size: 18pt; margin: 0 0 2mm; }
+  .secondary { color: #555; font-size: 0.85em; }
+  .head { display: flex; justify-content: space-between; gap: 8mm; margin-bottom: 6mm; }
+  .parties { display: flex; gap: 8mm; margin-bottom: 6mm; }
+  .party { flex: 1; border: 1px solid #bbb; border-radius: 2mm; padding: 3mm; }
+  .party h2 { font-size: 9pt; margin: 0 0 1.5mm; text-transform: uppercase; color: #444; }
+  .party .name { font-weight: 600; }
+  dl { display: grid; grid-template-columns: max-content auto; gap: 1mm 4mm; margin: 0; }
+  dt { color: #444; }
+  dd { margin: 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border-bottom: 1px solid #ddd; padding: 1.5mm 1.5mm; vertical-align: top; }
+  th { background: #f2f2f2; font-weight: 600; text-align: start; }
+  .n { text-align: end; white-space: nowrap; }
+  .totals { margin-top: 4mm; margin-inline-start: auto; width: 55%; }
+  .totals td { border: 0; padding: 1mm 1.5mm; }
+  .totals .grand td { border-top: 2px solid #111; font-weight: 700; font-size: 11.5pt; }
+  .note { margin-top: 4mm; color: #444; }
+</style>
+</head>
+<body>
+<div class="head">
+  <div>
+    <h1>{{ both(doc.kind) }}</h1>
+{% if doc.original_invoice %}
+    <div>{{ both("original_invoice") }}: {{ num(doc.original_invoice) }}</div>
+{% endif %}
+  </div>
+  <dl>
+    <dt>{{ both("number") }}</dt><dd>{{ num(doc.number) }}</dd>
+    <dt>{{ both("date") }}</dt><dd>{{ num(doc.doc_date.strftime("%d/%m/%Y")) }}</dd>
+{% if doc.due_date %}
+    <dt>{{ both("due_date") }}</dt><dd>{{ num(doc.due_date.strftime("%d/%m/%Y")) }}</dd>
+{% endif %}
+  </dl>
+</div>
+<div class="parties">
+{% for key, party in (("supplier", doc.supplier), ("customer", doc.customer)) %}
+  <section class="party">
+    <h2>{{ both(key) }}</h2>
+    <div class="name">{{ name(party) }}</div>
+{% for line in party.address %}
+    <div>{{ line }}</div>
+{% endfor %}
+{% if party.trn %}
+    <div>{{ both("trn") }}: {{ num(party.trn) }}</div>
+{% endif %}
+  </section>
+{% endfor %}
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>{{ both("line") }}</th>
+      <th>{{ both("item") }}</th>
+      <th class="n">{{ both("qty") }}</th>
+      <th class="n">{{ both("unit_price") }}</th>
+      <th class="n">{{ both("net") }}</th>
+      <th class="n">{{ both("vat_rate") }}</th>
+      <th class="n">{{ both("vat") }}</th>
+      <th class="n">{{ both("total") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for line in doc.lines %}
+    <tr>
+      <td>{{ num(loop.index) }}</td>
+      <td>{% if primary == 0 %}{{ line.name_en }}{% if line.name_ar %}<br><span class="secondary">{{ line.name_ar }}</span>{% endif %}{% else %}{{ line.name_ar or line.name_en }}{% if line.name_ar %}<br><span class="secondary">{{ line.name_en }}</span>{% endif %}{% endif %}{% if line.sku %}<br><span class="secondary">{{ num(line.sku) }}</span>{% endif %}</td>
+      <td class="n">{{ num((line.qty | quantity) ~ (" " ~ line.unit if line.unit else "")) }}</td>
+      <td class="n">{{ num(line.unit_price | money) }}</td>
+      <td class="n">{{ num(line.net | money) }}</td>
+      <td class="n">{{ num((line.vat_rate | quantity) ~ "%") }}</td>
+      <td class="n vat">{{ num(line.vat | money) }}</td>
+      <td class="n">{{ num(line.total | money) }}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+<table class="totals">
+  <tr><td>{{ both("net_total") }}</td><td class="n">{{ num(doc.net_total | money) }}</td></tr>
+  <tr><td>{{ both("vat_total") }}</td><td class="n vat-total">{{ num(doc.vat_total | money) }}</td></tr>
+{% if doc.round_off != 0 %}
+  <tr><td>{{ both("round_off") }}</td><td class="n">{{ num(doc.round_off | money) }}</td></tr>
+{% endif %}
+  <tr class="grand"><td>{{ both("grand_total") }}</td><td class="n">{{ num(doc.currency ~ " " ~ (doc.total | money)) }}</td></tr>
+</table>
+<p class="note">{{ both("amounts_in") }} {{ num(doc.currency) }}{% if doc.inclusive %} · {{ both("prices_inclusive") }}{% endif %}</p>
+</body>
+</html>

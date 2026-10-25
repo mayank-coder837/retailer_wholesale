@@ -8639,6 +8639,69 @@
         }
       }
     },
+    "/documents/{doc_id}/print": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Print Document",
+        "description": "A posted sales invoice or return as a printable tax invoice / credit note in English and Arabic (ADR\n0014): the browser or desktop app prints it or saves it as PDF. Printing is exporting.",
+        "operationId": "print_document",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Doc Id"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "en",
+                "ar"
+              ],
+              "type": "string",
+              "default": "en",
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/released-numbers": {
       "get": {
         "tags": [

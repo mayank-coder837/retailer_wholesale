@@ -2,14 +2,15 @@
 document's business and branch. Freed numbers are listed for whoever may create that type."""
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import HTMLResponse
 
 from app.core.authz import PermissionSet
 from app.core.deps import PrincipalDep, TenantSessionDep
 from app.core.numbering import PREFIXES, UnknownDocumentTypeError
-from app.modules.documents import service
+from app.modules.documents import printing, service
 from app.modules.documents.schemas import CancelIn, CorrectedOut, ReleasedNumberOut, ReverseIn
 from app.modules.identity.authz import get_permissions
 from app.modules.tenancy import service as tenancy
@@ -54,6 +55,20 @@ async def mark_document_sent(doc_id: uuid.UUID, perms: Signed, session: TenantSe
     perms.require(f"{doc.doc_type}.export", doc.business_id, doc.branch_id)
     doc = await service.mark_sent(session, doc_id)
     return await service.corrected_out(session, doc)
+
+
+@router.get("/documents/{doc_id}/print", operation_id="print_document", response_class=HTMLResponse)
+async def print_document(
+    doc_id: uuid.UUID,
+    perms: Signed,
+    session: TenantSessionDep,
+    lang: Annotated[Literal["en", "ar"], Query()] = "en",
+) -> HTMLResponse:
+    """A posted sales invoice or return as a printable tax invoice / credit note in English and Arabic (ADR
+    0014): the browser or desktop app prints it or saves it as PDF. Printing is exporting."""
+    doc = await service.get_document(session, doc_id)
+    perms.require(f"{doc.doc_type}.export", doc.business_id, doc.branch_id)
+    return HTMLResponse(await printing.print_html(session, doc_id, lang))
 
 
 @router.get("/documents/released-numbers", operation_id="list_released_numbers")
