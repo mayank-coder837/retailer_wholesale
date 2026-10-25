@@ -1936,6 +1936,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/{doc_id}/print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Print Document
+         * @description A posted sales invoice or return as a printable tax invoice / credit note in English and Arabic (ADR
+         *     0014): the browser or desktop app prints it or saves it as PDF. Printing is exporting.
+         */
+        get: operations["print_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/released-numbers": {
         parameters: {
             query?: never;
@@ -11203,6 +11224,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CorrectedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    print_document: {
+        parameters: {
+            query?: {
+                lang?: "en" | "ar";
+            };
+            header?: never;
+            path: {
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */

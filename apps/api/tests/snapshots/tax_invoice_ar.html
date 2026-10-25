@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>فاتورة ضريبية INV-2026-00001</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  @media screen { body { max-width: 210mm; margin: 0 auto; padding: 12mm; } }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; font-size: 10.5pt; color: #111; margin: 0; }
+  h1 { font-size: 18pt; margin: 0 0 2mm; }
+  .secondary { color: #555; font-size: 0.85em; }
+  .head { display: flex; justify-content: space-between; gap: 8mm; margin-bottom: 6mm; }
+  .parties { display: flex; gap: 8mm; margin-bottom: 6mm; }
+  .party { flex: 1; border: 1px solid #bbb; border-radius: 2mm; padding: 3mm; }
+  .party h2 { font-size: 9pt; margin: 0 0 1.5mm; text-transform: uppercase; color: #444; }
+  .party .name { font-weight: 600; }
+  dl { display: grid; grid-template-columns: max-content auto; gap: 1mm 4mm; margin: 0; }
+  dt { color: #444; }
+  dd { margin: 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border-bottom: 1px solid #ddd; padding: 1.5mm 1.5mm; vertical-align: top; }
+  th { background: #f2f2f2; font-weight: 600; text-align: start; }
+  .n { text-align: end; white-space: nowrap; }
+  .totals { margin-top: 4mm; margin-inline-start: auto; width: 55%; }
+  .totals td { border: 0; padding: 1mm 1.5mm; }
+  .totals .grand td { border-top: 2px solid #111; font-weight: 700; font-size: 11.5pt; }
+  .note { margin-top: 4mm; color: #444; }
+</style>
+</head>
+<body>
+<div class="head">
+  <div>
+    <h1><span class="primary">فاتورة ضريبية</span> <span class="secondary">Tax Invoice</span></h1>
+  </div>
+  <dl>
+    <dt><span class="primary">الرقم</span> <span class="secondary">Number</span></dt><dd><span dir="ltr">INV-2026-00001</span></dd>
+    <dt><span class="primary">التاريخ</span> <span class="secondary">Date</span></dt><dd><span dir="ltr">25/10/2026</span></dd>
+    <dt><span class="primary">تاريخ الاستحقاق</span> <span class="secondary">Due date</span></dt><dd><span dir="ltr">24/11/2026</span></dd>
+  </dl>
+</div>
+<div class="parties">
+  <section class="party">
+    <h2><span class="primary">المورد</span> <span class="secondary">Supplier</span></h2>
+    <div class="name">شركة النور للتجارة<br><span class="secondary">Al Noor Trading LLC</span></div>
+    <div>Deira, Dubai</div>
+    <div><span class="primary">رقم التسجيل الضريبي</span> <span class="secondary">TRN</span>: <span dir="ltr">100000000000003</span></div>
+  </section>
+  <section class="party">
+    <h2><span class="primary">العميل</span> <span class="secondary">Customer</span></h2>
+    <div class="name">أقمشة الخليج<br><span class="secondary">Gulf Fabrics LLC</span></div>
+    <div>Al Qasimia</div>
+    <div>Sharjah</div>
+    <div><span class="primary">رقم التسجيل الضريبي</span> <span class="secondary">TRN</span>: <span dir="ltr">100000000000011</span></div>
+  </section>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th><span class="primary">م</span> <span class="secondary">#</span></th>
+      <th><span class="primary">الصنف</span> <span class="secondary">Item</span></th>
+      <th class="n"><span class="primary">الكمية</span> <span class="secondary">Qty</span></th>
+      <th class="n"><span class="primary">سعر الوحدة</span> <span class="secondary">Unit price</span></th>
+      <th class="n"><span class="primary">الصافي</span> <span class="secondary">Net</span></th>
+      <th class="n"><span class="primary">نسبة الضريبة</span> <span class="secondary">VAT %</span></th>
+      <th class="n"><span class="primary">الضريبة</span> <span class="secondary">VAT</span></th>
+      <th class="n"><span class="primary">الإجمالي</span> <span class="secondary">Total</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span dir="ltr">1</span></td>
+      <td>قماش بوبلين<br><span class="secondary">Poplin fabric</span><br><span class="secondary"><span dir="ltr">FAB-01</span></span></td>
+      <td class="n"><span dir="ltr">20 m</span></td>
+      <td class="n"><span dir="ltr">10.50</span></td>
+      <td class="n"><span dir="ltr">200.00</span></td>
+      <td class="n"><span dir="ltr">5%</span></td>
+      <td class="n vat"><span dir="ltr">10.00</span></td>
+      <td class="n"><span dir="ltr">210.00</span></td>
+    </tr>
+    <tr>
+      <td><span dir="ltr">2</span></td>
+      <td>أزرار<br><span class="secondary">Buttons</span><br><span class="secondary"><span dir="ltr">BTN</span></span></td>
+      <td class="n"><span dir="ltr">3 box</span></td>
+      <td class="n"><span dir="ltr">1.99</span></td>
+      <td class="n"><span dir="ltr">5.69</span></td>
+      <td class="n"><span dir="ltr">5%</span></td>
+      <td class="n vat"><span dir="ltr">0.28</span></td>
+      <td class="n"><span dir="ltr">5.97</span></td>
+    </tr>
+  </tbody>
+</table>
+<table class="totals">
+  <tr><td><span class="primary">الإجمالي قبل الضريبة</span> <span class="secondary">Total excluding VAT</span></td><td class="n"><span dir="ltr">205.69</span></td></tr>
+  <tr><td><span class="primary">إجمالي الضريبة</span> <span class="secondary">Total VAT</span></td><td class="n vat-total"><span dir="ltr">10.28</span></td></tr>
+  <tr class="grand"><td><span class="primary">الإجمالي شامل الضريبة</span> <span class="secondary">Total including VAT</span></td><td class="n"><span dir="ltr">AED 215.97</span></td></tr>
+</table>
+<p class="note"><span class="primary">المبالغ بعملة</span> <span class="secondary">Amounts in</span> <span dir="ltr">AED</span></p>
+</body>
+</html>

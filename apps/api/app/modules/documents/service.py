@@ -469,3 +469,17 @@ def _fact(
         vat=(row.vat_amount or Decimal(0)) * sign,
         emirate=emirate_of[original.branch_id],
     )
+
+
+async def source_number(session: AsyncSession, doc_id: uuid.UUID) -> str | None:
+    """The number of the document a document's lines follow (a return: its invoice), for printing."""
+    source = aliased(DocumentLine)
+    stmt = (
+        select(Document.number)
+        .select_from(DocumentLine)
+        .join(source, source.id == DocumentLine.source_line_id)
+        .join(Document, Document.id == source.document_id)
+        .where(DocumentLine.document_id == doc_id)
+        .limit(1)
+    )
+    return (await session.execute(stmt)).scalar_one_or_none()
