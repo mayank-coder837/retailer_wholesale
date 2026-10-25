@@ -1,4 +1,4 @@
-"""Purchase posting rules, pure (posting-rules.md rules 7 to 9; decision A4).
+"""Purchase posting rules, pure (posting-rules.md rules 7 to 9, 29 to 31; decisions A4 and A10).
 
 The service works out the values (stock values from the cost pools, GRNI cleared from the receipt lines);
 these functions turn them into balanced journal lines by account. Nothing here reads the database.
@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
 from app.modules.accounting.posting import HEADER, JournalLine
+from app.modules.tax.codes import Treatment
 
 ZERO = Decimal(0)
 
@@ -19,6 +20,7 @@ class Accounts:
     inventory: uuid.UUID
     grni: uuid.UUID
     vat_input: uuid.UUID
+    vat_output: uuid.UUID  # reverse charge: the VAT due (rules 29, 30)
     ap_control: uuid.UUID
     price_variance: uuid.UUID
     cost_adjustment: uuid.UUID  # stock_cost_adjustment: rule 27 and purchase-return differences
@@ -66,27 +68,60 @@ def receipt(entry: Entry, value: Decimal) -> None:
     entry.credit(entry.accounts.grni, value)
 
 
-def bill_matched(entry: Entry, net: Decimal, vat: Decimal, grni_cleared: Decimal) -> None:
+def tax(entry: Entry, vat: Decimal, treatment: Treatment, expense: uuid.UUID | None = None) -> Decimal:
+    """A bill line's VAT by its tax code; returns the VAT owed to the supplier. Recoverable: Dr input VAT.
+    Blocked (SR-B): part of the expense. Reverse charge: Dr input VAT / Cr output VAT, nothing to the
+    supplier.
+    A negative ``vat`` undoes it (returns)."""
+    if treatment is Treatment.RECOVERABLE:
+        entry.debit(entry.accounts.vat_input, vat)
+    elif treatment is Treatment.BLOCKED:
+        assert expense is not None, "blocked VAT sits on an expense line"
+        entry.debit(expense, vat)
+    elif treatment is Treatment.REVERSE_CHARGE:
+        entry.debit(entry.accounts.vat_input, vat)
+        entry.credit(entry.accounts.vat_output, vat)
+        return ZERO
+    return vat
+
+
+def bill_matched(
+    entry: Entry,
+    net: Decimal,
+    vat: Decimal,
+    grni_cleared: Decimal,
+    treatment: Treatment = Treatment.RECOVERABLE,
+) -> None:
     """Rule 8: a bill line for goods already received — Dr GRNI (what was received), the price difference to
-    the variance account (A4), Dr input VAT / Cr the supplier."""
+    the variance account (A4), the VAT by its code / Cr the supplier."""
     entry.debit(entry.accounts.grni, grni_cleared)
     entry.debit(entry.accounts.price_variance, net - grni_cleared)
-    entry.debit(entry.accounts.vat_input, vat)
-    entry.supplier -= net + vat
+    entry.supplier -= net + tax(entry, vat, treatment)
 
 
-def bill_direct(entry: Entry, debit_account: uuid.UUID, net: Decimal, vat: Decimal) -> None:
+def bill_direct(
+    entry: Entry,
+    debit_account: uuid.UUID,
+    net: Decimal,
+    vat: Decimal,
+    treatment: Treatment = Treatment.RECOVERABLE,
+) -> None:
     """A bill line without a receipt: Dr inventory (stock comes in now) or the expense account."""
     entry.debit(debit_account, net)
-    entry.debit(entry.accounts.vat_input, vat)
-    entry.supplier -= net + vat
+    entry.supplier -= net + tax(entry, vat, treatment, debit_account)
 
 
-def return_to_supplier(entry: Entry, net: Decimal, vat: Decimal, stock_value: Decimal) -> None:
-    """Rule 9 against a bill: Dr the supplier (price + VAT) / Cr inventory (the cost it leaves at), Cr input
-    VAT, the difference between price and cost to stock cost adjustment."""
-    entry.supplier += net + vat
-    entry.credit(entry.accounts.vat_input, vat)
+def return_to_supplier(
+    entry: Entry,
+    net: Decimal,
+    vat: Decimal,
+    stock_value: Decimal,
+    treatment: Treatment = Treatment.RECOVERABLE,
+) -> None:
+    """Rule 9 against a bill: Dr the supplier (price + VAT owed) / Cr inventory (the cost it leaves at), the
+    VAT
+    undone by its code, the difference between price and cost to stock cost adjustment."""
+    entry.supplier += net - tax(entry, -vat, treatment)
     entry.credit(entry.accounts.inventory, stock_value)
     entry.credit(entry.accounts.cost_adjustment, net - stock_value)
 

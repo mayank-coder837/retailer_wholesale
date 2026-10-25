@@ -62,6 +62,13 @@ from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
 ZERO = Decimal(0)
+
+
+def _or_zero(amount: Decimal | None) -> Decimal:
+    """A stored amount for output: a stored zero stays 0.0000 (``or`` would swap it for a bare 0)."""
+    return Decimal("0.0000") if amount is None else amount
+
+
 TYPES = frozenset(t.value for t in SalesDocType)
 PRICE_PLACES = Decimal("0.000001")
 DEFAULT_VAT = Decimal(5)
@@ -778,7 +785,7 @@ async def _invoice_kind(session: AsyncSession, business: Business, doc: Document
     if (await parties.get_party_row(session, doc.party_id)).trn:
         return "tax_invoice"
     values = await settings_service.effective(session, business_id=business.id, branch_id=doc.branch_id)
-    return "simplified" if values.get("vat.simplified_for_unregistered", True) else "tax_invoice"
+    return "simplified" if values["vat.simplified_for_unregistered"].value else "tax_invoice"
 
 
 async def _post_effects(
@@ -931,8 +938,8 @@ async def _settle_return(
 
 
 def summary(doc: Document) -> SalesDocSummary:
-    subtotal = doc.subtotal or ZERO
-    vat = doc.tax_total or ZERO
+    subtotal = _or_zero(doc.subtotal)
+    vat = _or_zero(doc.tax_total)
     return SalesDocSummary(
         id=doc.id,
         doc_type=SalesDocType(doc.doc_type),
@@ -975,11 +982,11 @@ async def _line_out(session: AsyncSession, row: DocumentLine) -> SalesLineOut:
         unit_price=row.unit_price,
         price_source=row.price_source,
         below_min=row.below_min,
-        net_amount=row.net_amount or ZERO,
+        net_amount=_or_zero(row.net_amount),
         tax_code=row.tax_code,
-        vat_rate=row.vat_rate or ZERO,
-        vat_amount=row.vat_amount or ZERO,
-        line_total=row.line_total or ZERO,
+        vat_rate=_or_zero(row.vat_rate),
+        vat_amount=_or_zero(row.vat_amount),
+        line_total=_or_zero(row.line_total),
         source_line_id=row.source_line_id,
         batch_id=row.batch_id,
         description=row.description,

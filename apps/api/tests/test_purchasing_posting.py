@@ -9,7 +9,7 @@ from hypothesis import strategies as st
 from app.modules.purchasing import posting
 
 D = Decimal
-A = posting.Accounts(*(uuid.uuid4() for _ in range(6)))
+A = posting.Accounts(*(uuid.uuid4() for _ in range(7)))
 SUPPLIER = uuid.uuid4()
 EXPENSE = uuid.uuid4()
 
