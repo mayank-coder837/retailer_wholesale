@@ -24,5 +24,28 @@
      "recovered_box": "10", "name_en": "Reverse charge, imported services", "name_ar": "احتساب عكسي، خدمات مستوردة"},
     {"code": "RC-G", "side": "purchase", "rate": "5", "treatment": "reverse_charge", "net_box": "6", "vat_box": "6",
      "recovered_box": "10", "name_en": "Reverse charge, imported goods", "name_ar": "احتساب عكسي، بضائع مستوردة"}
+  ],
+  "boxes_source": "VAT 201 on EmaraTax; Box 1 sub-lines per emirate, labels to be checked by the accountant (R3)",
+  "boxes": [
+    {"box": "1a", "label_en": "Standard rated supplies in Abu Dhabi", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في أبوظبي", "kind": "amount_vat", "emirate": "abu_dhabi"},
+    {"box": "1b", "label_en": "Standard rated supplies in Dubai", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في دبي", "kind": "amount_vat", "emirate": "dubai"},
+    {"box": "1c", "label_en": "Standard rated supplies in Sharjah", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في الشارقة", "kind": "amount_vat", "emirate": "sharjah"},
+    {"box": "1d", "label_en": "Standard rated supplies in Ajman", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في عجمان", "kind": "amount_vat", "emirate": "ajman"},
+    {"box": "1e", "label_en": "Standard rated supplies in Umm Al Quwain", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في أم القيوين", "kind": "amount_vat", "emirate": "umm_al_quwain"},
+    {"box": "1f", "label_en": "Standard rated supplies in Ras Al Khaimah", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في رأس الخيمة", "kind": "amount_vat", "emirate": "ras_al_khaimah"},
+    {"box": "1g", "label_en": "Standard rated supplies in Fujairah", "label_ar": "التوريدات الخاضعة للنسبة الأساسية في الفجيرة", "kind": "amount_vat", "emirate": "fujairah"},
+    {"box": "2", "label_en": "Tax refunds provided to tourists (not used)", "label_ar": "المبالغ المستردة للسياح (غير مستخدم)", "kind": "manual"},
+    {"box": "3", "label_en": "Supplies subject to the reverse charge", "label_ar": "التوريدات الخاضعة لآلية الاحتساب العكسي", "kind": "amount_vat"},
+    {"box": "4", "label_en": "Zero rated supplies", "label_ar": "التوريدات الخاضعة لنسبة الصفر", "kind": "amount"},
+    {"box": "5", "label_en": "Exempt supplies", "label_ar": "التوريدات المعفاة", "kind": "amount"},
+    {"box": "6", "label_en": "Goods imported into the UAE", "label_ar": "السلع المستوردة إلى الدولة", "kind": "amount_vat"},
+    {"box": "7", "label_en": "Adjustments to goods imported into the UAE (manual)", "label_ar": "تعديلات على السلع المستوردة (يدوي)", "kind": "manual"},
+    {"box": "8", "label_en": "Totals (output)", "label_ar": "المجموع (المخرجات)", "kind": "total"},
+    {"box": "9", "label_en": "Standard rated expenses", "label_ar": "النفقات الخاضعة للنسبة الأساسية", "kind": "amount_vat"},
+    {"box": "10", "label_en": "Supplies subject to the reverse charge (recoverable)", "label_ar": "التوريدات الخاضعة لآلية الاحتساب العكسي (قابلة للاسترداد)", "kind": "amount_vat"},
+    {"box": "11", "label_en": "Totals (input)", "label_ar": "المجموع (المدخلات)", "kind": "total"},
+    {"box": "12", "label_en": "Total value of due tax for the period", "label_ar": "إجمالي الضريبة المستحقة عن الفترة", "kind": "total"},
+    {"box": "13", "label_en": "Total value of recoverable tax for the period", "label_ar": "إجمالي الضريبة القابلة للاسترداد عن الفترة", "kind": "total"},
+    {"box": "14", "label_en": "Payable tax for the period", "label_ar": "الضريبة المستحقة الدفع عن الفترة", "kind": "total"}
   ]
 }

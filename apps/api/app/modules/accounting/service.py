@@ -46,7 +46,9 @@ from app.modules.accounting.schemas import (
     TrialBalanceRowOut,
     VoucherIn,
 )
-from app.modules.documents.models import Document
+from app.modules.documents.models import Document, DocumentStatus
+from app.modules.tax.codes import Side
+from app.modules.tax.returns import VatFact
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
@@ -512,3 +514,75 @@ async def expense_account(session: AsyncSession, business_id: uuid.UUID, account
         or AccountType(account.account_type) in blocked
     ):
         raise chart.InvalidAccountError("Choose an expense or asset account.", field="account_id")
+
+
+# --- VAT return (M1.10b) ------------------------------------------------------------------------------------
+
+# Vouchers whose lines reach the VAT return, by side and sign (a credit or debit note reduces, in its own
+# period).
+VOUCHER_VAT_SIGN: dict[str, tuple[Side, int]] = {
+    "expense": (Side.PURCHASE, 1),
+    "debit_note": (Side.PURCHASE, -1),
+    "credit_note": (Side.SALES, -1),
+}
+
+
+async def vat_facts(
+    session: AsyncSession,
+    business_id: uuid.UUID,
+    date_from: date,
+    date_to: date,
+    emirate_of: dict[uuid.UUID, str],
+) -> list[VatFact]:
+    """Voucher lines with a tax code dated in the period, and reversals of those vouchers (negative, on the
+    reversal's date). Cancelled vouchers are left out."""
+    from sqlalchemy.orm import aliased
+
+    from app.modules.accounting.models import VoucherLine
+
+    counted = (DocumentStatus.POSTED.value, DocumentStatus.REVERSED.value)
+    direct = (
+        select(Document, VoucherLine)
+        .join(VoucherLine, VoucherLine.document_id == Document.id)
+        .where(
+            Document.business_id == business_id,
+            Document.doc_type.in_(VOUCHER_VAT_SIGN),
+            Document.status.in_(counted),
+            Document.doc_date.between(date_from, date_to),
+            VoucherLine.tax_code.is_not(None),
+        )
+    )
+    reversal = aliased(Document)
+    undone = (
+        select(reversal, Document, VoucherLine)
+        .join(Document, Document.id == reversal.reversal_of_id)
+        .join(VoucherLine, VoucherLine.document_id == Document.id)
+        .where(
+            reversal.business_id == business_id,
+            reversal.status == DocumentStatus.POSTED.value,
+            reversal.doc_date.between(date_from, date_to),
+            Document.doc_type.in_(VOUCHER_VAT_SIGN),
+            VoucherLine.tax_code.is_not(None),
+        )
+    )
+    rows = [(doc, doc, line, 1) for doc, line in (await session.execute(direct)).all()]
+    rows += [(rev, doc, line, -1) for rev, doc, line in (await session.execute(undone)).all()]
+    out: list[VatFact] = []
+    for shown, original, line, flip in rows:
+        side, sign = VOUCHER_VAT_SIGN[original.doc_type]
+        sign *= flip
+        out.append(
+            VatFact(
+                document_id=shown.id,
+                number=shown.number,
+                doc_type=shown.doc_type,
+                doc_date=shown.doc_date,
+                party_id=shown.party_id or line.party_id,
+                side=side,
+                code=line.tax_code or "",
+                net=(line.debit + line.credit) * sign,
+                vat=line.vat_amount * sign,
+                emirate=emirate_of[original.branch_id],
+            )
+        )
+    return out
