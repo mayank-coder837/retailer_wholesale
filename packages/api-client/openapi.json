@@ -12996,6 +12996,15 @@
         ],
         "title": "Nature"
       },
+      "NoVatReason": {
+        "type": "string",
+        "enum": [
+          "zero_rated",
+          "exempt",
+          "out_of_scope"
+        ],
+        "title": "NoVatReason"
+      },
       "OpenLineOut": {
         "properties": {
           "line_id": {
@@ -13082,6 +13091,28 @@
               }
             ],
             "title": "Unit Price"
+          },
+          "price_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The mode that price was typed in"
+          },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code"
           },
           "vat_rate": {
             "type": "string",
@@ -13205,6 +13236,28 @@
             "title": "Unit Price",
             "description": "Delivery lines: the price of the order line they follow"
           },
+          "price_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The mode that price was typed in"
+          },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code"
+          },
           "vat_rate": {
             "type": "string",
             "title": "Vat Rate"
@@ -13222,6 +13275,8 @@
           "qty_open_base",
           "qty_open",
           "unit_price",
+          "price_mode",
+          "tax_code",
           "vat_rate"
         ],
         "title": "OpenSalesLineOut",
@@ -13370,6 +13425,40 @@
             "pattern": "^[A-Z]{3}$",
             "title": "Default Currency",
             "default": "AED"
+          },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code",
+            "description": "Overrides the product's code on sales to this customer, e.g. ZR for exports"
+          },
+          "purchase_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Tax Code",
+            "description": "Overrides the product's code on purchases, e.g. RC-S for overseas services"
           },
           "addresses": {
             "items": {
@@ -13559,6 +13648,28 @@
             "type": "string",
             "title": "Default Currency"
           },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code"
+          },
+          "purchase_tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Tax Code"
+          },
           "addresses": {
             "items": {
               "$ref": "#/components/schemas/AddressOut"
@@ -13603,6 +13714,8 @@
           "whatsapp",
           "email",
           "default_currency",
+          "sales_tax_code",
+          "purchase_tax_code",
           "addresses",
           "contacts",
           "customer_profiles",
@@ -13718,6 +13831,40 @@
               }
             ],
             "title": "Email"
+          },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code",
+            "description": "Send null to remove the override"
+          },
+          "purchase_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Tax Code",
+            "description": "Send null to remove it"
           },
           "archived": {
             "anyOf": [
@@ -14615,6 +14762,15 @@
         "type": "object",
         "title": "PriceListPatch"
       },
+      "PriceMode": {
+        "type": "string",
+        "enum": [
+          "vat_exclusive",
+          "vat_inclusive",
+          "no_vat"
+        ],
+        "title": "PriceMode"
+      },
       "PriceSource": {
         "type": "string",
         "enum": [
@@ -14730,6 +14886,40 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Custom Fields"
+          },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code",
+            "description": "Default VAT on sales lines; none: SR"
+          },
+          "purchase_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Tax Code",
+            "description": "Default VAT on purchase lines; none: SR"
           }
         },
         "type": "object",
@@ -14823,6 +15013,28 @@
             "type": "object",
             "title": "Custom Fields"
           },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code"
+          },
+          "purchase_tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Tax Code"
+          },
           "archived_at": {
             "anyOf": [
               {
@@ -14879,6 +15091,8 @@
           "track_expiry",
           "track_serial",
           "custom_fields",
+          "sales_tax_code",
+          "purchase_tax_code",
           "archived_at",
           "units",
           "attributes",
@@ -14995,6 +15209,40 @@
               }
             ],
             "title": "Custom Fields"
+          },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code",
+            "description": "Send null to go back to SR"
+          },
+          "purchase_tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Tax Code",
+            "description": "Send null to go back to SR"
           },
           "archived": {
             "anyOf": [
@@ -15612,6 +15860,22 @@
             ],
             "title": "Narration"
           },
+          "price_mode": {
+            "$ref": "#/components/schemas/PriceMode",
+            "description": "How prices are typed: VAT-exclusive, VAT-inclusive, or no VAT (with the reason)",
+            "default": "vat_exclusive"
+          },
+          "no_vat_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoVatReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "With no_vat: zero_rated (ZR), exempt (EX) or out_of_scope (OS)"
+          },
           "lines": {
             "items": {
               "$ref": "#/components/schemas/PurchaseLineIn"
@@ -15741,6 +16005,26 @@
             ],
             "title": "Narration"
           },
+          "price_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_vat_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoVatReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subtotal": {
             "type": "string",
             "title": "Subtotal"
@@ -15751,7 +16035,8 @@
           },
           "total": {
             "type": "string",
-            "title": "Total"
+            "title": "Total",
+            "description": "What the supplier is owed (reverse-charge VAT is not)"
           },
           "posted_at": {
             "anyOf": [
@@ -15800,6 +16085,8 @@
           "due_date",
           "reference",
           "narration",
+          "price_mode",
+          "no_vat_reason",
           "subtotal",
           "tax_total",
           "total",
@@ -15916,6 +16203,26 @@
             ],
             "title": "Narration"
           },
+          "price_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_vat_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoVatReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "subtotal": {
             "type": "string",
             "title": "Subtotal"
@@ -15926,7 +16233,8 @@
           },
           "total": {
             "type": "string",
-            "title": "Total"
+            "title": "Total",
+            "description": "What the supplier is owed (reverse-charge VAT is not)"
           },
           "posted_at": {
             "anyOf": [
@@ -15956,6 +16264,8 @@
           "due_date",
           "reference",
           "narration",
+          "price_mode",
+          "no_vat_reason",
           "subtotal",
           "tax_total",
           "total",
@@ -16041,7 +16351,24 @@
               }
             ],
             "title": "Unit Price",
-            "description": "Per unit typed, VAT-exclusive (default: the line it follows)"
+            "description": "Per unit typed, in the document's price mode (default: the line it follows)"
+          },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code",
+            "description": "SR, SR-B, ZR, EX, OS, RC-S or RC-G; default: the line it follows, the supplier's, the item's, else SR"
           },
           "vat_rate": {
             "anyOf": [
@@ -16056,7 +16383,7 @@
               }
             ],
             "title": "Vat Rate",
-            "description": "0 or 5 (%); default: the line it follows, else 0"
+            "description": "Deprecated (before tax codes): 5 means SR, 0 means OS"
           },
           "source_line_id": {
             "anyOf": [
@@ -16240,17 +16567,30 @@
             "type": "string",
             "title": "Net Amount"
           },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code"
+          },
           "vat_rate": {
             "type": "string",
             "title": "Vat Rate"
           },
           "vat_amount": {
             "type": "string",
-            "title": "Vat Amount"
+            "title": "Vat Amount",
+            "description": "Reverse charge: the VAT self-assessed (not owed to the supplier)"
           },
           "line_total": {
             "type": "string",
-            "title": "Line Total"
+            "title": "Line Total",
+            "description": "What the line adds to the bill"
           },
           "source_line_id": {
             "anyOf": [
@@ -16338,6 +16678,7 @@
           "base_unit",
           "unit_price",
           "net_amount",
+          "tax_code",
           "vat_rate",
           "vat_amount",
           "line_total",
@@ -16857,6 +17198,22 @@
             ],
             "title": "Narration"
           },
+          "price_mode": {
+            "$ref": "#/components/schemas/PriceMode",
+            "description": "How prices are typed: VAT-exclusive, VAT-inclusive, or no VAT (with the reason)",
+            "default": "vat_exclusive"
+          },
+          "no_vat_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoVatReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "With no_vat: zero_rated (ZR), exempt (EX) or out_of_scope (OS)"
+          },
           "lines": {
             "items": {
               "$ref": "#/components/schemas/SalesLineIn"
@@ -16999,6 +17356,38 @@
             ],
             "title": "Narration"
           },
+          "price_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_vat_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoVatReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "invoice_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Kind",
+            "description": "Posted invoices and returns: tax_invoice, simplified, or invoice (not VAT-registered)"
+          },
           "subtotal": {
             "type": "string",
             "title": "Subtotal"
@@ -17072,6 +17461,9 @@
           "due_date",
           "reference",
           "narration",
+          "price_mode",
+          "no_vat_reason",
+          "invoice_kind",
           "subtotal",
           "tax_total",
           "round_off",
@@ -17202,6 +17594,38 @@
             ],
             "title": "Narration"
           },
+          "price_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_vat_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoVatReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "invoice_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Kind",
+            "description": "Posted invoices and returns: tax_invoice, simplified, or invoice (not VAT-registered)"
+          },
           "subtotal": {
             "type": "string",
             "title": "Subtotal"
@@ -17247,6 +17671,9 @@
           "due_date",
           "reference",
           "narration",
+          "price_mode",
+          "no_vat_reason",
+          "invoice_kind",
           "subtotal",
           "tax_total",
           "round_off",
@@ -17383,7 +17810,24 @@
               }
             ],
             "title": "Unit Price",
-            "description": "Per unit typed, VAT-exclusive (default: the order line it follows); none on deliveries"
+            "description": "Per unit typed, in the document's price mode (default: the line it follows); none on deliveries"
+          },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code",
+            "description": "SR, ZR, EX or OS; default: the line it follows, the customer's, the item's, else SR"
           },
           "vat_rate": {
             "anyOf": [
@@ -17398,7 +17842,7 @@
               }
             ],
             "title": "Vat Rate",
-            "description": "0 or 5 (%); default: the line it follows, else 5"
+            "description": "Deprecated (before tax codes): 5 means SR, 0 means ZR"
           },
           "price_source": {
             "anyOf": [
@@ -17575,6 +18019,17 @@
             "type": "string",
             "title": "Net Amount"
           },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code"
+          },
           "vat_rate": {
             "type": "string",
             "title": "Vat Rate"
@@ -17651,6 +18106,7 @@
           "price_source",
           "below_min",
           "net_amount",
+          "tax_code",
           "vat_rate",
           "vat_amount",
           "line_total",
@@ -19362,6 +19818,23 @@
             "title": "Credit",
             "description": "Journal and contra"
           },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2,
+                "examples": [
+                  "SR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code",
+            "description": "Expense and debit notes: a purchase code (SR, SR-B, RC-S…); credit notes: a sales code"
+          },
           "vat_rate": {
             "anyOf": [
               {
@@ -19372,7 +19845,7 @@
               }
             ],
             "title": "Vat Rate",
-            "description": "0 or 5 (%), expense and credit / debit notes",
+            "description": "Deprecated (before tax codes): 5 means SR; ignored with a tax code",
             "default": "0"
           },
           "description": {
@@ -19435,6 +19908,17 @@
             "type": "string",
             "title": "Credit"
           },
+          "tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Code"
+          },
           "vat_rate": {
             "type": "string",
             "title": "Vat Rate"
@@ -19470,6 +19954,7 @@
           "party_id",
           "debit",
           "credit",
+          "tax_code",
           "vat_rate",
           "vat_amount",
           "description",

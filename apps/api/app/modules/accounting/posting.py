@@ -11,6 +11,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 
 from app.core.money import currency_decimals
+from app.modules.tax.codes import Treatment
 
 HEADER = -1  # the allocation key of the header party's line (credit and debit notes)
 
@@ -53,6 +54,10 @@ class Line:
     party_id: uuid.UUID | None = None
     vat_rate: Decimal = Decimal(0)
     description: str | None = None
+    tax_code: str | None = None
+    treatment: Treatment = (
+        Treatment.RECOVERABLE
+    )  # charged VAT: input (expense, debit note) or output (credit note)
 
     @property
     def amount(self) -> Decimal:
@@ -129,30 +134,41 @@ def journal_for(voucher: Voucher, accounts: Accounts, *, round_off: Decimal = De
     side = LINE_SIDE[voucher.doc_type]
     out: list[JournalLine] = []
     vats: list[Decimal] = []
+    charged = blocked = self_assessed = Decimal(0)
     for i, line in enumerate(voucher.lines):
+        vat = (
+            vat_of(line.amount, line.vat_rate, voucher.currency)
+            if voucher.doc_type in WITH_VAT
+            else Decimal(0)
+        )
+        vats.append(vat)
+        if line.treatment is Treatment.BLOCKED:  # SR-B: the VAT is part of the expense (rule 8)
+            blocked += vat
+        elif line.treatment is Treatment.REVERSE_CHARGE:  # rule 29: self-assessed, not paid to anyone
+            self_assessed += vat
+        else:
+            charged += vat
         out.append(
             _side(
                 line.account_id,
-                line.amount,
+                line.amount + (vat if line.treatment is Treatment.BLOCKED else Decimal(0)),
                 side,
                 party_id=line.party_id,
                 description=line.description,
                 allocation_key=i if line.party_id else None,
             )
         )
-        vats.append(
-            vat_of(line.amount, line.vat_rate, voucher.currency)
-            if voucher.doc_type in WITH_VAT
-            else Decimal(0)
-        )
     net = sum((line.amount for line in voucher.lines), Decimal(0))
-    vat = sum(vats, Decimal(0))
-    if vat:
+    if charged:
         vat_account = (
             accounts.vat_output if voucher.doc_type is VoucherType.CREDIT_NOTE else accounts.vat_input
         )
-        out.append(_side(vat_account, vat, side, description="VAT"))
-    total = net + vat
+        out.append(_side(vat_account, charged, side, description="VAT"))
+    if self_assessed:
+        out.append(_side(accounts.vat_input, self_assessed, side, description="VAT, reverse charge"))
+        out.append(_side(accounts.vat_output, self_assessed, _other(side), description="VAT, reverse charge"))
+    vat = charged + blocked + self_assessed
+    total = net + charged + blocked
 
     if voucher.doc_type in WITH_PARTY:
         assert voucher.party_account_id is not None

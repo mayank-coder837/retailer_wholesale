@@ -258,6 +258,7 @@ function SalesEntryPage({
     if (out.length === 0) return "sales.entry.noLines";
     return {
       doc_type: kind,
+      price_mode: "vat_exclusive", // price modes on screen come with M1.10d
       business_id: current.id,
       branch_id: branch,
       doc_date: date,

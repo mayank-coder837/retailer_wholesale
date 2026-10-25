@@ -7,6 +7,7 @@ from typing import Any
 from httpx import AsyncClient
 
 from tests.api_helpers import bearer, signup_body
+from tests.test_accounting_api import books
 from tests.test_pricing_api import ok
 from tests.test_purchasing_api import buyer
 from tests.test_sales_api import seller
@@ -256,3 +257,32 @@ async def test_returning_reverse_charge_goods_undoes_both_vat_sides(client: Asyn
         "40.0000",
     )
     assert ("1400", "0.0000", "2.0000") in await b.journal(ret["id"])
+
+
+# --- vouchers ----------------------------------------------------------------------------------------------
+
+
+async def test_expense_vouchers_and_notes_take_codes_of_their_side(client: AsyncClient) -> None:
+    b = await books(client)
+    dinner = await b.post(
+        b.voucher(
+            "expense",
+            [{"account_id": b.account("6100"), "amount": "200", "tax_code": "SR-B"}],
+            account_id=b.account("1110"),
+        )
+    )
+    assert (dinner["total"], dinner["lines"][0]["tax_code"], dinner["lines"][0]["vat_amount"]) == (
+        "210.0000",
+        "SR-B",
+        "10.0000",
+    )
+    wrong_side = await client.post(
+        "/vouchers",
+        json=b.voucher("credit_note", [{"amount": "100", "tax_code": "RC-S"}], party_id=b.customer),
+        headers=b.h,
+    )
+    assert (wrong_side.status_code, wrong_side.json()["field"]) == (422, "lines[0].tax_code")
+    receipt = b.voucher(
+        "receipt", [{"party_id": b.customer, "amount": "100", "tax_code": "SR"}], account_id=b.account("1110")
+    )
+    assert (await client.post("/vouchers", json=receipt, headers=b.h)).status_code == 422
