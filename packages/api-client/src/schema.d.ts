@@ -1841,6 +1841,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tax-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tax Codes
+         * @description The fixed tax codes (seed registry, not editable), for the code on a line; any signed-in user.
+         */
+        get: operations["list_tax_codes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/vat-returns/draft": {
         parameters: {
             query?: never;
@@ -4940,6 +4960,11 @@ export interface components {
             below_min: boolean;
             /** May Go Below Min */
             may_go_below_min: boolean;
+            /**
+             * @description The mode the price is in: a last price in its invoice's; lists, promotions and base prices exclude VAT (R9). A screen in another mode does not use it as it is.
+             * @default vat_exclusive
+             */
+            price_mode: components["schemas"]["PriceMode"];
         };
         /** RefreshIn */
         RefreshIn: {
@@ -5263,6 +5288,16 @@ export interface components {
             unit: string;
             /** Unit Price */
             unit_price: string | null;
+            /**
+             * Sales Tax Code
+             * @description The item's own sales code (none: SR): a new line's default after the party's
+             */
+            sales_tax_code?: string | null;
+            /**
+             * @description The mode that invoice's price was typed in
+             * @default vat_exclusive
+             */
+            price_mode: components["schemas"]["PriceMode"];
         };
         /** SalesLineIn */
         SalesLineIn: {
@@ -5390,6 +5425,11 @@ export interface components {
             /** Value */
             value: unknown;
         };
+        /**
+         * Side
+         * @enum {string}
+         */
+        Side: "sales" | "purchase";
         /** SignupIn */
         SignupIn: {
             /**
@@ -5686,6 +5726,36 @@ export interface components {
             tenant_id: string;
             /** @default web */
             client: components["schemas"]["ClientKind"];
+        };
+        /**
+         * TaxCodeOut
+         * @description One code of the registry (M1.10d): what entry screens offer on a line.
+         */
+        TaxCodeOut: {
+            /**
+             * Code
+             * @example SR
+             */
+            code: string;
+            /**
+             * Side
+             * @description sales or purchase
+             */
+            side: string;
+            /**
+             * Rate
+             * @description Percent, e.g. 5
+             */
+            rate: string;
+            /**
+             * Treatment
+             * @description output, recoverable, blocked, reverse_charge or none
+             */
+            treatment: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
         };
         /** TenantOut */
         TenantOut: {
@@ -11056,6 +11126,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PdcOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tax_codes: {
+        parameters: {
+            query?: {
+                side?: components["schemas"]["Side"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxCodeOut"][];
                 };
             };
             /** @description Validation Error */

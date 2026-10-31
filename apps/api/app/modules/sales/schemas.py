@@ -205,3 +205,10 @@ class SalesHistoryLineOut(BaseModel):
     qty: Decimal
     unit: str
     unit_price: Decimal | None
+    sales_tax_code: str | None = Field(
+        default=None,
+        description="The item's own sales code (none: SR): a new line's default after the party's",
+    )
+    price_mode: PriceMode = Field(
+        default=PriceMode.VAT_EXCLUSIVE, description="The mode that invoice's price was typed in"
+    )

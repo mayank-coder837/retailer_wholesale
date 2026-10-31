@@ -1,14 +1,16 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
 // M1.10d acceptance, against the real API and database: a posted invoice lands in Box 1b (Dubai) of this month's
-// VAT return, the figure opens that invoice, and the invoice prints as a tax invoice in English and Arabic.
+// VAT return, the figure opens that invoice, and the invoice prints as a tax invoice in English and Arabic; an
+// invoice typed with VAT included posts the VAT the screen showed.
 // Needs the API at VITE_API_URL (default http://localhost:8000).
 
 const API = process.env.VITE_API_URL ?? "http://localhost:8000";
 const PASSWORD = "correct horse battery";
 const SHOTS = process.env.SCREENSHOTS; // a folder: save the screens for a look
 
-test("an invoice in the VAT return, opened from its box and printed", async ({ page, request }) => {
+/** A VAT-registered trader in Dubai with a customer and 100 m of fabric in stock. */
+async function trader(request: APIRequestContext) {
   const email = `vat-${Date.now()}-${Math.floor(Math.random() * 1e6)}@e2e.ae`;
   const signup = await request.post(`${API}/auth/signup`, {
     data: {
@@ -54,6 +56,20 @@ test("an invoice in the VAT return, opened from its box and printed", async ({ p
     },
   });
   expect(stock.ok()).toBeTruthy();
+  const customerId = (await customer.json()).id as string;
+  return { email, headers, business, branch, warehouse, today, customerId, variant };
+}
+
+async function logIn(page: Page, email: string) {
+  await page.goto("/#/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page.getByRole("heading", { name: "Welcome, VAT Owner" })).toBeVisible();
+}
+
+test("an invoice in the VAT return, opened from its box and printed", async ({ page, request }) => {
+  const { email, headers, business, branch, warehouse, today, customerId, variant } = await trader(request);
   const invoice = await request.post(`${API}/sales-documents?post=true`, {
     headers,
     data: {
@@ -61,7 +77,7 @@ test("an invoice in the VAT return, opened from its box and printed", async ({ p
       business_id: business,
       branch_id: branch,
       doc_date: today,
-      party_id: (await customer.json()).id,
+      party_id: customerId,
       warehouse_id: warehouse,
       lines: [{ variant_id: variant, unit: "m", qty: "20", unit_price: "10", tax_code: "SR" }],
     },
@@ -69,11 +85,7 @@ test("an invoice in the VAT return, opened from its box and printed", async ({ p
   expect(invoice.ok()).toBeTruthy();
   const number = (await invoice.json()).number as string;
 
-  await page.goto("/#/login");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page.getByRole("heading", { name: "Welcome, VAT Owner" })).toBeVisible();
+  await logIn(page, email);
 
   // This month, by dates: 200.00 at 5% in Dubai.
   await page.getByRole("link", { name: "Accounts", exact: true }).click();
@@ -115,4 +127,32 @@ test("an invoice in the VAT return, opened from its box and printed", async ({ p
   await expect(printed.getByText(number).first()).toBeVisible();
   await expect(print).toBeEnabled();
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/print-ar.png`, fullPage: true });
+});
+
+test("an invoice typed with VAT included posts the VAT the screen showed", async ({ page, request }) => {
+  const { email } = await trader(request);
+  await logIn(page, email);
+
+  await page.getByRole("link", { name: "Sales", exact: true }).click();
+  await page.getByRole("link", { name: "New invoice" }).click();
+  await page.getByLabel("Customer", { exact: true }).selectOption({ label: "C0001 Gulf Fabrics LLC" });
+  await page.getByLabel("Item", { exact: true }).selectOption({ label: "FAB Poplin fabric" });
+  await expect(page.getByLabel("Unit", { exact: true })).toHaveValue("m");
+  await page.getByLabel("Quantity", { exact: true }).fill("3");
+  await page.getByLabel("Price per unit").fill("10.50");
+  await expect(page.getByLabel("Tax", { exact: true })).toHaveValue("SR");
+  await page.getByLabel("Prices").selectOption("vat_inclusive");
+  // 31.50 including VAT: VAT 1.50, net 30.00 (the API's own example).
+  await expect(page.getByLabel("Totals")).toContainText("Subtotal30.00VAT1.50Total31.50");
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/entry-inclusive-en.png`, fullPage: true });
+  await page.getByRole("button", { name: "Post" }).click();
+
+  await expect(page.getByRole("heading", { name: /Sales invoice INV-\d{4}-00001/ })).toBeVisible();
+  await expect(page.getByLabel("Totals")).toContainText("Subtotal30.00VAT1.50Total31.50");
+
+  await page.getByRole("button", { name: "Language" }).click();
+  await page.getByRole("link", { name: "المبيعات", exact: true }).click();
+  await page.getByRole("link", { name: "فاتورة جديدة" }).click();
+  await expect(page.getByLabel("الأسعار")).toBeVisible();
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/entry-ar.png`, fullPage: true });
 });

@@ -267,3 +267,69 @@ describe("Purchasing screens", () => {
     expect(calls.some((c) => c.path.startsWith("/purchase-documents"))).toBe(false);
   });
 });
+
+describe("VAT on purchase entry", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await setLanguage("en");
+  });
+
+  it("shows reverse-charge VAT without adding it to what the supplier is owed", async () => {
+    window.location.hash = "#/purchases/new/purchase_bill?from=po1";
+    const { api, calls } = buyerApi({
+      "POST /purchase-documents": { status: 201, body: doc({ id: "pb1", doc_type: "purchase_bill" }) },
+      "GET /purchase-documents/pb1": { status: 200, body: doc({ id: "pb1", doc_type: "purchase_bill" }) },
+    });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    const tax = await screen.findByLabelText("Tax");
+    await waitFor(() => expect(tax).toHaveValue("SR")); // the order line's 5%
+    // Goods for stock: blocked VAT would change their cost, so it is not offered.
+    expect(within(tax).queryByRole("option", { name: "5%, input VAT blocked" })).toBeNull();
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal760.00VAT38.00Total798.00");
+
+    await user.selectOptions(tax, "RC-G");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent(
+      "Subtotal760.00VAT38.00Reverse charge (you account for it)-38.00Total760.00",
+    );
+    await user.click(screen.getByRole("button", { name: "Post" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "POST")).toBe(true));
+    const body = calls.find((c) => c.method === "POST" && c.path === "/purchase-documents")?.body as {
+      price_mode: string;
+      lines: Record<string, unknown>[];
+    };
+    expect(body.price_mode).toBe("vat_exclusive");
+    expect(body.lines[0]).toMatchObject({ source_line_id: "l1", tax_code: "RC-G" });
+    expect(body.lines[0]).not.toHaveProperty("vat_rate");
+  });
+
+  it("offers blocked VAT on an expense, and counts it in the total", async () => {
+    window.location.hash = "#/purchases/new/purchase_bill";
+    const { api } = buyerApi();
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await user.click(await screen.findByRole("button", { name: "Add expense" }));
+    const taxes = screen.getAllByLabelText("Tax");
+    const expenseTax = taxes[taxes.length - 1]!;
+    await within(expenseTax).findByRole("option", { name: "5%, input VAT blocked" });
+    await user.selectOptions(expenseTax, "SR-B");
+    await user.type(screen.getByLabelText("Amount"), "200");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal200.00VAT10.00Total210.00");
+  });
+
+  it("takes VAT out of a bill typed with VAT included", async () => {
+    window.location.hash = "#/purchases/new/purchase_bill?from=po1";
+    const { api } = buyerApi();
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await user.selectOptions(await screen.findByLabelText("Prices"), "vat_inclusive");
+    // 2 rolls at 380.00 including VAT = 760.00: VAT 36.19, net 723.81.
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal723.81VAT36.19Total760.00");
+  });
+});

@@ -930,8 +930,7 @@
       "vat": "VAT",
       "total": "Total",
       "price": "Price per unit",
-      "net": "Net",
-      "vatRate": "VAT"
+      "net": "Net"
     },
     "entry": {
       "noBranch": "Choose a branch first.",
@@ -1081,8 +1080,7 @@
       "roundOff": "Round-off",
       "total": "Total",
       "price": "Price per unit",
-      "net": "Net",
-      "vatRate": "VAT"
+      "net": "Net"
     },
     "entry": {
       "noBranch": "Choose a branch first.",
@@ -1359,5 +1357,24 @@
       "permission_denied": "You don't have permission to print or export this document.",
       "generic": "The document could not be loaded for printing. Try again."
     }
+  },
+  "tax": {
+    "prices": "Prices",
+    "fixedHint": "As the document it follows.",
+    "modes": {
+      "vat_exclusive": "Excluding VAT",
+      "vat_inclusive": "Including VAT",
+      "no_vat": "No VAT"
+    },
+    "reason": "Why no VAT",
+    "reasons": {
+      "zero_rated": "Zero rated (exports, …)",
+      "exempt": "Exempt",
+      "out_of_scope": "Out of scope"
+    },
+    "code": "Tax",
+    "notRegistered": "This business is not VAT-registered, so no VAT is charged.",
+    "reverseCharge": "Reverse charge (you account for it)",
+    "otherMode": "Suggested price {{price}} ({{mode}}): type this document's price."
   }
 }

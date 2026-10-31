@@ -59,6 +59,7 @@ class LastSale:
     factor_to_base: Decimal  # of that line's unit
     document_number: str
     document_date: date
+    price_mode: str = "vat_exclusive"  # the mode that invoice's prices were typed in (M1.10d)
 
 
 @dataclass(frozen=True)

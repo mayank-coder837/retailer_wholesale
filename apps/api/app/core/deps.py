@@ -74,4 +74,7 @@ async def get_tenant_session(
         yield session
 
 
-TenantSessionDep = Annotated[AsyncSession, Depends(get_tenant_session)]
+# scope="function": commit before the response is sent. FastAPI's default ends a dependency with yield after
+# the response, so a client could read "201 Created" (and ask for the new document) before the commit, or be
+# told a post succeeded that then failed the deferred double-entry check at commit.
+TenantSessionDep = Annotated[AsyncSession, Depends(get_tenant_session, scope="function")]

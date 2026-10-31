@@ -34,6 +34,7 @@ from app.modules.pricing.schemas import (
     QuoteOut,
     UnitPricesIn,
 )
+from app.modules.tax.codes import PriceMode
 from app.modules.tenancy import service as tenancy
 
 DUBAI = ZoneInfo("Asia/Dubai")
@@ -356,4 +357,7 @@ async def quote(session: AsyncSession, data: QuoteIn, *, may_override_min: bool)
         min_price=result.min_price,
         below_min=result.below_min,
         may_go_below_min=result.may_go_below_min,
+        price_mode=PriceMode(last_sale.price_mode)
+        if last_sale is not None and result.source is engine.PriceSource.LAST_PRICE
+        else PriceMode.VAT_EXCLUSIVE,
     )

@@ -286,3 +286,38 @@ async def test_expense_vouchers_and_notes_take_codes_of_their_side(client: Async
         "receipt", [{"party_id": b.customer, "amount": "100", "tax_code": "SR"}], account_id=b.account("1110")
     )
     assert (await client.post("/vouchers", json=receipt, headers=b.h)).status_code == 422
+
+
+async def test_a_suggested_price_says_which_mode_it_is_in(client: AsyncClient) -> None:
+    s = await seller(client)
+    body = {"business_id": s.shop.business_id, "variant_id": s.fabric, "unit": "pcs", "qty": "1"}
+    base = await ok(await client.post("/pricing/quote", json=body, headers=s.h))
+    assert base["price_mode"] == "vat_exclusive"  # lists and base prices exclude VAT (R9)
+    await s.post(s.doc("sales_invoice", [s.line("3", unit_price="10.50")], price_mode="vat_inclusive"))
+    last = await ok(await client.post("/pricing/quote", json=body | {"party_id": s.customer}, headers=s.h))
+    assert (last["source"], last["price"], last["price_mode"]) == ("last_price", "10.500000", "vat_inclusive")
+    history = await ok(
+        await client.get(
+            f"/parties/{s.customer}/sales-history", params={"business_id": s.shop.business_id}, headers=s.h
+        )
+    )
+    assert history[0]["price_mode"] == "vat_inclusive"
+
+
+async def test_the_tax_codes_are_listed_by_side_for_any_signed_in_user(client: AsyncClient) -> None:
+    assert (await client.get("/tax-codes")).status_code == 401
+    h = bearer(await ok(await client.post("/auth/signup", json=signup_body("codes@shop.ae")), 201))
+    sales = await ok(await client.get("/tax-codes", params={"side": "sales"}, headers=h))
+    assert [(c["code"], c["rate"], c["treatment"]) for c in sales] == [
+        ("SR", "5", "output"),
+        ("ZR", "0", "none"),
+        ("EX", "0", "none"),
+        ("OS", "0", "none"),
+    ]
+    purchase = await ok(await client.get("/tax-codes", params={"side": "purchase"}, headers=h))
+    assert [c["code"] for c in purchase] == ["SR", "SR-B", "ZR", "EX", "OS", "RC-S", "RC-G"]
+    assert {c["side"] for c in purchase} == {"purchase"}
+    assert all(c["name_en"] and c["name_ar"] for c in sales + purchase)
+    every = await ok(await client.get("/tax-codes", headers=h))
+    assert len(every) == len(sales) + len(purchase)
+    assert (await client.get("/tax-codes", params={"side": "both"}, headers=h)).status_code == 422
