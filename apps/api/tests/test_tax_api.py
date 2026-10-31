@@ -89,6 +89,26 @@ async def test_codes_default_from_the_customer_then_the_item(client: AsyncClient
     assert (typed["lines"][0]["tax_code"], typed["tax_total"]) == ("SR", "0.5000")
     bad = await client.patch(f"/products/{s.product}", json={"sales_tax_code": "RC-S"}, headers=s.h)
     assert bad.status_code == 422, "a purchase code is not a sales code"
+    # Blocked VAT is for expenses: a stock item may not default to it (R8), on create or later.
+    blocked = await client.patch(f"/products/{s.product}", json={"purchase_tax_code": "SR-B"}, headers=s.h)
+    assert (blocked.status_code, blocked.json()["field"]) == (422, "purchase_tax_code")
+    service = {
+        "sku": "DLV",
+        "name_en": "Delivery",
+        "name_ar": "توصيل",
+        "product_type": "service",
+        "base_unit": "pcs",
+    }
+    created = await client.post("/products", json=service | {"purchase_tax_code": "SR-B"}, headers=s.h)
+    assert created.status_code == 201, created.text  # a service may: it is an expense
+    stock = {
+        "sku": "BOX",
+        "name_en": "Box",
+        "name_ar": "صندوق",
+        "base_unit": "pcs",
+        "purchase_tax_code": "SR-B",
+    }
+    assert (await client.post("/products", json=stock, headers=s.h)).status_code == 422
     await ok(await client.patch(f"/products/{s.product}", json={"sales_tax_code": None}, headers=s.h))
     back = await s.post(s.doc("sales_invoice", [s.line("1", unit_price="10")]))
     assert back["lines"][0]["tax_code"] == "SR"
