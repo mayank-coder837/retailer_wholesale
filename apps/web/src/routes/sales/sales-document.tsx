@@ -24,6 +24,9 @@ import {
 import { BackToSales } from "@/routes/sales/sales";
 import { useBusiness } from "@/shell/use-business";
 
+/** Documents with a printed form (M1.10c): the tax invoice and the tax credit note. */
+const PRINTABLE = ["sales_invoice", "sales_return"];
+
 /** Sales → one document (M1.8c): its lines and totals; a draft is posted or deleted; a posted one leads to the
  * next step, can be marked as sent, and cancelled or reversed. */
 export function SalesDocumentPage() {
@@ -359,6 +362,16 @@ export function SalesDocumentPage() {
         </div>
       ) : (
         <>
+          {posted && PRINTABLE.includes(d.doc_type) && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Button variant="outline" asChild>
+                <Link to="/sales/$docId/print" params={{ docId: d.id }}>
+                  {t("print.open")}
+                </Link>
+              </Button>
+              <span className="text-muted-foreground">{t("print.openHint")}</span>
+            </div>
+          )}
           {posted && !state.data?.sent_at && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <Button variant="outline" disabled={sent.isPending} onClick={() => sent.mutate()}>

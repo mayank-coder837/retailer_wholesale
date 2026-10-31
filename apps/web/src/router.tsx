@@ -14,6 +14,7 @@ import { PdcRegisterPage } from "@/routes/accounts/pdcs";
 import { ChartPage } from "@/routes/accounts/chart";
 import { PeriodsPage } from "@/routes/accounts/periods";
 import { TrialBalancePage } from "@/routes/accounts/trial-balance";
+import { VatReturnPage } from "@/routes/accounts/vat-return";
 import { VoucherPage } from "@/routes/accounts/voucher";
 import { VoucherRoute } from "@/routes/accounts/voucher-entry";
 import { VouchersPage } from "@/routes/accounts/vouchers";
@@ -29,6 +30,7 @@ import { PricingSettingsPage } from "@/routes/pricing/pricing-settings";
 import { PurchaseDocumentPage } from "@/routes/purchasing/purchase-document";
 import { PurchaseEntryRoute } from "@/routes/purchasing/purchase-entry";
 import { PurchasesPage } from "@/routes/purchasing/purchases";
+import { SalesPrintPage } from "@/routes/sales/sales-print";
 import { SalesDocumentPage } from "@/routes/sales/sales-document";
 import { SalesEntryRoute } from "@/routes/sales/sales-entry";
 import { SalesPage } from "@/routes/sales/sales";
@@ -167,6 +169,11 @@ const salesDocRoute = createRoute({
   path: "/sales/$docId",
   component: SalesDocumentPage,
 });
+const salesPrintRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/sales/$docId/print",
+  component: SalesPrintPage,
+});
 const purchasesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/purchases",
@@ -223,6 +230,11 @@ const chequeRoute = createRoute({
   path: "/accounts/cheques/$pdcId",
   component: PdcPage,
 });
+const vatReturnRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/accounts/vat-return",
+  component: VatReturnPage,
+});
 const ageingRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/accounts/ageing",
@@ -264,6 +276,7 @@ const routeTree = rootRoute.addChildren([
     salesRoute,
     newSalesRoute,
     salesDocRoute,
+    salesPrintRoute,
     purchasesRoute,
     newPurchaseRoute,
     purchaseRoute,
@@ -276,6 +289,7 @@ const routeTree = rootRoute.addChildren([
     newChequeRoute,
     chequeRoute,
     ageingRoute,
+    vatReturnRoute,
     periodsRoute,
     accountRoute,
     page("/reports", "nav.reports"),
