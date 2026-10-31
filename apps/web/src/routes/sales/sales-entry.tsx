@@ -8,20 +8,12 @@ import { CodeTag } from "@/components/code-tag";
 import { besideField, Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  accountLabel,
-  fromFils,
-  money,
-  todayIso,
-  useAccounts,
-  useBranches,
-  vatFils,
-} from "@/routes/accounts/queries";
+import { accountLabel, fromFils, money, todayIso, useAccounts, useBranches } from "@/routes/accounts/queries";
 import { localName } from "@/routes/catalog/product-form";
 import { errorCode, unwrap, useProducts } from "@/routes/catalog/queries";
 import { ComingSoon } from "@/routes/coming-soon";
 import { qty as shortQty, useStockBatches, useStockProduct, useWarehouses } from "@/routes/inventory/queries";
-import { useParties } from "@/routes/parties/queries";
+import { useParties, useParty } from "@/routes/parties/queries";
 import { DECIMAL6, netFils, useReleasedNumbers } from "@/routes/purchasing/queries";
 import {
   isSalesDocType,
@@ -39,6 +31,15 @@ import {
   type SalesLineIn,
 } from "@/routes/sales/queries";
 import { BackToSales } from "@/routes/sales/sales";
+import {
+  useCodeInfo,
+  resolveCode,
+  splitFils,
+  useDefaultPriceMode,
+  type NoVatReason,
+  type PriceMode,
+} from "@/routes/tax/tax";
+import { PriceModeFields, TaxCodeField } from "@/routes/tax/tax-fields";
 import { useBusiness } from "@/shell/use-business";
 
 interface Fixed {
@@ -57,7 +58,10 @@ interface LineState {
   price: string;
   priceTouched: boolean;
   priceSource: string | null;
-  vat: "5" | "0";
+  /** The tax code the user chose; empty: the default (the line followed, the customer's, the item's, SR). */
+  taxCode: string;
+  /** The item's own sales code (from the product or the history line); none: standard rated. */
+  itemCode: string | null;
   batchId: string;
   trackBatch: boolean;
   /** Following a line of an earlier document: fixed item, and what is still open there. */
@@ -76,7 +80,8 @@ const emptyLine = (): LineState => ({
   price: "",
   priceTouched: false,
   priceSource: null,
-  vat: "5",
+  taxCode: "",
+  itemCode: null,
   batchId: "",
   trackBatch: false,
   source: null,
@@ -92,7 +97,6 @@ function fromOpen(o: OpenSalesLine): LineState {
     qty: shortQty(o.qty_open),
     price,
     priceTouched: price !== "",
-    vat: Number(o.vat_rate) > 0 ? "5" : "0",
     source: o,
     fixed: { sku: o.sku, name_en: o.name_en, name_ar: o.name_ar },
   };
@@ -107,6 +111,7 @@ function fromHistory(h: HistoryLine): LineState {
     price: h.unit_price ? shortQty(h.unit_price) : "",
     priceTouched: !!h.unit_price,
     priceSource: h.unit_price ? `last_price:${h.number}` : null,
+    itemCode: h.sales_tax_code ?? null,
     fixed: { sku: h.sku, name_en: h.name_en, name_ar: h.name_ar },
   };
 }
@@ -180,6 +185,7 @@ function SalesEntryPage({
   const [lockReason, setLockReason] = useState<string | null>(null);
   const [creditBlock, setCreditBlock] = useState<CreditBlock | null>(null);
   const [creditReason, setCreditReason] = useState("");
+  const [modeChoice, setModeChoice] = useState<{ mode: PriceMode; reason: NoVatReason | null } | null>(null);
 
   const branch = branchId || branches.data?.[0]?.id || "";
   const ownWarehouses = (warehouses.data ?? []).filter((w) => w.branch_id === branch);
@@ -197,6 +203,35 @@ function SalesEntryPage({
   const priced = !isDelivery;
   const followsDelivery = start?.doc.doc_type === "delivery_note";
   const movesStock = isDelivery || isReturn || (isInvoice && !followsDelivery);
+
+  // VAT (M1.10d): a document that follows another keeps its price mode (a return always does); a new one starts
+  // from the setting. A business that is not registered charges no VAT: every line is out of scope.
+  const registered = current?.vat_registered ?? true;
+  const defaultMode = useDefaultPriceMode(branch);
+  const modeFixed = !!start?.doc.price_mode;
+  const mode: PriceMode =
+    (start?.doc.price_mode as PriceMode | null | undefined) ??
+    modeChoice?.mode ??
+    (registered ? defaultMode : undefined) ??
+    "vat_exclusive";
+  const reason: NoVatReason | null =
+    mode === "no_vat"
+      ? ((start?.doc.no_vat_reason ?? modeChoice?.reason ?? "zero_rated") as NoVatReason)
+      : null;
+  const customer = useParty(customerId);
+  const codeInfo = useCodeInfo("sales");
+  const codeOf = (l: LineState): string =>
+    resolveCode({
+      side: "sales",
+      registered,
+      mode,
+      reason,
+      typed: isReturn ? null : l.taxCode,
+      followed: l.source ? (l.source.tax_code ?? (Number(l.source.vat_rate) > 0 ? "SR" : "ZR")) : null,
+      party: customer.data?.sales_tax_code,
+      product: l.itemCode,
+    });
+  const codeFixed = isReturn || mode === "no_vat" || !registered;
 
   // The pricing engine's suggestion for each line the user has not priced (last price first, A9).
   const quotes = useQueries({
@@ -245,7 +280,8 @@ function SalesEntryPage({
         if (!price) return "sales.entry.needPrice";
         if (!DECIMAL6.test(price)) return "sales.entry.badPrice";
         line.unit_price = price;
-        line.vat_rate = l.vat;
+        // Only a code the user chose: otherwise the API applies the same default the screen shows.
+        if (l.taxCode && !codeFixed) line.tax_code = l.taxCode as SalesLineIn["tax_code"];
         line.price_source = l.priceTouched ? (l.priceSource ?? "manual") : (quoteOf(i)?.price_source ?? null);
       }
       if (l.trackBatch && movesStock && !isReturn) {
@@ -258,7 +294,8 @@ function SalesEntryPage({
     if (out.length === 0) return "sales.entry.noLines";
     return {
       doc_type: kind,
-      price_mode: "vat_exclusive", // price modes on screen come with M1.10d
+      price_mode: mode,
+      no_vat_reason: reason,
       business_id: current.id,
       branch_id: branch,
       doc_date: date,
@@ -328,14 +365,14 @@ function SalesEntryPage({
     }
   }
 
-  // Totals as the API will compute them: per line, VAT half-up to the fils (decision A3).
+  // Totals as the API will compute them: per line in the document's mode, VAT half-up to the fils (A3, R6).
   let subtotal = 0;
   let vat = 0;
   for (const [i, l] of lines.entries()) {
     if (!priced) break;
-    const net = netFils(l.qty.trim(), priceOf(l, i));
+    const [net, lineVat] = splitFils(netFils(l.qty.trim(), priceOf(l, i)), codeInfo(codeOf(l)).rate, mode);
     subtotal += net;
-    vat += vatFils(net, isReturn ? Number(l.source?.vat_rate ?? 0) : Number(l.vat));
+    vat += lineVat;
   }
 
   const problem = typeof built === "string" ? built : null;
@@ -492,7 +529,16 @@ function SalesEntryPage({
               />
             )}
           </Field>
+          {priced && registered && (
+            <PriceModeFields
+              mode={mode}
+              reason={reason}
+              fixed={modeFixed}
+              onChange={(m, r) => setModeChoice({ mode: m, reason: r })}
+            />
+          )}
         </div>
+        {priced && !registered && <p className="text-sm text-muted-foreground">{t("tax.notRegistered")}</p>}
         {isInvoice && (
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <label className="flex items-center gap-2">
@@ -529,6 +575,8 @@ function SalesEntryPage({
               index={i}
               quote={quoteOf(i)}
               price={priceOf(l, i)}
+              taxCode={codeOf(l)}
+              taxCodeFixed={codeFixed}
               businessId={current?.id}
               warehouseId={warehouse}
               movesStock={movesStock}
@@ -793,6 +841,8 @@ function SalesLine({
   index,
   quote,
   price,
+  taxCode,
+  taxCodeFixed,
   businessId,
   warehouseId,
   movesStock,
@@ -805,6 +855,8 @@ function SalesLine({
   index: number;
   quote: Quote | undefined;
   price: string;
+  taxCode: string;
+  taxCodeFixed: boolean;
   businessId: string | undefined;
   warehouseId: string;
   movesStock: boolean;
@@ -830,7 +882,12 @@ function SalesLine({
   const needsDefaults = !!chosen && chosen.id === line.productId && !line.variantId && !!chosen.variants[0];
   useEffect(() => {
     if (needsDefaults && chosen) {
-      onChange({ variantId: chosen.variants[0]!.id, unit: chosen.base_unit, trackBatch: chosen.track_batch });
+      onChange({
+        variantId: chosen.variants[0]!.id,
+        unit: chosen.base_unit,
+        trackBatch: chosen.track_batch,
+        itemCode: chosen.sales_tax_code ?? null,
+      });
     }
   }, [needsDefaults, chosen, onChange]);
 
@@ -878,6 +935,8 @@ function SalesLine({
                     unit: "",
                     batchId: "",
                     priceTouched: false,
+                    taxCode: "",
+                    itemCode: null,
                   })
                 }
               >
@@ -973,20 +1032,14 @@ function SalesLine({
           )}
         </Field>
       )}
-      {priced && !isReturn && (
-        <Field label={t("sales.doc.vatRate")} className="w-24">
-          {(p) => (
-            <select
-              {...p}
-              className={inputClass}
-              value={line.vat}
-              onChange={(e) => onChange({ vat: e.target.value as LineState["vat"] })}
-            >
-              <option value="5">5%</option>
-              <option value="0">0%</option>
-            </select>
-          )}
-        </Field>
+      {priced && (
+        <TaxCodeField
+          side="sales"
+          value={taxCode}
+          readOnly={taxCodeFixed}
+          stock={false}
+          onChange={(code) => onChange({ taxCode: code })}
+        />
       )}
       {line.trackBatch && movesStock && !isReturn && (
         <Field label={t("inventory.stock.batch")} className="w-48">

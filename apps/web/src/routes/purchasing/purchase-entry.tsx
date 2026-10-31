@@ -8,20 +8,12 @@ import { CodeTag } from "@/components/code-tag";
 import { besideField, Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  accountLabel,
-  fromFils,
-  money,
-  todayIso,
-  useAccounts,
-  useBranches,
-  vatFils,
-} from "@/routes/accounts/queries";
+import { accountLabel, fromFils, money, todayIso, useAccounts, useBranches } from "@/routes/accounts/queries";
 import { localName } from "@/routes/catalog/product-form";
 import { errorCode, unwrap, useProducts } from "@/routes/catalog/queries";
 import { ComingSoon } from "@/routes/coming-soon";
 import { qty as shortQty, useStockProduct, useWarehouses } from "@/routes/inventory/queries";
-import { useParties } from "@/routes/parties/queries";
+import { useParties, useParty } from "@/routes/parties/queries";
 import {
   DECIMAL6,
   isPurchaseDocType,
@@ -37,6 +29,15 @@ import {
   type PurchaseLineIn,
 } from "@/routes/purchasing/queries";
 import { BackToPurchases } from "@/routes/purchasing/purchases";
+import {
+  useCodeInfo,
+  resolveCode,
+  splitFils,
+  useDefaultPriceMode,
+  type NoVatReason,
+  type PriceMode,
+} from "@/routes/tax/tax";
+import { PriceModeFields, TaxCodeField } from "@/routes/tax/tax-fields";
 import { useBusiness } from "@/shell/use-business";
 
 /** Accounts an expense or service line may debit (the API refuses cash, bank, control, tax and stock). */
@@ -50,7 +51,12 @@ interface LineState {
   unit: string;
   qty: string;
   price: string;
-  vat: "5" | "0";
+  /** The tax code the user chose; empty: the default (the line followed, the supplier's, the item's, SR). */
+  taxCode: string;
+  /** The item's own purchase code; none: standard rated. */
+  itemCode: string | null;
+  /** Goods kept in stock: blocked VAT (SR-B) is never offered on them (it would change the stock's cost). */
+  stocked: boolean;
   accountId: string;
   description: string;
   batchNo: string;
@@ -70,7 +76,9 @@ const emptyLine = (kind: LineState["kind"] = "item"): LineState => ({
   unit: "",
   qty: kind === "expense" ? "1" : "",
   price: "",
-  vat: "5",
+  taxCode: "",
+  itemCode: null,
+  stocked: kind === "item",
   accountId: "",
   description: "",
   batchNo: "",
@@ -87,7 +95,6 @@ function fromOpen(o: OpenLine): LineState {
     unit: o.unit ?? "",
     qty: shortQty(o.qty_open),
     price: o.unit_price === null || o.unit_price === undefined ? "" : shortQty(o.unit_price),
-    vat: Number(o.vat_rate) > 0 ? "5" : "0",
     source: o,
   };
 }
@@ -150,6 +157,7 @@ function PurchaseEntryPage({
   const [reuse, setReuse] = useState("");
   const [tried, setTried] = useState(false);
   const [lockReason, setLockReason] = useState<string | null>(null);
+  const [modeChoice, setModeChoice] = useState<{ mode: PriceMode; reason: NoVatReason | null } | null>(null);
 
   const branch = branchId || branches.data?.[0]?.id || "";
   const ownWarehouses = (warehouses.data ?? []).filter((w) => w.branch_id === branch);
@@ -169,6 +177,33 @@ function PurchaseEntryPage({
   const isBill = kind === "purchase_bill";
   // Nothing is owed yet on a receipt or on returning goods not yet billed, so no VAT (as the API posts it).
   const noVat = kind === "goods_receipt" || (isReturn && start?.doc.doc_type === "goods_receipt");
+  // VAT (M1.10d): a document that follows another keeps its price mode (a return always does); a new one starts
+  // from the setting. Purchases record the VAT charged whether or not the business is registered (as the API).
+  const defaultMode = useDefaultPriceMode(branch);
+  const modeFixed = !!start?.doc.price_mode;
+  const mode: PriceMode =
+    (start?.doc.price_mode as PriceMode | null | undefined) ??
+    modeChoice?.mode ??
+    defaultMode ??
+    "vat_exclusive";
+  const reason: NoVatReason | null =
+    mode === "no_vat"
+      ? ((start?.doc.no_vat_reason ?? modeChoice?.reason ?? "zero_rated") as NoVatReason)
+      : null;
+  const supplier = useParty(supplierId);
+  const codeInfo = useCodeInfo("purchase");
+  const codeOf = (l: LineState): string =>
+    resolveCode({
+      side: "purchase",
+      registered: true,
+      mode,
+      reason,
+      typed: isReturn ? null : l.taxCode,
+      followed: l.source ? (l.source.tax_code ?? (Number(l.source.vat_rate) > 0 ? "SR" : "OS")) : null,
+      party: supplier.data?.purchase_tax_code,
+      product: l.kind === "item" ? l.itemCode : null,
+    });
+  const codeFixed = isReturn || mode === "no_vat";
   const needsWarehouse =
     kind === "goods_receipt" ||
     isReturn ||
@@ -193,7 +228,7 @@ function PurchaseEntryPage({
           account_id: l.accountId,
           qty: "1",
           unit_price: price,
-          vat_rate: l.vat,
+          tax_code: l.taxCode && !codeFixed ? (l.taxCode as PurchaseLineIn["tax_code"]) : null,
           description: l.description.trim() || null,
         });
         continue;
@@ -204,8 +239,9 @@ function PurchaseEntryPage({
       if (l.source) line.source_line_id = l.source.line_id;
       if (!isReturn) {
         if (price) line.unit_price = price;
-        // A receipt carries no VAT: its rate comes from the order, as the default for the bill.
-        if (!noVat) line.vat_rate = l.vat;
+        // Only a code the user chose: otherwise the API applies the same default the screen shows. A receipt
+        // carries no VAT; its code (from the order) is the default for the bill.
+        if (l.taxCode && !codeFixed && !noVat) line.tax_code = l.taxCode as PurchaseLineIn["tax_code"];
       }
       if (l.trackBatch && !isReturn && kind !== "purchase_order") {
         if (!l.batchNo.trim()) return "purchasing.entry.needBatch";
@@ -219,7 +255,8 @@ function PurchaseEntryPage({
     if (out.length === 0) return "purchasing.entry.noLines";
     return {
       doc_type: kind,
-      price_mode: "vat_exclusive", // price modes on screen come with M1.10d
+      price_mode: mode,
+      no_vat_reason: reason,
       business_id: current.id,
       branch_id: branch,
       doc_date: date,
@@ -277,15 +314,20 @@ function PurchaseEntryPage({
   }
 
   // Totals as the API will compute them: per line, VAT half-up to the fils (decision A3).
+  // Reverse-charge VAT is self-assessed: shown, and not owed to the supplier (rules 29, 30).
   let subtotal = 0;
   let vat = 0;
+  let reverseCharge = 0;
   for (const l of lines) {
     const price = isReturn ? (l.source?.unit_price ?? "") : l.price.trim();
-    const net =
+    const amount =
       l.kind === "expense" ? netFils("1", price) : netFils(l.qty.trim(), price ? shortQty(price) : "");
+    const info = codeInfo(codeOf(l));
+    const [net, splitVat] = splitFils(amount, info.rate, mode);
+    const lineVat = noVat ? 0 : splitVat;
     subtotal += net;
-    const rate = noVat ? 0 : isReturn ? Number(l.source?.vat_rate ?? 0) : Number(l.vat);
-    vat += vatFils(net, rate);
+    vat += lineVat;
+    if (info.treatment === "reverse_charge") reverseCharge += lineVat;
   }
 
   const problem = typeof built === "string" ? built : null;
@@ -435,6 +477,12 @@ function PurchaseEntryPage({
             />
           )}
         </Field>
+        <PriceModeFields
+          mode={mode}
+          reason={reason}
+          fixed={modeFixed}
+          onChange={(m, r) => setModeChoice({ mode: m, reason: r })}
+        />
       </div>
 
       <fieldset className="flex flex-col gap-3">
@@ -449,6 +497,8 @@ function PurchaseEntryPage({
             line={l}
             index={i}
             expenseAccounts={expenseAccounts}
+            taxCode={codeOf(l)}
+            taxCodeFixed={codeFixed}
             removable={lines.length > 1 || !!l.source}
             onChange={(patch) => update(l.key, patch)}
             onRemove={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
@@ -495,9 +545,17 @@ function PurchaseEntryPage({
         <dd className="text-right tabular-nums">
           <span dir="ltr">{money(fromFils(vat))}</span>
         </dd>
+        {reverseCharge > 0 && (
+          <>
+            <dt>{t("tax.reverseCharge")}</dt>
+            <dd className="text-right tabular-nums">
+              <span dir="ltr">-{money(fromFils(reverseCharge))}</span>
+            </dd>
+          </>
+        )}
         <dt className="font-semibold">{t("purchasing.doc.total")}</dt>
         <dd className="text-right font-semibold tabular-nums">
-          <span dir="ltr">{money(fromFils(subtotal + vat))}</span>
+          <span dir="ltr">{money(fromFils(subtotal + vat - reverseCharge))}</span>
         </dd>
       </dl>
 
@@ -568,6 +626,8 @@ function PurchaseLine({
   line,
   index,
   expenseAccounts,
+  taxCode,
+  taxCodeFixed,
   removable,
   onChange,
   onRemove,
@@ -576,6 +636,8 @@ function PurchaseLine({
   line: LineState;
   index: number;
   expenseAccounts: { id: string; code: string; name_en: string; name_ar: string }[];
+  taxCode: string;
+  taxCodeFixed: boolean;
   removable: boolean;
   onChange: (patch: Partial<LineState>) => void;
   onRemove: () => void;
@@ -596,6 +658,8 @@ function PurchaseLine({
         unit: chosen.base_unit,
         trackBatch: chosen.track_batch,
         trackExpiry: chosen.track_expiry,
+        itemCode: chosen.purchase_tax_code ?? null,
+        stocked: chosen.product_type === "stock",
       });
     }
   }, [needsDefaults, chosen, onChange]);
@@ -611,20 +675,15 @@ function PurchaseLine({
       ×
     </Button>
   );
-  const vatField = !isReturn && kind !== "goods_receipt" && (
-    <Field label={t("purchasing.doc.vatRate")} className="w-24">
-      {(p) => (
-        <select
-          {...p}
-          className={inputClass}
-          value={line.vat}
-          onChange={(e) => onChange({ vat: e.target.value as LineState["vat"] })}
-        >
-          <option value="5">5%</option>
-          <option value="0">0%</option>
-        </select>
-      )}
-    </Field>
+  // A receipt carries no VAT (nothing is owed yet): its code, from the order, waits for the bill.
+  const vatField = kind !== "goods_receipt" && (
+    <TaxCodeField
+      side="purchase"
+      value={taxCode}
+      readOnly={taxCodeFixed}
+      stock={line.stocked}
+      onChange={(code) => onChange({ taxCode: code })}
+    />
   );
 
   if (line.kind === "expense") {
@@ -706,7 +765,16 @@ function PurchaseLine({
                 className={cn(inputClass, "min-w-0 flex-1")}
                 value={line.productId}
                 onChange={(e) =>
-                  onChange({ productId: e.target.value, variantId: "", unit: "", batchNo: "", expiry: "" })
+                  onChange({
+                    productId: e.target.value,
+                    variantId: "",
+                    unit: "",
+                    batchNo: "",
+                    expiry: "",
+                    taxCode: "",
+                    itemCode: null,
+                    stocked: true,
+                  })
                 }
               >
                 <option value="">{t("accounts.voucher.choose")}</option>

@@ -22,8 +22,8 @@ const business = (id: string, en: string, ar: string) => ({
   legal_name_en: en,
   legal_name_ar: ar,
   trade_license_no: null,
-  trn: null,
-  vat_registered: false,
+  trn: "100000000000003",
+  vat_registered: true, // the beachhead customer: a VAT-registered trader
   base_currency: "AED",
   fiscal_year_start_month: 1,
   time_zone: "Asia/Dubai",
@@ -34,6 +34,30 @@ const business = (id: string, en: string, ar: string) => ({
 export const BUSINESSES = [
   business("b1", "Al Noor Trading LLC", "شركة النور للتجارة"),
   business("b2", "Al Noor Textiles LLC", "شركة النور للأقمشة"),
+];
+
+const code = (side: string, c: string, rate: string, treatment: string, en: string, ar: string) => ({
+  side,
+  code: c,
+  rate,
+  treatment,
+  name_en: en,
+  name_ar: ar,
+});
+
+/** The registry as `GET /tax-codes` answers it (seeds/tax_codes/ae.json). */
+export const TAX_CODES = [
+  code("sales", "SR", "5", "output", "Standard rated 5%", "خاضع للنسبة الأساسية 5%"),
+  code("sales", "ZR", "0", "none", "Zero rated", "خاضع لنسبة الصفر"),
+  code("sales", "EX", "0", "none", "Exempt", "معفى"),
+  code("sales", "OS", "0", "none", "Out of scope", "خارج النطاق"),
+  code("purchase", "SR", "5", "recoverable", "Standard rated 5%, recoverable", "قابل للاسترداد 5%"),
+  code("purchase", "SR-B", "5", "blocked", "5%, input VAT blocked", "5%، غير قابلة للاسترداد"),
+  code("purchase", "ZR", "0", "none", "Zero rated", "خاضع لنسبة الصفر"),
+  code("purchase", "EX", "0", "none", "Exempt", "معفى"),
+  code("purchase", "OS", "0", "none", "Out of scope", "خارج النطاق"),
+  code("purchase", "RC-S", "5", "reverse_charge", "Reverse charge, imported services", "احتساب عكسي، خدمات"),
+  code("purchase", "RC-G", "5", "reverse_charge", "Reverse charge, imported goods", "احتساب عكسي، بضائع"),
 ];
 
 type Routes = Parameters<typeof fakeApi>[0];
@@ -51,6 +75,7 @@ export function shopApi({ signedIn = false, ...rest }: Options = {}) {
     "POST /auth/logout": { status: 204, body: null },
     "GET /me": { status: 200, body: ME },
     "GET /businesses": { status: 200, body: BUSINESSES.slice(0, 1) },
+    "GET /tax-codes": { status: 200, body: TAX_CODES },
     ...overrides,
   });
 }

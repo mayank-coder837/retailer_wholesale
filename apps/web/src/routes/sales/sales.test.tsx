@@ -4,7 +4,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { App } from "@/app";
 import { initI18n, setLanguage } from "@/i18n";
-import { shopApi } from "@/test/shop-api";
+import { BUSINESSES, shopApi } from "@/test/shop-api";
 
 const CUSTOMER = {
   id: "c1",
@@ -419,5 +419,174 @@ describe("Printing a sales document", () => {
     expect(
       await screen.findByText("You don't have permission to print or export this document."),
     ).toBeInTheDocument();
+  });
+});
+
+describe("VAT on sales entry", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await setLanguage("en");
+  });
+
+  const postedBody = (calls: { method: string; path: string; body: unknown }[]) =>
+    calls.find((c) => c.method === "POST" && c.path === "/sales-documents")?.body as {
+      price_mode: string;
+      no_vat_reason: string | null;
+      lines: Record<string, unknown>[];
+    };
+
+  it("takes VAT out of prices that include it, and lets the API pick the default code", async () => {
+    window.location.hash = "#/sales/new/sales_invoice";
+    const { api, calls } = sellerApi({ "POST /sales-documents": { status: 201, body: doc() } });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await chooseCustomerAndItem(user);
+    await user.type(screen.getByLabelText("Quantity"), "10");
+    await waitFor(() => expect(screen.getByLabelText("Price per unit")).toHaveValue("12"));
+    expect(screen.getByLabelText("Tax")).toHaveValue("SR");
+    await user.selectOptions(screen.getByLabelText("Prices"), "vat_inclusive");
+    // 120.00 including VAT: VAT 120 × 5/105 = 5.714 → 5.71, net the rest.
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal114.29VAT5.71Total120.00");
+    await user.click(screen.getByRole("button", { name: "Post" }));
+
+    await screen.findByRole("heading", { name: /INV-2026-00001/ });
+    const body = postedBody(calls);
+    expect([body.price_mode, body.no_vat_reason]).toEqual(["vat_inclusive", null]);
+    expect(body.lines[0]).not.toHaveProperty("tax_code");
+    expect(body.lines[0]).not.toHaveProperty("vat_rate");
+  });
+
+  it("sends a code the user chose", async () => {
+    window.location.hash = "#/sales/new/sales_invoice";
+    const { api, calls } = sellerApi({ "POST /sales-documents": { status: 201, body: doc() } });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await chooseCustomerAndItem(user);
+    await user.type(screen.getByLabelText("Quantity"), "10");
+    await waitFor(() => expect(screen.getByLabelText("Price per unit")).toHaveValue("12"));
+    await user.selectOptions(screen.getByLabelText("Tax"), "ZR");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal120.00VAT0.00Total120.00");
+    await user.click(screen.getByRole("button", { name: "Post" }));
+    await screen.findByRole("heading", { name: /INV-2026-00001/ });
+    expect(postedBody(calls).lines[0]).toMatchObject({ tax_code: "ZR" });
+  });
+
+  it("defaults to the customer's own code", async () => {
+    window.location.hash = "#/sales/new/sales_invoice";
+    const { api } = sellerApi({
+      "GET /parties/c1": { status: 200, body: { ...CUSTOMER, sales_tax_code: "ZR" } },
+    });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await chooseCustomerAndItem(user);
+    await user.type(screen.getByLabelText("Quantity"), "10");
+    await waitFor(() => expect(screen.getByLabelText("Tax")).toHaveValue("ZR"));
+    await waitFor(() =>
+      expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal120.00VAT0.00Total120.00"),
+    );
+  });
+
+  it("without VAT, every line takes the reason's code", async () => {
+    window.location.hash = "#/sales/new/sales_invoice";
+    const { api, calls } = sellerApi({ "POST /sales-documents": { status: 201, body: doc() } });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await chooseCustomerAndItem(user);
+    await user.type(screen.getByLabelText("Quantity"), "10");
+    await waitFor(() => expect(screen.getByLabelText("Price per unit")).toHaveValue("12"));
+    await user.selectOptions(screen.getByLabelText("Prices"), "no_vat");
+    await user.selectOptions(screen.getByLabelText("Why no VAT"), "exempt");
+    expect(screen.getByLabelText("Tax")).toHaveValue("EX");
+    expect(screen.getByLabelText("Tax")).toBeDisabled();
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("VAT0.00Total120.00");
+    await user.click(screen.getByRole("button", { name: "Post" }));
+    await screen.findByRole("heading", { name: /INV-2026-00001/ });
+    const body = postedBody(calls);
+    expect([body.price_mode, body.no_vat_reason]).toEqual(["no_vat", "exempt"]);
+    expect(body.lines[0]).not.toHaveProperty("tax_code");
+  });
+
+  it("starts in the price mode the settings choose", async () => {
+    window.location.hash = "#/sales/new/sales_invoice";
+    const { api, calls } = sellerApi({
+      "GET /settings": {
+        status: 200,
+        body: [
+          {
+            key: "sales.default_price_mode",
+            value: "vat_inclusive",
+            source: "branch",
+            scopes: ["tenant", "business", "branch", "user"],
+            description: "",
+          },
+        ],
+      },
+    });
+    render(<App api={api} />);
+    await waitFor(() => expect(screen.getByLabelText("Prices")).toHaveValue("vat_inclusive"));
+    expect(calls.find((c) => c.path === "/settings")?.query).toBe("?branch_id=br1");
+  });
+
+  it("charges no VAT for a business that is not registered", async () => {
+    window.location.hash = "#/sales/new/sales_invoice";
+    const { api } = sellerApi({
+      "GET /businesses": { status: 200, body: [{ ...BUSINESSES[0], vat_registered: false, trn: null }] },
+    });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await chooseCustomerAndItem(user);
+    await user.type(screen.getByLabelText("Quantity"), "10");
+    await waitFor(() => expect(screen.getByLabelText("Price per unit")).toHaveValue("12"));
+    expect(
+      screen.getByText("This business is not VAT-registered, so no VAT is charged."),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Prices")).toBeNull();
+    expect(screen.getByLabelText("Tax")).toHaveValue("OS");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal120.00VAT0.00Total120.00");
+  });
+
+  it("an invoice from an order keeps the order's price mode", async () => {
+    window.location.hash = "#/sales/new/sales_invoice?from=so1";
+    const order = doc({
+      id: "so1",
+      doc_type: "sales_order",
+      number: "SO-2026-00001",
+      price_mode: "vat_inclusive",
+    });
+    const open = {
+      line_id: "l1",
+      variant_id: "v1",
+      sku: "FAB",
+      name_en: "Fabric",
+      name_ar: "قماش",
+      unit: "pcs",
+      factor_to_base: "1.000000",
+      qty_open_base: "10.000000",
+      qty_open: "10.000000",
+      unit_price: "12.600000",
+      price_mode: "vat_inclusive",
+      tax_code: "SR",
+      vat_rate: "5",
+    };
+    const { api } = sellerApi({
+      "GET /sales-documents/so1": { status: 200, body: order },
+      "GET /sales-documents/so1/open-lines": { status: 200, body: [open] },
+    });
+    render(<App api={api} />);
+    const prices = await screen.findByLabelText("Prices");
+    expect(prices).toHaveValue("vat_inclusive");
+    expect(prices).toBeDisabled();
+    // 126.00 including VAT: 6.00 VAT, 120.00 net.
+    await waitFor(() =>
+      expect(screen.getByLabelText("Totals")).toHaveTextContent("Subtotal120.00VAT6.00Total126.00"),
+    );
   });
 });
