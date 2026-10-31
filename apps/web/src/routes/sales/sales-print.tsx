@@ -57,7 +57,11 @@ export function SalesPrintPage() {
               </Button>
             ))}
           </div>
-          <Button disabled={!html.data} onClick={() => frame.current?.contentWindow?.print()}>
+          {/* Not while the page on screen is still the other language (or document) waiting to be replaced. */}
+          <Button
+            disabled={!html.data || html.isPlaceholderData}
+            onClick={() => frame.current?.contentWindow?.print()}
+          >
             {t("print.print")}
           </Button>
         </div>
@@ -78,8 +82,9 @@ export function SalesPrintPage() {
           className="w-full max-w-[210mm] self-center rounded-lg border bg-white shadow-sm"
           style={{ height }}
           onLoad={(e) => {
-            const body = e.currentTarget.contentDocument?.documentElement;
-            if (body) setHeight(body.scrollHeight + 16);
+            // The content's own height (the root element is never shorter than the frame, so it would only grow).
+            const body = e.currentTarget.contentDocument?.body;
+            if (body) setHeight(body.scrollHeight + 2);
           }}
         />
       )}

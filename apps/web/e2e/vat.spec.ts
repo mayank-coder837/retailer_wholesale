@@ -103,10 +103,16 @@ test("an invoice in the VAT return, opened from its box and printed", async ({ p
   await docs.getByRole("link", { name: number }).click();
   await page.getByRole("link", { name: "Print / Save as PDF" }).click();
   const printed = page.frameLocator('iframe[title="Print preview"]');
+  const print = page.getByRole("button", { name: "Print / Save as PDF" });
+  await expect(printed.locator('html[dir="ltr"]')).toBeAttached();
   await expect(printed.getByText("Tax Invoice", { exact: false }).first()).toBeVisible();
   await expect(printed.getByText(number).first()).toBeVisible();
+  await expect(print).toBeEnabled();
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/print-en.png`, fullPage: true });
+  // Both languages show both titles: the page's direction tells which one arrived.
   await page.getByRole("group", { name: "Language of the printed document" }).getByText("العربية").click();
-  await expect(printed.getByText("فاتورة ضريبية").first()).toBeVisible();
+  await expect(printed.locator('html[dir="rtl"]')).toBeAttached();
+  await expect(printed.getByText(number).first()).toBeVisible();
+  await expect(print).toBeEnabled();
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/print-ar.png`, fullPage: true });
 });
