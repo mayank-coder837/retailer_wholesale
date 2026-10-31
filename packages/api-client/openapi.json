@@ -17079,6 +17079,11 @@
           "may_go_below_min": {
             "type": "boolean",
             "title": "May Go Below Min"
+          },
+          "price_mode": {
+            "$ref": "#/components/schemas/PriceMode",
+            "description": "The mode the price is in: a last price in its invoice's; lists, promotions and base prices exclude VAT (R9). A screen in another mode does not use it as it is.",
+            "default": "vat_exclusive"
           }
         },
         "type": "object",
@@ -18034,6 +18039,11 @@
             ],
             "title": "Sales Tax Code",
             "description": "The item's own sales code (none: SR): a new line's default after the party's"
+          },
+          "price_mode": {
+            "$ref": "#/components/schemas/PriceMode",
+            "description": "The mode that invoice's price was typed in",
+            "default": "vat_exclusive"
           }
         },
         "type": "object",

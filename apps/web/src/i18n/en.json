@@ -1374,6 +1374,7 @@
     },
     "code": "Tax",
     "notRegistered": "This business is not VAT-registered, so no VAT is charged.",
-    "reverseCharge": "Reverse charge (you account for it)"
+    "reverseCharge": "Reverse charge (you account for it)",
+    "otherMode": "Suggested price {{price}} ({{mode}}): type this document's price."
   }
 }

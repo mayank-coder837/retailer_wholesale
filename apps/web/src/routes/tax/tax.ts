@@ -41,15 +41,20 @@ export function useCodeInfo(side: Side): (code: string) => { rate: string; treat
 }
 
 /** The price mode a new document starts in: the setting `sales.default_price_mode` for this branch and user. */
-export function useDefaultPriceMode(branchId: string): PriceMode | undefined {
+export function useDefaultPriceMode(branchId: string): { mode: PriceMode | undefined; ready: boolean } {
   const api = useApi();
   const settings = useQuery({
     queryKey: ["settings", branchId],
     enabled: !!branchId,
+    retry: false,
     queryFn: async () => unwrap(await api.GET("/settings", { params: { query: { branch_id: branchId } } })),
   });
   const value = settings.data?.find((s) => s.key === "sales.default_price_mode")?.value;
-  return PRICE_MODES.includes(value as PriceMode) ? (value as PriceMode) : undefined;
+  return {
+    mode: PRICE_MODES.includes(value as PriceMode) ? (value as PriceMode) : undefined,
+    // Unreadable settings: excluding VAT, the API's own default.
+    ready: settings.isSuccess || settings.isError,
+  };
 }
 
 /** The code a line takes, in the API's order (`tax.resolve`): a sales business that is not registered and the

@@ -1129,6 +1129,7 @@ async def last_sale(
         factor_to_base=row.factor_to_base,
         document_number=doc.number,
         document_date=doc.doc_date,
+        price_mode=doc.price_mode or PriceMode.VAT_EXCLUSIVE.value,
     )
 
 
@@ -1163,6 +1164,7 @@ async def sales_history(
                 unit=unit,
                 unit_price=row.unit_price,
                 sales_tax_code=item.sales_tax_code,
+                price_mode=PriceMode(doc.price_mode or PriceMode.VAT_EXCLUSIVE.value),
             )
         )
         if len(out) >= limit:

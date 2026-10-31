@@ -58,6 +58,8 @@ interface LineState {
   price: string;
   priceTouched: boolean;
   priceSource: string | null;
+  /** The mode a price filled in from history was typed in; none: typed here. Another mode's price is not used. */
+  priceMode: PriceMode | null;
   /** The tax code the user chose; empty: the default (the line followed, the customer's, the item's, SR). */
   taxCode: string;
   /** The item's own sales code (from the product or the history line); none: standard rated. */
@@ -80,6 +82,7 @@ const emptyLine = (): LineState => ({
   price: "",
   priceTouched: false,
   priceSource: null,
+  priceMode: null,
   taxCode: "",
   itemCode: null,
   batchId: "",
@@ -102,6 +105,16 @@ function fromOpen(o: OpenSalesLine): LineState {
   };
 }
 
+/** Prices excluding VAT and prices without VAT are both net; only an inclusive price differs. */
+function sameBasis(a: PriceMode, b: PriceMode): boolean {
+  return (a === "vat_inclusive") === (b === "vat_inclusive");
+}
+
+/** The no-VAT reason behind a line's code (a delivery note keeps only its lines' codes). */
+function reasonOf(code: string | null | undefined): NoVatReason | null {
+  return code === "ZR" ? "zero_rated" : code === "EX" ? "exempt" : code === "OS" ? "out_of_scope" : null;
+}
+
 function fromHistory(h: HistoryLine): LineState {
   return {
     ...emptyLine(),
@@ -111,6 +124,7 @@ function fromHistory(h: HistoryLine): LineState {
     price: h.unit_price ? shortQty(h.unit_price) : "",
     priceTouched: !!h.unit_price,
     priceSource: h.unit_price ? `last_price:${h.number}` : null,
+    priceMode: h.price_mode ?? "vat_exclusive",
     itemCode: h.sales_tax_code ?? null,
     fixed: { sku: h.sku, name_en: h.name_en, name_ar: h.name_ar },
   };
@@ -204,19 +218,24 @@ function SalesEntryPage({
   const followsDelivery = start?.doc.doc_type === "delivery_note";
   const movesStock = isDelivery || isReturn || (isInvoice && !followsDelivery);
 
-  // VAT (M1.10d): a document that follows another keeps its price mode (a return always does); a new one starts
-  // from the setting. A business that is not registered charges no VAT: every line is out of scope.
+  // VAT (M1.10d): a document that follows another keeps its price mode (a return always does) — a delivery note
+  // has none of its own, so its open lines carry the order's; a new one starts from the setting, fixed once it
+  // arrives so it never changes under typed prices. A business that is not registered charges no VAT.
   const registered = current?.vat_registered ?? true;
-  const defaultMode = useDefaultPriceMode(branch);
-  const modeFixed = !!start?.doc.price_mode;
-  const mode: PriceMode =
-    (start?.doc.price_mode as PriceMode | null | undefined) ??
-    modeChoice?.mode ??
-    (registered ? defaultMode : undefined) ??
-    "vat_exclusive";
+  const followedLine = start?.open.find((o) => o.price_mode);
+  const sourceMode = (start?.doc.price_mode ?? followedLine?.price_mode ?? null) as PriceMode | null;
+  const defaults = useDefaultPriceMode(branch);
+  // Adjusted while rendering (React's way for state that follows other data), once.
+  if (!sourceMode && !modeChoice && defaults.ready)
+    setModeChoice({ mode: defaults.mode ?? "vat_exclusive", reason: null });
+  const modeFixed = !!sourceMode;
+  const mode: PriceMode = (registered ? (sourceMode ?? modeChoice?.mode) : undefined) ?? "vat_exclusive";
   const reason: NoVatReason | null =
     mode === "no_vat"
-      ? ((start?.doc.no_vat_reason ?? modeChoice?.reason ?? "zero_rated") as NoVatReason)
+      ? ((start?.doc.no_vat_reason ??
+          reasonOf(followedLine?.tax_code) ??
+          modeChoice?.reason ??
+          "zero_rated") as NoVatReason)
       : null;
   const customer = useParty(customerId);
   const codeInfo = useCodeInfo("sales");
@@ -255,11 +274,28 @@ function SalesEntryPage({
     })),
   });
   const quoteOf = (i: number): Quote | undefined => quotes[i]?.data;
+  // A suggested price (the last price, a list, the history) typed in another mode is not used as it is (R9).
+  const suggestionOf = (l: LineState, i: number): { price: string; mode: PriceMode } | null => {
+    if (isReturn) return null;
+    if (l.priceTouched) return l.priceMode ? { price: l.price.trim(), mode: l.priceMode } : null;
+    const q = quoteOf(i);
+    return q?.price ? { price: shortQty(q.price), mode: q.price_mode ?? "vat_exclusive" } : null;
+  };
   const priceOf = (l: LineState, i: number): string => {
     if (isReturn) return l.source?.unit_price ? shortQty(l.source.unit_price) : "";
-    if (l.priceTouched) return l.price.trim();
-    const q = quoteOf(i);
-    return q?.price ? shortQty(q.price) : "";
+    const suggested = suggestionOf(l, i);
+    if (suggested) return sameBasis(suggested.mode, mode) ? suggested.price : "";
+    return l.priceTouched ? l.price.trim() : "";
+  };
+  const otherModeOf = (l: LineState, i: number) => {
+    const suggested = suggestionOf(l, i);
+    return suggested && !sameBasis(suggested.mode, mode) ? suggested : null;
+  };
+  // Minimum prices exclude VAT: an inclusive price is compared without its VAT (as the API).
+  const netPriceOf = (l: LineState, i: number): number => {
+    const price = Number(priceOf(l, i));
+    const rate = Number(codeInfo(codeOf(l)).rate);
+    return mode === "vat_inclusive" && rate ? (price * 100) / (100 + rate) : price;
   };
 
   function build(): SalesDocIn | string {
@@ -381,6 +417,9 @@ function SalesEntryPage({
   const customerOptions = customers.data ?? [];
   const chosenMissing = customerId && !customerOptions.some((p) => p.id === customerId);
   const chosenReuse = released.data?.find((r) => String(r.number) === reuse);
+
+  // A new document waits for its price mode, so prices are never typed in one mode and posted in another.
+  if (registered && priced && !sourceMode && !modeChoice) return <p>{t("common.loading")}</p>;
 
   return (
     <div className="flex max-w-5xl flex-col gap-5">
@@ -575,6 +614,8 @@ function SalesEntryPage({
               index={i}
               quote={quoteOf(i)}
               price={priceOf(l, i)}
+              netPrice={netPriceOf(l, i)}
+              otherMode={otherModeOf(l, i)}
               taxCode={codeOf(l)}
               taxCodeFixed={codeFixed}
               businessId={current?.id}
@@ -841,6 +882,8 @@ function SalesLine({
   index,
   quote,
   price,
+  netPrice,
+  otherMode,
   taxCode,
   taxCodeFixed,
   businessId,
@@ -855,6 +898,8 @@ function SalesLine({
   index: number;
   quote: Quote | undefined;
   price: string;
+  netPrice: number;
+  otherMode: { price: string; mode: PriceMode } | null;
   taxCode: string;
   taxCodeFixed: boolean;
   businessId: string | undefined;
@@ -892,7 +937,7 @@ function SalesLine({
   }, [needsDefaults, chosen, onChange]);
 
   const minimum = quote?.min_price ? Number(quote.min_price) : null;
-  const belowMin = priced && !isReturn && minimum !== null && price !== "" && Number(price) < minimum;
+  const belowMin = priced && !isReturn && minimum !== null && price !== "" && netPrice < minimum;
   const fixed = line.fixed;
   return (
     <div className="flex flex-wrap items-start gap-2 rounded-lg border p-3">
@@ -1011,11 +1056,13 @@ function SalesLine({
           hint={
             isReturn
               ? undefined
-              : line.priceTouched
-                ? undefined
-                : quote?.price_source
-                  ? t(`sales.priceSource.${quote.source}`, { name: quote.source_name })
-                  : undefined
+              : otherMode
+                ? t("tax.otherMode", { price: otherMode.price, mode: t(`tax.modes.${otherMode.mode}`) })
+                : line.priceTouched
+                  ? undefined
+                  : quote?.price_source
+                    ? t(`sales.priceSource.${quote.source}`, { name: quote.source_name })
+                    : undefined
           }
           error={belowMin ? t("sales.entry.belowMin", { min: shortQty(quote!.min_price!) }) : null}
         >
@@ -1027,7 +1074,14 @@ function SalesLine({
               inputMode="decimal"
               readOnly={isReturn}
               value={price}
-              onChange={(e) => onChange({ price: e.target.value, priceTouched: true, priceSource: "manual" })}
+              onChange={(e) =>
+                onChange({
+                  price: e.target.value,
+                  priceTouched: true,
+                  priceSource: "manual",
+                  priceMode: null,
+                })
+              }
             />
           )}
         </Field>

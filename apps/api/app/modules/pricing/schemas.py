@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.modules.pricing.engine import PriceSource, PromotionKind
 from app.modules.pricing.models import PromotionScope
+from app.modules.tax.codes import PriceMode
 
 Money = Field(ge=0, max_digits=19, decimal_places=4)
 Name = Field(min_length=1, max_length=100)
@@ -140,3 +141,8 @@ class QuoteOut(BaseModel):
     min_price: Decimal | None
     below_min: bool
     may_go_below_min: bool
+    price_mode: PriceMode = Field(
+        default=PriceMode.VAT_EXCLUSIVE,
+        description="The mode the price is in: a last price in its invoice's; lists, promotions and base "
+        "prices exclude VAT (R9). A screen in another mode does not use it as it is.",
+    )

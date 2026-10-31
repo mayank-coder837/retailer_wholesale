@@ -178,14 +178,15 @@ function PurchaseEntryPage({
   // Nothing is owed yet on a receipt or on returning goods not yet billed, so no VAT (as the API posts it).
   const noVat = kind === "goods_receipt" || (isReturn && start?.doc.doc_type === "goods_receipt");
   // VAT (M1.10d): a document that follows another keeps its price mode (a return always does); a new one starts
-  // from the setting. Purchases record the VAT charged whether or not the business is registered (as the API).
-  const defaultMode = useDefaultPriceMode(branch);
-  const modeFixed = !!start?.doc.price_mode;
-  const mode: PriceMode =
-    (start?.doc.price_mode as PriceMode | null | undefined) ??
-    modeChoice?.mode ??
-    defaultMode ??
-    "vat_exclusive";
+  // from the setting, fixed once it arrives so it never changes under typed prices. Purchases record the VAT
+  // charged whether or not the business is registered (as the API).
+  const sourceMode = (start?.doc.price_mode ?? null) as PriceMode | null;
+  const defaults = useDefaultPriceMode(branch);
+  // Adjusted while rendering (React's way for state that follows other data), once.
+  if (!sourceMode && !modeChoice && defaults.ready)
+    setModeChoice({ mode: defaults.mode ?? "vat_exclusive", reason: null });
+  const modeFixed = !!sourceMode;
+  const mode: PriceMode = sourceMode ?? modeChoice?.mode ?? "vat_exclusive";
   const reason: NoVatReason | null =
     mode === "no_vat"
       ? ((start?.doc.no_vat_reason ?? modeChoice?.reason ?? "zero_rated") as NoVatReason)
@@ -335,6 +336,9 @@ function PurchaseEntryPage({
   const name = (x: { name_en: string; name_ar: string }) => (i18n.language === "ar" ? x.name_ar : x.name_en);
   const supplierOptions = suppliers.data ?? [];
   const chosenSupplierMissing = supplierId && !supplierOptions.some((p) => p.id === supplierId);
+
+  // A new document waits for its price mode, so prices are never typed in one mode and posted in another.
+  if (!sourceMode && !modeChoice) return <p>{t("common.loading")}</p>;
 
   return (
     <form

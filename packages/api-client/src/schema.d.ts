@@ -4960,6 +4960,11 @@ export interface components {
             below_min: boolean;
             /** May Go Below Min */
             may_go_below_min: boolean;
+            /**
+             * @description The mode the price is in: a last price in its invoice's; lists, promotions and base prices exclude VAT (R9). A screen in another mode does not use it as it is.
+             * @default vat_exclusive
+             */
+            price_mode: components["schemas"]["PriceMode"];
         };
         /** RefreshIn */
         RefreshIn: {
@@ -5288,6 +5293,11 @@ export interface components {
              * @description The item's own sales code (none: SR): a new line's default after the party's
              */
             sales_tax_code?: string | null;
+            /**
+             * @description The mode that invoice's price was typed in
+             * @default vat_exclusive
+             */
+            price_mode: components["schemas"]["PriceMode"];
         };
         /** SalesLineIn */
         SalesLineIn: {
