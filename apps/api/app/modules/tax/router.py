@@ -8,12 +8,29 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from app.core.authz import PermissionSet
-from app.core.deps import TenantSessionDep
+from app.core.deps import PrincipalDep, TenantSessionDep
 from app.modules.identity.authz import require
-from app.modules.tax import service
-from app.modules.tax.schemas import VatBoxLineOut, VatReturnOut
+from app.modules.tax import codes, service
+from app.modules.tax.schemas import TaxCodeOut, VatBoxLineOut, VatReturnOut
 
 router = APIRouter(tags=["tax"])
+
+
+@router.get("/tax-codes", operation_id="list_tax_codes")
+async def list_tax_codes(_principal: PrincipalDep, side: codes.Side | None = None) -> list[TaxCodeOut]:
+    """The fixed tax codes (seed registry, not editable), for the code on a line; any signed-in user."""
+    return [
+        TaxCodeOut(
+            code=c.code,
+            side=c.side.value,
+            rate=c.rate,
+            treatment=c.treatment.value,
+            name_en=c.name_en,
+            name_ar=c.name_ar,
+        )
+        for s in ([side] if side else list(codes.Side))
+        for c in codes.codes(s)
+    ]
 
 
 @router.get("/vat-returns/draft", operation_id="vat_return_draft")

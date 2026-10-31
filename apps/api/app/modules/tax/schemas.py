@@ -7,6 +7,17 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 
+class TaxCodeOut(BaseModel):
+    """One code of the registry (M1.10d): what entry screens offer on a line."""
+
+    code: str = Field(examples=["SR"])
+    side: str = Field(description="sales or purchase")
+    rate: Decimal = Field(description="Percent, e.g. 5")
+    treatment: str = Field(description="output, recoverable, blocked, reverse_charge or none")
+    name_en: str
+    name_ar: str
+
+
 class VatBoxOut(BaseModel):
     box: str = Field(examples=["1b"])
     label_en: str

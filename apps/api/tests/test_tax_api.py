@@ -286,3 +286,22 @@ async def test_expense_vouchers_and_notes_take_codes_of_their_side(client: Async
         "receipt", [{"party_id": b.customer, "amount": "100", "tax_code": "SR"}], account_id=b.account("1110")
     )
     assert (await client.post("/vouchers", json=receipt, headers=b.h)).status_code == 422
+
+
+async def test_the_tax_codes_are_listed_by_side_for_any_signed_in_user(client: AsyncClient) -> None:
+    assert (await client.get("/tax-codes")).status_code == 401
+    h = bearer(await ok(await client.post("/auth/signup", json=signup_body("codes@shop.ae")), 201))
+    sales = await ok(await client.get("/tax-codes", params={"side": "sales"}, headers=h))
+    assert [(c["code"], c["rate"], c["treatment"]) for c in sales] == [
+        ("SR", "5", "output"),
+        ("ZR", "0", "none"),
+        ("EX", "0", "none"),
+        ("OS", "0", "none"),
+    ]
+    purchase = await ok(await client.get("/tax-codes", params={"side": "purchase"}, headers=h))
+    assert [c["code"] for c in purchase] == ["SR", "SR-B", "ZR", "EX", "OS", "RC-S", "RC-G"]
+    assert {c["side"] for c in purchase} == {"purchase"}
+    assert all(c["name_en"] and c["name_ar"] for c in sales + purchase)
+    every = await ok(await client.get("/tax-codes", headers=h))
+    assert len(every) == len(sales) + len(purchase)
+    assert (await client.get("/tax-codes", params={"side": "both"}, headers=h)).status_code == 422

@@ -8319,6 +8319,65 @@
         }
       }
     },
+    "/tax-codes": {
+      "get": {
+        "tags": [
+          "tax"
+        ],
+        "summary": "List Tax Codes",
+        "description": "The fixed tax codes (seed registry, not editable), for the code on a line; any signed-in user.",
+        "operationId": "list_tax_codes",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "side",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Side"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Side"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxCodeOut"
+                  },
+                  "title": "Response List Tax Codes"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/vat-returns/draft": {
       "get": {
         "tags": [
@@ -17963,6 +18022,18 @@
               }
             ],
             "title": "Unit Price"
+          },
+          "sales_tax_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Tax Code",
+            "description": "The item's own sales code (none: SR): a new line's default after the party's"
           }
         },
         "type": "object",
@@ -18387,6 +18458,14 @@
           "value"
         ],
         "title": "SettingIn"
+      },
+      "Side": {
+        "type": "string",
+        "enum": [
+          "sales",
+          "purchase"
+        ],
+        "title": "Side"
       },
       "SignupIn": {
         "properties": {
@@ -19187,6 +19266,51 @@
           "tenant_id"
         ],
         "title": "SwitchTenantIn"
+      },
+      "TaxCodeOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "examples": [
+              "SR"
+            ]
+          },
+          "side": {
+            "type": "string",
+            "title": "Side",
+            "description": "sales or purchase"
+          },
+          "rate": {
+            "type": "string",
+            "title": "Rate",
+            "description": "Percent, e.g. 5"
+          },
+          "treatment": {
+            "type": "string",
+            "title": "Treatment",
+            "description": "output, recoverable, blocked, reverse_charge or none"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "side",
+          "rate",
+          "treatment",
+          "name_en",
+          "name_ar"
+        ],
+        "title": "TaxCodeOut",
+        "description": "One code of the registry (M1.10d): what entry screens offer on a line."
       },
       "TenantOut": {
         "properties": {

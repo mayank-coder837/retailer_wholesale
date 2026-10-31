@@ -1162,6 +1162,7 @@ async def sales_history(
                 qty=row.qty_entered,
                 unit=unit,
                 unit_price=row.unit_price,
+                sales_tax_code=item.sales_tax_code,
             )
         )
         if len(out) >= limit:

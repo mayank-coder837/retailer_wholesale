@@ -286,10 +286,13 @@ async def test_the_last_price_comes_first_and_the_history_is_the_customers_own(c
         (invoice["number"], "3.000000", "pcs", "10.500000"),
         (f"INV-{TODAY.year}-00001", "1.000000", "carton", "252.000000"),
     ]
+    assert {h["sales_tax_code"] for h in history} == {None}  # standard rated: the item has no code of its own
+    await ok(await client.patch(f"/products/{s.product}", json={"sales_tax_code": "EX"}, headers=s.h))
     found = await ok(
         await client.get(f"/parties/{s.customer}/sales-history", params={**params, "q": "fab"}, headers=s.h)
     )
     assert len(found) == 2
+    assert {h["sales_tax_code"] for h in found} == {"EX"}  # a line added from history knows its default
     none = await ok(
         await client.get(f"/parties/{s.customer}/sales-history", params={**params, "q": "soap"}, headers=s.h)
     )
