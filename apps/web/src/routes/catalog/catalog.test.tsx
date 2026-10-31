@@ -347,7 +347,6 @@ describe("A product's VAT codes", () => {
     expect(await within(tax).findByText("Saved")).toBeInTheDocument();
     expect(calls.find((c) => c.method === "PATCH")?.body).toEqual({
       sales_tax_code: "ZR",
-      purchase_tax_code: null,
     });
   });
 });

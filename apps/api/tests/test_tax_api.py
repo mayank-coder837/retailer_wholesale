@@ -5,6 +5,8 @@ from decimal import Decimal
 from typing import Any
 
 from httpx import AsyncClient
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from tests.api_helpers import bearer, signup_body
 from tests.test_accounting_api import books
@@ -72,6 +74,27 @@ async def test_no_vat_needs_its_reason_and_decides_every_lines_code(client: Asyn
         "0.0000",
         "20.0000",
     )
+
+
+async def test_a_blocked_code_saved_before_the_rule_never_blocks_other_edits(
+    client: AsyncClient, owner_engine: AsyncEngine
+) -> None:
+    s = await seller(client)
+    # Before M1.10d-3 a stock item could take SR-B: plant one, as an older database may hold it.
+    async with owner_engine.begin() as conn:
+        await conn.execute(
+            text("UPDATE product SET purchase_tax_code = 'SR-B' WHERE id = :id"), {"id": s.product}
+        )
+    renamed = await client.patch(f"/products/{s.product}", json={"name_en": "Fabric roll"}, headers=s.h)
+    assert renamed.status_code == 200, renamed.text
+    sales = await client.patch(f"/products/{s.product}", json={"sales_tax_code": "ZR"}, headers=s.h)
+    assert sales.status_code == 200, sales.text
+    again = await client.patch(f"/products/{s.product}", json={"purchase_tax_code": "SR-B"}, headers=s.h)
+    assert again.status_code == 422  # setting it is still refused
+    cleared = await ok(
+        await client.patch(f"/products/{s.product}", json={"purchase_tax_code": None}, headers=s.h)
+    )
+    assert cleared["purchase_tax_code"] is None
 
 
 async def test_codes_default_from_the_customer_then_the_item(client: AsyncClient) -> None:

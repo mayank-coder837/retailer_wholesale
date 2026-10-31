@@ -92,13 +92,15 @@ function ProductTax({ product }: { product: Product }) {
   const [form, setForm] = useState(saved);
   const changed = form.sales !== saved.sales || form.purchase !== saved.purchase;
   const save = useMutation({
-    mutationFn: async () =>
-      unwrap(
-        await api.PATCH("/products/{product_id}", {
-          params: { path: { product_id: product.id } },
-          body: { sales_tax_code: form.sales || null, purchase_tax_code: form.purchase || null },
-        }),
-      ),
+    mutationFn: async () => {
+      // Only what changed: a code saved earlier is never sent back to be checked again.
+      const body: { sales_tax_code?: string | null; purchase_tax_code?: string | null } = {};
+      if (form.sales !== saved.sales) body.sales_tax_code = form.sales || null;
+      if (form.purchase !== saved.purchase) body.purchase_tax_code = form.purchase || null;
+      return unwrap(
+        await api.PATCH("/products/{product_id}", { params: { path: { product_id: product.id } }, body }),
+      );
+    },
     onSuccess: (updated) => queryClient.setQueryData(["product", product.id], updated),
   });
   return (

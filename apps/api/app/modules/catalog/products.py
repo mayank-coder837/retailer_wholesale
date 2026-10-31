@@ -501,7 +501,8 @@ async def update_product(session: AsyncSession, product_id: uuid.UUID, data: Pro
     for field in ("sales_tax_code", "purchase_tax_code"):  # null clears: back to standard rated
         if field in fields:
             setattr(product, field, getattr(data, field))
-    _check_purchase_code(product.product_type, product.purchase_tax_code)
+    if "purchase_tax_code" in fields:  # only a code being set: a code saved earlier never blocks other edits
+        _check_purchase_code(product.product_type, product.purchase_tax_code)
     if data.archived is not None:
         product.archived_at = datetime.now(UTC) if data.archived else None
     await session.flush()
