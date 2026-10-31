@@ -366,3 +366,58 @@ describe("Sales screens", () => {
     expect(screen.queryByRole("button", { name: "Mark as sent" })).toBeNull();
   });
 });
+
+describe("Printing a sales document", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await setLanguage("en");
+  });
+
+  it("leads from a posted invoice to its print preview, in English or Arabic", async () => {
+    window.location.hash = "#/sales/inv1";
+    const { api, calls } = sellerApi({
+      "GET /documents/inv1/print": { status: 200, body: "<html><body><h1>TAX INVOICE</h1></body></html>" },
+    });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    await user.click(await screen.findByRole("link", { name: "Print / Save as PDF" }));
+    const frame = await screen.findByTitle("Print preview");
+    expect(frame.getAttribute("srcdoc")).toContain("TAX INVOICE");
+    expect(frame.getAttribute("sandbox")).toBe("allow-same-origin allow-modals"); // no scripts
+    const print = calls.filter((c) => c.path === "/documents/inv1/print");
+    expect(print[0]?.query).toBe("?lang=en");
+    expect(print[0]?.authorization).toMatch(/^Bearer /);
+
+    await user.click(screen.getByRole("button", { name: "العربية" }));
+    await waitFor(() =>
+      expect(calls.filter((c) => c.path === "/documents/inv1/print").map((c) => c.query)).toContain(
+        "?lang=ar",
+      ),
+    );
+  });
+
+  it("offers no print on a draft", async () => {
+    window.location.hash = "#/sales/inv1";
+    const { api } = sellerApi({
+      "GET /sales-documents/inv1": { status: 200, body: doc({ status: "draft", number: null }) },
+    });
+    render(<App api={api} />);
+    await screen.findByRole("button", { name: "Post" });
+    expect(screen.queryByRole("link", { name: "Print / Save as PDF" })).toBeNull();
+  });
+
+  it("explains a refusal", async () => {
+    window.location.hash = "#/sales/inv1/print";
+    const { api } = sellerApi({
+      "GET /documents/inv1/print": { status: 403, body: { code: "permission_denied" } },
+    });
+    render(<App api={api} />);
+    expect(
+      await screen.findByText("You don't have permission to print or export this document."),
+    ).toBeInTheDocument();
+  });
+});

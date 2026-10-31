@@ -32,6 +32,9 @@ export function fakeApi(routes: Record<string, Handler | { status: number; body:
       typeof route === "function" ? route(body) : (route ?? { status: 404, body: { code: "not_found" } });
     if (answer.status === UNREACHABLE.status) throw new TypeError("Failed to fetch");
     if (answer.status === 204) return new Response(null, { status: 204 });
+    // A string body is a page (a printed document), not JSON.
+    if (typeof answer.body === "string")
+      return new Response(answer.body, { status: answer.status, headers: { "content-type": "text/html" } });
     return new Response(JSON.stringify(answer.body), {
       status: answer.status,
       headers: { "content-type": "application/json" },

@@ -563,7 +563,8 @@
       "trialBalance": "Trial balance",
       "periods": "Fiscal periods",
       "ageing": "Ageing",
-      "cheques": "Cheques (PDC)"
+      "cheques": "Cheques (PDC)",
+      "vatReturn": "VAT return"
     },
     "chart": {
       "new": "New account",
@@ -1296,6 +1297,67 @@
       "pdc_not_editable": "This cheque can no longer change.",
       "invalid_account": "Choose a bank account.",
       "forbidden": "You are not allowed to do that."
+    }
+  },
+  "vat": {
+    "title": "VAT return",
+    "period": "VAT period",
+    "lengths": {
+      "quarter": "Quarter",
+      "month": "Month",
+      "custom": "Other dates"
+    },
+    "endsIn": "Period ends in",
+    "endsInHint": "FTA quarters follow your TRN's stagger: pick the month yours ends in.",
+    "from": "From",
+    "to": "To",
+    "pickDates": "Choose the first and last day of the period.",
+    "periodShown": "{{from}} to {{to}}",
+    "outcome": {
+      "payable": "VAT payable to the FTA",
+      "refundable": "VAT refundable by the FTA",
+      "nil": "No VAT to pay or reclaim"
+    },
+    "aed": "AED",
+    "box": "Box",
+    "description": "Description",
+    "amount": "Amount (AED)",
+    "vat": "VAT (AED)",
+    "sections": {
+      "output": "VAT on sales and all other outputs",
+      "input": "VAT on expenses and all other inputs",
+      "net": "Net VAT due"
+    },
+    "manualLater": "Entered by hand when filing (later)",
+    "showDocuments": "Show the documents behind box {{box}}",
+    "documentsIn": "Documents in box {{box}}",
+    "noDocuments": "No posted documents fall in this box for the period.",
+    "date": "Date",
+    "document": "Document",
+    "party": "Customer or supplier",
+    "total_one": "Total of {{count}} document",
+    "total_other": "Total of {{count}} documents",
+    "draftNote": "A live draft from posted documents: it changes when documents in the period are posted, cancelled or reversed. Credit notes and reversals count in the period of their own date. Saving and filing the return come later.",
+    "errors": {
+      "invalid_vat_period": "The period ends before it starts."
+    }
+  },
+  "print": {
+    "open": "Print / Save as PDF",
+    "openHint": "The tax invoice in English or Arabic, as the customer gets it.",
+    "back": "Back to the document",
+    "title": "Print preview",
+    "language": "Language of the printed document",
+    "languages": {
+      "en": "English",
+      "ar": "العربية"
+    },
+    "print": "Print / Save as PDF",
+    "hint": "In the print dialog, choose a printer, or \"Save as PDF\" / \"Microsoft Print to PDF\" to keep a file.",
+    "errors": {
+      "not_printable": "Only a posted sales invoice or goods-returned note can be printed.",
+      "permission_denied": "You don't have permission to print or export this document.",
+      "generic": "The document could not be loaded for printing. Try again."
     }
   }
 }

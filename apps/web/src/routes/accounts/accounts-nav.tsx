@@ -8,6 +8,7 @@ const SECTIONS = [
   "/accounts/cheques",
   "/accounts/trial-balance",
   "/accounts/ageing",
+  "/accounts/vat-return",
   "/accounts/periods",
 ];
 
@@ -41,6 +42,11 @@ export function AccountsNav() {
       to: "/accounts/ageing",
       label: t("accounts.nav.ageing"),
       matches: (p) => p.startsWith("/accounts/ageing"),
+    },
+    {
+      to: "/accounts/vat-return",
+      label: t("accounts.nav.vatReturn"),
+      matches: (p) => p.startsWith("/accounts/vat-return"),
     },
     {
       to: "/accounts/periods",
