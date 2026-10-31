@@ -55,7 +55,10 @@ async function seller(request: APIRequestContext) {
   return { email, customer: (await customer.json()).id as string };
 }
 
-test("quotation → order → delivery → invoice, sent, cancelled; the books agree", async ({ page, request }) => {
+test("quotation → order → delivery → invoice, sent, cancelled; the books agree", async ({
+  page,
+  request,
+}) => {
   const { email, customer } = await seller(request);
 
   await page.goto("/#/login");
