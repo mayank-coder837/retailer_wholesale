@@ -43,7 +43,9 @@ async function trader(request: APIRequestContext) {
     headers,
     data: { sku: "FAB", name_en: "Poplin fabric", name_ar: "قماش بوبلين", base_unit: "m" },
   });
-  const variant = (await product.json()).variants[0].id as string;
+  const productBody = await product.json();
+  const variant = productBody.variants[0].id as string;
+  const productId = productBody.id as string;
   const stock = await request.post(`${API}/stock-documents?post=true`, {
     headers,
     data: {
@@ -57,7 +59,7 @@ async function trader(request: APIRequestContext) {
   });
   expect(stock.ok()).toBeTruthy();
   const customerId = (await customer.json()).id as string;
-  return { email, headers, business, branch, warehouse, today, customerId, variant };
+  return { email, headers, business, branch, warehouse, today, customerId, variant, productId };
 }
 
 async function logIn(page: Page, email: string) {
@@ -155,4 +157,52 @@ test("an invoice typed with VAT included posts the VAT the screen showed", async
   await page.getByRole("link", { name: "فاتورة جديدة" }).click();
   await expect(page.getByLabel("الأسعار")).toBeVisible();
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/entry-ar.png`, fullPage: true });
+});
+
+test("an expense under the reverse charge: VAT shown, not paid; item and customer codes", async ({
+  page,
+  request,
+}) => {
+  const { email, customerId, productId } = await trader(request);
+  await logIn(page, email);
+
+  await page.goto("/#/vouchers/expense");
+  await expect(page.getByRole("heading", { name: "Expense voucher" })).toBeVisible();
+  await page.getByLabel("Account", { exact: true }).selectOption({ label: "6100 Rent" });
+  await page.getByLabel("Amount", { exact: true }).fill("200");
+  await page.getByLabel("Tax", { exact: true }).selectOption("RC-S");
+  await expect(page.getByLabel("Totals")).toContainText(
+    "Net200.00VAT10.00Reverse charge (you account for it)-10.00Total200.00",
+  );
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/voucher-rc-en.png`, fullPage: true });
+  await page.getByRole("button", { name: "Post" }).click();
+  await expect(page.getByRole("heading", { name: /Expense voucher EV-\d{4}-00001/ })).toBeVisible();
+  // The cash paid is the net: the VAT goes in as input and out as output.
+  const journal = page.getByRole("table");
+  await expect(journal).toContainText("200.00");
+  await expect(journal).toContainText("10.00");
+
+  await page.goto(`/#/inventory/products/${productId}`);
+  const tax = page.getByRole("region", { name: "Tax" });
+  await tax.getByLabel("Tax when sold").selectOption("EX");
+  await tax.getByRole("button", { name: "Save tax" }).click();
+  await expect(tax.getByText("Saved")).toBeVisible();
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/product-tax-en.png`, fullPage: true });
+
+  await page.goto(`/#/parties/${customerId}`);
+  const details = page.getByRole("region", { name: "Details" });
+  await details.getByRole("button", { name: "Edit", exact: true }).click();
+  await details.getByLabel("Tax on sales to them").selectOption("ZR");
+  await details.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(details.getByRole("definition").filter({ hasText: "Zero rated" })).toBeVisible();
+  await page.getByRole("button", { name: "Language" }).click();
+  await expect(page.getByText("الضريبة على المبيعات له")).toBeVisible();
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/party-tax-ar.png`, fullPage: true });
+
+  // A new invoice to this customer now defaults to zero rated: the customer's code beats the item's.
+  await page.getByRole("button", { name: "اللغة" }).click();
+  await page.goto("/#/sales/new/sales_invoice");
+  await page.getByLabel("Customer", { exact: true }).selectOption(customerId);
+  await page.getByLabel("Item", { exact: true }).selectOption({ label: "FAB Poplin fabric" });
+  await expect(page.getByLabel("Tax", { exact: true })).toHaveValue("ZR");
 });

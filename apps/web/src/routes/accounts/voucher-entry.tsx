@@ -22,7 +22,6 @@ import {
   toFils,
   useAccounts,
   useBranches,
-  vatFils,
   VOUCHER_AMOUNT,
   WITH_CASH_ACCOUNT,
   WITH_PARTY,
@@ -33,6 +32,8 @@ import {
   type VoucherLineIn,
   type VoucherType,
 } from "@/routes/accounts/queries";
+import { splitFils, useCodeInfo, type Side } from "@/routes/tax/tax";
+import { TaxCodeField } from "@/routes/tax/tax-fields";
 import { errorCode, unwrap } from "@/routes/catalog/queries";
 import { ComingSoon } from "@/routes/coming-soon";
 import { partyName, useParties, type Role } from "@/routes/parties/queries";
@@ -69,7 +70,8 @@ interface LineState {
   amount: string;
   debit: string;
   credit: string;
-  vat: "0" | "5";
+  /** The line's tax code (expense vouchers and notes); empty: no VAT. */
+  taxCode: string;
   description: string;
   billWise: BillWise;
 }
@@ -82,7 +84,7 @@ const emptyLine = (): LineState => ({
   amount: "",
   debit: "",
   credit: "",
-  vat: "0",
+  taxCode: "",
   description: "",
   billWise: ON_ACCOUNT,
 });
@@ -136,14 +138,24 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
   const update = (key: number, patch: Partial<LineState>) =>
     setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
-  // Totals in fils (integers): exact, like the API.
+  // Totals in fils (integers): exact, like the API. Blocked VAT is part of the expense; reverse-charge VAT is
+  // self-assessed and paid to no one, so it is not in the total (posting rules 8, 29).
+  const taxSide: Side = kind === "credit_note" ? "sales" : "purchase";
+  const codeInfo = useCodeInfo(taxSide);
   const net = lines.reduce((sum, l) => sum + filsOf(l.amount), 0);
-  const vat = WITH_VAT.includes(kind)
-    ? lines.reduce((sum, l) => sum + vatFils(filsOf(l.amount), Number(l.vat)), 0)
-    : 0;
+  let vat = 0;
+  let reverseCharge = 0;
+  if (WITH_VAT.includes(kind))
+    for (const l of lines) {
+      if (!l.taxCode) continue;
+      const info = codeInfo(l.taxCode);
+      const [, lineVat] = splitFils(filsOf(l.amount), info.rate, "vat_exclusive");
+      vat += lineVat;
+      if (info.treatment === "reverse_charge") reverseCharge += lineVat;
+    }
   const debits = lines.reduce((sum, l) => sum + filsOf(l.debit), 0);
   const credits = lines.reduce((sum, l) => sum + filsOf(l.credit), 0);
-  const total = single ? net + vat : debits;
+  const total = single ? net + vat - reverseCharge : debits;
 
   function lineAccount(l: LineState): Account | undefined {
     return l.accountId ? byId.get(l.accountId) : undefined;
@@ -186,7 +198,8 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
         account_id: l.accountId || null,
         party_id: l.partyId || null,
         description: l.description.trim() || null,
-        vat_rate: WITH_VAT.includes(kind) ? l.vat : "0",
+        tax_code: WITH_VAT.includes(kind) && l.taxCode ? l.taxCode : null,
+        vat_rate: "0", // before tax codes; ignored with one
         allocations,
       };
       if (single) line.amount = fromFils(filsOf(l.amount));
@@ -444,19 +457,13 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
                   </>
                 )}
                 {WITH_VAT.includes(kind) && (
-                  <Field label={t("accounts.voucher.vat")} className="w-24">
-                    {(p) => (
-                      <select
-                        {...p}
-                        className={inputClass}
-                        value={l.vat}
-                        onChange={(e) => update(l.key, { vat: e.target.value as "0" | "5" })}
-                      >
-                        <option value="0">0%</option>
-                        <option value="5">5%</option>
-                      </select>
-                    )}
-                  </Field>
+                  <TaxCodeField
+                    side={taxSide}
+                    empty={t("tax.noVat")}
+                    stock={false}
+                    value={l.taxCode}
+                    onChange={(code) => update(l.key, { taxCode: code })}
+                  />
                 )}
                 <Field label={t("accounts.voucher.description")} className="min-w-40 flex-1">
                   {(p) => (
@@ -526,6 +533,14 @@ export function VoucherEntryPage({ kind }: { kind: VoucherType }) {
                 <dd className="text-right tabular-nums">
                   <span dir="ltr">{money(fromFils(vat))}</span>
                 </dd>
+                {reverseCharge > 0 && (
+                  <>
+                    <dt>{t("tax.reverseCharge")}</dt>
+                    <dd className="text-right tabular-nums">
+                      <span dir="ltr">-{money(fromFils(reverseCharge))}</span>
+                    </dd>
+                  </>
+                )}
               </>
             )}
             <dt className="font-semibold">{t("accounts.voucher.total")}</dt>

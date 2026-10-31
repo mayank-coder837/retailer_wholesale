@@ -24,6 +24,8 @@ import { useBusiness } from "@/shell/use-business";
 import { cn } from "@/lib/utils";
 import { AgeingTable } from "@/routes/accounts/ageing";
 import { useAgeing } from "@/routes/sales/queries";
+import { useCodeName } from "@/routes/tax/tax";
+import { TaxCodeField } from "@/routes/tax/tax-fields";
 
 /** Customers & suppliers → one party (M1.4): details, addresses, contacts, this business's terms, credit. */
 export function PartyPage() {
@@ -120,8 +122,11 @@ function Details({ party }: { party: Party }) {
     email: party.email ?? "",
     customer: party.is_customer,
     supplier: party.is_supplier,
+    salesTax: party.sales_tax_code ?? "",
+    purchaseTax: party.purchase_tax_code ?? "",
   };
   const [form, setForm] = useState(initial);
+  const codeName = useCodeName();
   const [editing, setEditing] = useState(false);
   const set = (patch: Partial<typeof initial>) => setForm((f) => ({ ...f, ...patch }));
   const save = useMutation({
@@ -144,6 +149,22 @@ function Details({ party }: { party: Party }) {
           <dd dir="ltr">{party.whatsapp ?? "—"}</dd>
           <dt className="text-muted-foreground">{t("parties.email")}</dt>
           <dd dir="ltr">{party.email ?? "—"}</dd>
+          {party.is_customer && (
+            <>
+              <dt className="text-muted-foreground">{t("tax.partySales")}</dt>
+              <dd>{party.sales_tax_code ? codeName("sales", party.sales_tax_code) : t("tax.asEachItem")}</dd>
+            </>
+          )}
+          {party.is_supplier && (
+            <>
+              <dt className="text-muted-foreground">{t("tax.partyPurchase")}</dt>
+              <dd>
+                {party.purchase_tax_code
+                  ? codeName("purchase", party.purchase_tax_code)
+                  : t("tax.asEachItem")}
+              </dd>
+            </>
+          )}
         </dl>
         <div className="flex gap-2">
           <Button
@@ -186,6 +207,8 @@ function Details({ party }: { party: Party }) {
             email: form.email.trim() || null,
             is_customer: form.customer,
             is_supplier: form.supplier,
+            sales_tax_code: (form.salesTax || null) as PartyPatch["sales_tax_code"],
+            purchase_tax_code: (form.purchaseTax || null) as PartyPatch["purchase_tax_code"],
           });
         }}
       >
@@ -275,6 +298,30 @@ function Details({ party }: { party: Party }) {
             {t("parties.supplier")}
           </label>
         </div>
+        {form.customer && (
+          <TaxCodeField
+            side="sales"
+            label={t("tax.partySales")}
+            hint={t("tax.partySalesHint")}
+            empty={t("tax.asEachItem")}
+            className=""
+            stock={false}
+            value={form.salesTax}
+            onChange={(code) => set({ salesTax: code })}
+          />
+        )}
+        {form.supplier && (
+          <TaxCodeField
+            side="purchase"
+            label={t("tax.partyPurchase")}
+            hint={t("tax.partyPurchaseHint")}
+            empty={t("tax.asEachItem")}
+            className=""
+            stock={false}
+            value={form.purchaseTax}
+            onChange={(code) => set({ purchaseTax: code })}
+          />
+        )}
         <div className="flex gap-2 sm:col-span-2">
           <Button type="submit" disabled={save.isPending}>
             {t("parties.save")}

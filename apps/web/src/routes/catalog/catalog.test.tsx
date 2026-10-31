@@ -312,3 +312,42 @@ describe("product form logic", () => {
     expect(body.custom_fields).toEqual({});
   });
 });
+
+describe("A product's VAT codes", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await setLanguage("en");
+  });
+
+  it("saves the item's own codes; blocked VAT is not offered on stock", async () => {
+    window.location.hash = "#/inventory/products/p1";
+    const { api, calls } = catalogApi({
+      "PATCH /products/p1": {
+        status: 200,
+        body: { ...FABRIC, sales_tax_code: "ZR", purchase_tax_code: null },
+      },
+    });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    const tax = await screen.findByRole("region", { name: "Tax" });
+    const sales = within(tax).getByLabelText("Tax when sold");
+    const purchase = within(tax).getByLabelText("Tax when bought");
+    expect(sales).toHaveValue("");
+    expect(within(sales).getByRole("option", { name: "Standard rated 5% (default)" })).toBeInTheDocument();
+    await within(purchase).findByRole("option", { name: "Reverse charge, imported goods" });
+    expect(within(purchase).queryByRole("option", { name: "5%, input VAT blocked" })).toBeNull();
+    expect(within(tax).getByRole("button", { name: "Save tax" })).toBeDisabled();
+
+    await user.selectOptions(sales, "ZR");
+    await user.click(within(tax).getByRole("button", { name: "Save tax" }));
+    expect(await within(tax).findByText("Saved")).toBeInTheDocument();
+    expect(calls.find((c) => c.method === "PATCH")?.body).toEqual({
+      sales_tax_code: "ZR",
+      purchase_tax_code: null,
+    });
+  });
+});

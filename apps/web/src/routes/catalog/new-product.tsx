@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useApi } from "@/api/use-api";
 import { besideField, Field, inputClass } from "@/components/field";
 import { Button } from "@/components/ui/button";
+import { TaxCodeField } from "@/routes/tax/tax-fields";
 import {
   emptyDraft,
   localName,
@@ -111,7 +112,12 @@ export function NewProductPage() {
               {...p}
               className={inputClass}
               value={draft.productType}
-              onChange={(e) => set({ productType: e.target.value as ProductDraft["productType"] })}
+              onChange={(e) => {
+                const productType = e.target.value as ProductDraft["productType"];
+                // Blocked VAT is never a stock item's code (R8).
+                const blocked = productType === "stock" && draft.purchaseTaxCode === "SR-B";
+                set({ productType, purchaseTaxCode: blocked ? "" : draft.purchaseTaxCode });
+              }}
             >
               {(["stock", "service", "non_stock"] as const).map((type) => (
                 <option key={type} value={type}>
@@ -121,6 +127,24 @@ export function NewProductPage() {
             </select>
           )}
         </Field>
+        <TaxCodeField
+          side="sales"
+          label={t("tax.salesCode")}
+          empty={t("tax.standardDefault")}
+          className=""
+          stock={false}
+          value={draft.salesTaxCode}
+          onChange={(code) => set({ salesTaxCode: code })}
+        />
+        <TaxCodeField
+          side="purchase"
+          label={t("tax.purchaseCode")}
+          empty={t("tax.standardDefault")}
+          className=""
+          stock={draft.productType === "stock"}
+          value={draft.purchaseTaxCode}
+          onChange={(code) => set({ purchaseTaxCode: code })}
+        />
         <Field label={t("catalog.category")}>
           {(p) => (
             <select

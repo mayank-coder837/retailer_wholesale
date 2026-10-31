@@ -258,9 +258,9 @@ describe("Accounts screens", () => {
     });
   });
 
-  it("adds VAT per line on an expense voucher", async () => {
+  it("adds VAT per line on an expense voucher by its tax code", async () => {
     window.location.hash = "#/vouchers/expense";
-    const { api } = booksApi();
+    const { api, calls } = booksApi({ "POST /vouchers": { status: 201, body: POSTED } });
     const user = userEvent.setup();
     render(<App api={api} />);
 
@@ -271,11 +271,36 @@ describe("Accounts screens", () => {
     expect(within(accountSelect).queryByRole("option", { name: "1110 Cash" })).toBeNull();
     await user.selectOptions(accountSelect, "rent");
     await user.type(screen.getByLabelText("Amount"), "200");
-    await user.selectOptions(screen.getByLabelText("VAT"), "5");
-    const totals = screen.getByLabelText("Totals");
-    expect(totals).toHaveTextContent("Net200.00");
-    expect(totals).toHaveTextContent("VAT10.00");
-    expect(totals).toHaveTextContent("Total210.00");
+    const tax = screen.getByLabelText("Tax");
+    expect(tax).toHaveValue(""); // no VAT until a code is chosen
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Net200.00VAT0.00Total200.00");
+
+    await user.selectOptions(tax, "SR");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Net200.00VAT10.00Total210.00");
+    // Blocked VAT is paid (part of the expense); reverse charge is self-assessed, paid to no one.
+    await user.selectOptions(tax, "SR-B");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent("Net200.00VAT10.00Total210.00");
+    await user.selectOptions(tax, "RC-S");
+    expect(screen.getByLabelText("Totals")).toHaveTextContent(
+      "Net200.00VAT10.00Reverse charge (you account for it)-10.00Total200.00",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Post" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "POST" && c.path === "/vouchers")).toBe(true));
+    const body = calls.find((c) => c.method === "POST" && c.path === "/vouchers")?.body as {
+      lines: Record<string, unknown>[];
+    };
+    expect(body.lines[0]).toMatchObject({ account_id: "rent", amount: "200.00", tax_code: "RC-S" });
+  });
+
+  it("offers sales codes, and no VAT, on a credit note", async () => {
+    window.location.hash = "#/vouchers/credit_note";
+    const { api } = booksApi();
+    render(<App api={api} />);
+    const tax = await screen.findByLabelText("Tax");
+    await within(tax).findByRole("option", { name: "Zero rated" });
+    expect(within(tax).queryByRole("option", { name: "Reverse charge, imported services" })).toBeNull();
+    expect(within(tax).getByRole("option", { name: "No VAT" })).toBeInTheDocument();
   });
 
   it("asks why before posting into a locked month, then posts the draft with the reason", async () => {
