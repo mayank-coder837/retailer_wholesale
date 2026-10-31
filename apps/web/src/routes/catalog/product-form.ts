@@ -17,6 +17,8 @@ export interface ProductDraft {
   purchaseUnit: string; // a unit code: the base unit or one of `units`
   salesUnit: string;
   chosen: Record<string, string[]>; // attribute code → English values
+  salesTaxCode: string; // empty: standard rated (M1.10)
+  purchaseTaxCode: string;
   custom: Record<string, string | boolean | string[]>;
 }
 
@@ -34,6 +36,8 @@ export function emptyDraft(baseUnit = "pcs"): ProductDraft {
     salesUnit: baseUnit,
     chosen: {},
     custom: {},
+    salesTaxCode: "",
+    purchaseTaxCode: "",
   };
 }
 
@@ -83,6 +87,8 @@ export function toProductIn(draft: ProductDraft, attributes: Attribute[], fields
     track_expiry: false,
     track_serial: false,
     custom_fields: custom,
+    sales_tax_code: draft.salesTaxCode || null,
+    purchase_tax_code: draft.purchaseTaxCode || null,
   };
 }
 

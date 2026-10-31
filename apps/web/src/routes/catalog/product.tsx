@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { localName } from "@/routes/catalog/product-form";
 import { errorCode, unwrap, useProduct, type Product } from "@/routes/catalog/queries";
 import { ProductPricing } from "@/routes/pricing/product-pricing";
+import { TaxCodeField } from "@/routes/tax/tax-fields";
 
 /** Inventory → product (M1.2): units, variants and barcodes. */
 export function ProductPage() {
@@ -75,9 +76,71 @@ export function ProductPage() {
         </ul>
       </section>
 
+      <ProductTax product={p} />
       <Barcodes product={p} variantLabel={variantLabel} />
       <ProductPricing product={p} variantLabel={variantLabel} />
     </div>
+  );
+}
+
+/** The item's own VAT codes (M1.10): the default on its lines after the customer's or supplier's. */
+function ProductTax({ product }: { product: Product }) {
+  const { t } = useTranslation();
+  const api = useApi();
+  const queryClient = useQueryClient();
+  const saved = { sales: product.sales_tax_code ?? "", purchase: product.purchase_tax_code ?? "" };
+  const [form, setForm] = useState(saved);
+  const changed = form.sales !== saved.sales || form.purchase !== saved.purchase;
+  const save = useMutation({
+    mutationFn: async () => {
+      // Only what changed: a code saved earlier is never sent back to be checked again.
+      const body: { sales_tax_code?: string | null; purchase_tax_code?: string | null } = {};
+      if (form.sales !== saved.sales) body.sales_tax_code = form.sales || null;
+      if (form.purchase !== saved.purchase) body.purchase_tax_code = form.purchase || null;
+      return unwrap(
+        await api.PATCH("/products/{product_id}", { params: { path: { product_id: product.id } }, body }),
+      );
+    },
+    onSuccess: (updated) => queryClient.setQueryData(["product", product.id], updated),
+  });
+  return (
+    <section className="flex flex-col gap-2" aria-label={t("tax.productTitle")}>
+      <h2 className="text-lg font-semibold">{t("tax.productTitle")}</h2>
+      <div className="flex flex-wrap items-end gap-3">
+        <TaxCodeField
+          side="sales"
+          label={t("tax.salesCode")}
+          empty={t("tax.standardDefault")}
+          className="w-64"
+          stock={false}
+          value={form.sales}
+          onChange={(code) => setForm({ ...form, sales: code })}
+        />
+        <TaxCodeField
+          side="purchase"
+          label={t("tax.purchaseCode")}
+          empty={t("tax.standardDefault")}
+          className="w-64"
+          stock={product.product_type === "stock"}
+          value={form.purchase}
+          onChange={(code) => setForm({ ...form, purchase: code })}
+        />
+        <Button disabled={!changed || save.isPending} onClick={() => save.mutate()}>
+          {t("tax.save")}
+        </Button>
+        {save.isSuccess && !changed && (
+          <span role="status" className="pb-2 text-sm text-muted-foreground">
+            {t("tax.saved")}
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-muted-foreground">{t("tax.productHint")}</p>
+      {save.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          {t(`catalog.errors.${errorCode(save.error)}`, { defaultValue: t("catalog.errors.generic") })}
+        </p>
+      )}
+    </section>
   );
 }
 

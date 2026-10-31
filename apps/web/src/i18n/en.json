@@ -1375,6 +1375,19 @@
     "code": "Tax",
     "notRegistered": "This business is not VAT-registered, so no VAT is charged.",
     "reverseCharge": "Reverse charge (you account for it)",
-    "otherMode": "Suggested price {{price}} ({{mode}}): type this document's price."
+    "otherMode": "Suggested price {{price}} ({{mode}}): type this document's price.",
+    "salesCode": "Tax when sold",
+    "purchaseCode": "Tax when bought",
+    "standardDefault": "Standard rated 5% (default)",
+    "productTitle": "Tax",
+    "productHint": "The default on its lines, unless the customer or supplier has their own.",
+    "save": "Save tax",
+    "saved": "Saved",
+    "partySales": "Tax on sales to them",
+    "partyPurchase": "Tax on purchases from them",
+    "partySalesHint": "E.g. zero rated for a customer outside the UAE.",
+    "partyPurchaseHint": "E.g. reverse charge for a supplier outside the UAE.",
+    "asEachItem": "As each item",
+    "noVat": "No VAT"
   }
 }

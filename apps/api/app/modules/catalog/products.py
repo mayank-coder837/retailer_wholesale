@@ -35,6 +35,7 @@ from app.modules.catalog.models import (
     CustomFieldEntity,
     Product,
     ProductAttribute,
+    ProductType,
     ProductUnit,
     Unit,
     UnitFamily,
@@ -87,6 +88,19 @@ class DuplicateVariantError(ConflictError):
 class InvalidProductError(UnprocessableError):
     code = "invalid_product"
     title = "The product is not valid"
+
+
+def _check_purchase_code(product_type: str, code: str | None) -> None:
+    """Blocked VAT (SR-B) is for expenses: on goods kept in stock it would change their cost (R8). Refused
+    here as well as on the purchase, so the default never leads to a purchase that cannot post."""
+    from app.modules.tax import codes as tax
+
+    found = tax.get(tax.Side.PURCHASE, code) if code else None
+    if found is not None and found.treatment is tax.Treatment.BLOCKED and product_type == ProductType.STOCK:
+        raise InvalidProductError(
+            "Blocked VAT (SR-B) is for expenses, not stock: it would change the stock's cost.",
+            field="purchase_tax_code",
+        )
 
 
 class InvalidBarcodeError(UnprocessableError):
@@ -406,6 +420,7 @@ async def create_product(session: AsyncSession, tenant_id: uuid.UUID, data: Prod
     if data.brand_id is not None:
         await setup.get_brand(session, data.brand_id)
     custom = await setup.validate_custom_fields(session, CustomFieldEntity.PRODUCT, data.custom_fields)
+    _check_purchase_code(data.product_type.value, data.purchase_tax_code)
     product = Product(
         id=new_id(),
         tenant_id=tenant_id,
@@ -486,6 +501,8 @@ async def update_product(session: AsyncSession, product_id: uuid.UUID, data: Pro
     for field in ("sales_tax_code", "purchase_tax_code"):  # null clears: back to standard rated
         if field in fields:
             setattr(product, field, getattr(data, field))
+    if "purchase_tax_code" in fields:  # only a code being set: a code saved earlier never blocks other edits
+        _check_purchase_code(product.product_type, product.purchase_tax_code)
     if data.archived is not None:
         product.archived_at = datetime.now(UTC) if data.archived else None
     await session.flush()

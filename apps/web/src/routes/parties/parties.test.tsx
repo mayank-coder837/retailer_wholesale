@@ -231,3 +231,38 @@ describe("Customers & suppliers screens", () => {
     expect(screen.getByText("عميل")).toBeInTheDocument();
   });
 });
+
+describe("A customer's or supplier's VAT override", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await setLanguage("en");
+  });
+
+  it("shows the override and saves a new one", async () => {
+    window.location.hash = "#/parties/pa1";
+    const { api, calls } = partiesApi({
+      "PATCH /parties/pa1": { status: 200, body: { ...PARTY, sales_tax_code: "ZR" } },
+    });
+    const user = userEvent.setup();
+    render(<App api={api} />);
+
+    expect(await screen.findByText("Tax on sales to them")).toBeInTheDocument();
+    expect(screen.getByText("As each item")).toBeInTheDocument();
+    expect(screen.queryByText("Tax on purchases from them")).toBeNull(); // a customer, not a supplier
+
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const sales = screen.getByLabelText("Tax on sales to them");
+    await within(sales).findByRole("option", { name: "Zero rated" });
+    await user.selectOptions(sales, "ZR");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Zero rated")).toBeInTheDocument();
+    expect(calls.find((c) => c.method === "PATCH")?.body).toMatchObject({
+      sales_tax_code: "ZR",
+      purchase_tax_code: null,
+    });
+  });
+});

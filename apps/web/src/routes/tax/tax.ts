@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import type { components } from "@smartbiz/api-client";
 
@@ -37,6 +38,17 @@ export function useCodeInfo(side: Side): (code: string) => { rate: string; treat
   return (code) => {
     const c = codes.data?.find((x) => x.code === code);
     return { rate: c?.rate ?? "0", treatment: c?.treatment };
+  };
+}
+
+/** A code's name in the interface language (the code itself until the registry arrives). */
+export function useCodeName(): (side: Side, code: string) => string {
+  const { i18n } = useTranslation();
+  const sales = useTaxCodes("sales");
+  const purchase = useTaxCodes("purchase");
+  return (side, code) => {
+    const c = (side === "sales" ? sales : purchase).data?.find((x) => x.code === code);
+    return c ? (i18n.language === "ar" ? c.name_ar : c.name_en) : code;
   };
 }
 

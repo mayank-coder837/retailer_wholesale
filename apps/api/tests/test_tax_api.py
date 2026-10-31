@@ -5,6 +5,8 @@ from decimal import Decimal
 from typing import Any
 
 from httpx import AsyncClient
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from tests.api_helpers import bearer, signup_body
 from tests.test_accounting_api import books
@@ -74,6 +76,27 @@ async def test_no_vat_needs_its_reason_and_decides_every_lines_code(client: Asyn
     )
 
 
+async def test_a_blocked_code_saved_before_the_rule_never_blocks_other_edits(
+    client: AsyncClient, owner_engine: AsyncEngine
+) -> None:
+    s = await seller(client)
+    # Before M1.10d-3 a stock item could take SR-B: plant one, as an older database may hold it.
+    async with owner_engine.begin() as conn:
+        await conn.execute(
+            text("UPDATE product SET purchase_tax_code = 'SR-B' WHERE id = :id"), {"id": s.product}
+        )
+    renamed = await client.patch(f"/products/{s.product}", json={"name_en": "Fabric roll"}, headers=s.h)
+    assert renamed.status_code == 200, renamed.text
+    sales = await client.patch(f"/products/{s.product}", json={"sales_tax_code": "ZR"}, headers=s.h)
+    assert sales.status_code == 200, sales.text
+    again = await client.patch(f"/products/{s.product}", json={"purchase_tax_code": "SR-B"}, headers=s.h)
+    assert again.status_code == 422  # setting it is still refused
+    cleared = await ok(
+        await client.patch(f"/products/{s.product}", json={"purchase_tax_code": None}, headers=s.h)
+    )
+    assert cleared["purchase_tax_code"] is None
+
+
 async def test_codes_default_from_the_customer_then_the_item(client: AsyncClient) -> None:
     s = await seller(client)
     await ok(await client.patch(f"/products/{s.product}", json={"sales_tax_code": "EX"}, headers=s.h))
@@ -89,6 +112,26 @@ async def test_codes_default_from_the_customer_then_the_item(client: AsyncClient
     assert (typed["lines"][0]["tax_code"], typed["tax_total"]) == ("SR", "0.5000")
     bad = await client.patch(f"/products/{s.product}", json={"sales_tax_code": "RC-S"}, headers=s.h)
     assert bad.status_code == 422, "a purchase code is not a sales code"
+    # Blocked VAT is for expenses: a stock item may not default to it (R8), on create or later.
+    blocked = await client.patch(f"/products/{s.product}", json={"purchase_tax_code": "SR-B"}, headers=s.h)
+    assert (blocked.status_code, blocked.json()["field"]) == (422, "purchase_tax_code")
+    service = {
+        "sku": "DLV",
+        "name_en": "Delivery",
+        "name_ar": "توصيل",
+        "product_type": "service",
+        "base_unit": "pcs",
+    }
+    created = await client.post("/products", json=service | {"purchase_tax_code": "SR-B"}, headers=s.h)
+    assert created.status_code == 201, created.text  # a service may: it is an expense
+    stock = {
+        "sku": "BOX",
+        "name_en": "Box",
+        "name_ar": "صندوق",
+        "base_unit": "pcs",
+        "purchase_tax_code": "SR-B",
+    }
+    assert (await client.post("/products", json=stock, headers=s.h)).status_code == 422
     await ok(await client.patch(f"/products/{s.product}", json={"sales_tax_code": None}, headers=s.h))
     back = await s.post(s.doc("sales_invoice", [s.line("1", unit_price="10")]))
     assert back["lines"][0]["tax_code"] == "SR"

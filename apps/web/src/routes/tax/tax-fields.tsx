@@ -69,27 +69,37 @@ export function PriceModeFields({
   );
 }
 
-/** A line's tax code: shows the code the line takes (``value``, already defaulted); a change is the user's
- * choice. Read-only when the mode or the document decides it. ``stock``: blocked VAT is never offered. */
+/** A tax code choice: shows the code the line takes (``value``, already defaulted); a change is the user's
+ * choice. Read-only when the mode or the document decides it. ``stock``: blocked VAT is never offered.
+ * ``empty``: the label of "no code" (value ""), where that is a choice — no VAT on a voucher line, no
+ * override on a party, standard rated on a product. */
 export function TaxCodeField({
   side,
   value,
-  readOnly,
+  readOnly = false,
   stock,
   onChange,
+  label,
+  hint,
+  empty,
+  className = "w-48",
 }: {
   side: Side;
   value: string;
-  readOnly: boolean;
+  readOnly?: boolean;
   stock: boolean;
   onChange: (code: string) => void;
+  label?: string;
+  hint?: string;
+  empty?: string;
+  className?: string;
 }) {
   const { t, i18n } = useTranslation();
   const codes = useTaxCodes(side);
   const offered = (codes.data ?? []).filter((c) => c.code === value || !(stock && c.treatment === "blocked"));
-  const known = offered.some((c) => c.code === value);
+  const known = (value === "" && empty !== undefined) || offered.some((c) => c.code === value);
   return (
-    <Field label={t("tax.code")} className="w-48">
+    <Field label={label ?? t("tax.code")} hint={hint} className={className}>
       {(p) => (
         <select
           {...p}
@@ -98,6 +108,7 @@ export function TaxCodeField({
           disabled={readOnly}
           onChange={(e) => onChange(e.target.value)}
         >
+          {empty !== undefined && <option value="">{empty}</option>}
           {!known && <option value={value}>{value}</option>}
           {offered.map((c) => (
             <option key={c.code} value={c.code}>
