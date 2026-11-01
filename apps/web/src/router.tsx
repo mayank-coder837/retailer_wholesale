@@ -15,6 +15,10 @@ import { ChartPage } from "@/routes/accounts/chart";
 import { PeriodsPage } from "@/routes/accounts/periods";
 import { TrialBalancePage } from "@/routes/accounts/trial-balance";
 import { VatReturnPage } from "@/routes/accounts/vat-return";
+import { BalanceSheetPage } from "@/routes/reports/balance-sheet";
+import { DayBookPage } from "@/routes/reports/day-book";
+import { ProfitLossPage } from "@/routes/reports/profit-loss";
+import { ReportsPage } from "@/routes/reports/reports";
 import { VoucherPage } from "@/routes/accounts/voucher";
 import { VoucherRoute } from "@/routes/accounts/voucher-entry";
 import { VouchersPage } from "@/routes/accounts/vouchers";
@@ -22,7 +26,6 @@ import { CatalogSettingsPage } from "@/routes/catalog/catalog-settings";
 import { NewProductPage } from "@/routes/catalog/new-product";
 import { ProductPage } from "@/routes/catalog/product";
 import { ProductsPage } from "@/routes/catalog/products";
-import { ComingSoon } from "@/routes/coming-soon";
 import { NewPartyPage } from "@/routes/parties/new-party";
 import { PartiesPage } from "@/routes/parties/parties";
 import { PartyPage } from "@/routes/parties/party";
@@ -55,10 +58,6 @@ const signupRoute = createRoute({ getParentRoute: () => rootRoute, path: "/signu
 
 /** Everything below needs a signed-in user; AppShell sends others to /login. */
 const appRoute = createRoute({ getParentRoute: () => rootRoute, id: "app", component: AppShell });
-
-/** A Phase 1 area that is not built yet. Generic so the path stays a literal type for typed links. */
-const page = <P extends string>(path: P, titleKey: string) =>
-  createRoute({ getParentRoute: () => appRoute, path, component: () => <ComingSoon titleKey={titleKey} /> });
 
 const dashboardRoute = createRoute({
   getParentRoute: () => appRoute,
@@ -230,6 +229,26 @@ const chequeRoute = createRoute({
   path: "/accounts/cheques/$pdcId",
   component: PdcPage,
 });
+const reportsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/reports",
+  component: ReportsPage,
+});
+const profitLossRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/reports/profit-loss",
+  component: ProfitLossPage,
+});
+const balanceSheetRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/reports/balance-sheet",
+  component: BalanceSheetPage,
+});
+const dayBookRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/reports/day-book",
+  component: DayBookPage,
+});
 const vatReturnRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/accounts/vat-return",
@@ -292,7 +311,10 @@ const routeTree = rootRoute.addChildren([
     vatReturnRoute,
     periodsRoute,
     accountRoute,
-    page("/reports", "nav.reports"),
+    reportsRoute,
+    profitLossRoute,
+    balanceSheetRoute,
+    dayBookRoute,
   ]),
 ]);
 
