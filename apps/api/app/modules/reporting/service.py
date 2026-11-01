@@ -61,6 +61,8 @@ async def _movement(
 
 
 def _check_period(date_from: date, date_to: date) -> None:
+    if date_from <= date.min:  # the day before it (opening balances) does not exist
+        raise InvalidReportPeriodError("Choose a later start date.", field="from")
     if date_to < date_from:
         raise InvalidReportPeriodError("The period ends before it starts.", field="to")
 

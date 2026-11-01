@@ -150,3 +150,9 @@ async def test_reports_need_report_view_and_a_valid_period(client: AsyncClient) 
         headers=b.h,
     )
     assert (backwards.status_code, backwards.json()["code"]) == (422, "invalid_report_period")
+    earliest = await client.get(
+        "/reports/profit-loss",
+        params={"business_id": b.shop.business_id, "from": "0001-01-01", "to": str(TODAY)},
+        headers=b.h,
+    )
+    assert (earliest.status_code, earliest.json()["field"]) == (422, "from")  # not a 500

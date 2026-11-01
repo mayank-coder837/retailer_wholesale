@@ -313,7 +313,9 @@ def _ledger_select() -> Any:  # an 11-column select; rows map onto LedgerLine
         )
         .join(JournalEntry, JournalEntry.id == JournalLine.entry_id)
         .outerjoin(Document, Document.id == JournalEntry.source_document_id)
-        .order_by(JournalLine.entry_date, JournalEntry.posted_at, JournalLine.line_no)
+        # The entry before the line number: entries written in one transaction share posted_at, and their
+        # lines must still come out entry by entry (the day book groups and stops on them).
+        .order_by(JournalLine.entry_date, JournalEntry.posted_at, JournalLine.entry_id, JournalLine.line_no)
     )
 
 
