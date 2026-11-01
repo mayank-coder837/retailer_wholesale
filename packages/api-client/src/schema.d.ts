@@ -1902,6 +1902,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/profit-loss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Profit Loss
+         * @description Income and expenses in the period: sales - cost of goods sold = gross profit; + other income - expenses
+         *     = net profit.
+         */
+        get: operations["profit_loss"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/balance-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Balance Sheet
+         * @description Assets, liabilities and equity on a date, with the profit not yet closed into equity (R10).
+         */
+        get: operations["balance_sheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/day-book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Day Book
+         * @description Every posted journal entry in the period with its lines, oldest first (at most 500 entries).
+         */
+        get: operations["day_book"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -2633,6 +2694,41 @@ export interface components {
             /** Value */
             value: string;
         };
+        /** BalanceSheetOut */
+        BalanceSheetOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Fiscal Year Start
+             * Format: date
+             */
+            fiscal_year_start: string;
+            /** Assets */
+            assets: components["schemas"]["SectionOut"][];
+            /** Liabilities */
+            liabilities: components["schemas"]["SectionOut"][];
+            /** @description With the profit not yet closed into equity (open question R10) */
+            equity: components["schemas"]["SectionOut"];
+            /** Total Assets */
+            total_assets: string;
+            /** Total Liabilities */
+            total_liabilities: string;
+            /** Total Equity */
+            total_equity: string;
+            /**
+             * Balanced
+             * @description Assets = liabilities + equity (checked, not assumed)
+             */
+            balanced: boolean;
+        };
         /** BarcodeIn */
         BarcodeIn: {
             /**
@@ -3324,6 +3420,84 @@ export interface components {
             database: string;
             /** Server Version */
             server_version: string;
+        };
+        /** DayBookEntryOut */
+        DayBookEntryOut: {
+            /**
+             * Entry Id
+             * Format: uuid
+             */
+            entry_id: string;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Number */
+            number: string | null;
+            /** Narration */
+            narration: string | null;
+            /** Document Id */
+            document_id: string | null;
+            /** Doc Type */
+            doc_type: string | null;
+            /** Lines */
+            lines: components["schemas"]["DayBookLineOut"][];
+        };
+        /** DayBookLineOut */
+        DayBookLineOut: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Party Id */
+            party_id: string | null;
+            /** Party Name En */
+            party_name_en: string | null;
+            /** Party Name Ar */
+            party_name_ar: string | null;
+            /** Description */
+            description: string | null;
+            /** Debit */
+            debit: string;
+            /** Credit */
+            credit: string;
+        };
+        /** DayBookOut */
+        DayBookOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Entries */
+            entries: components["schemas"]["DayBookEntryOut"][];
+            /** Total Debit */
+            total_debit: string;
+            /** Total Credit */
+            total_credit: string;
+            /**
+             * Truncated
+             * @description More entries than shown: narrow the dates
+             */
+            truncated: boolean;
         };
         /** DepositIn */
         DepositIn: {
@@ -4548,6 +4722,36 @@ export interface components {
             /** Is Sales Default */
             is_sales_default?: boolean | null;
         };
+        /** ProfitLossOut */
+        ProfitLossOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Sections */
+            sections: components["schemas"]["SectionOut"][];
+            /**
+             * Gross Profit
+             * @description Sales less cost of goods sold
+             */
+            gross_profit: string;
+            /**
+             * Net Profit
+             * @description Gross profit plus other income less expenses; negative: a loss
+             */
+            net_profit: string;
+        };
         /** PromotionIn */
         PromotionIn: {
             /**
@@ -5413,6 +5617,19 @@ export interface components {
              */
             reasons: string[];
         };
+        /** SectionOut */
+        SectionOut: {
+            /**
+             * Key
+             * @description P&L: sales, cogs, other_income, expenses. Balance sheet: current_assets, fixed_assets, current_liabilities, non_current_liabilities, equity
+             * @example sales
+             */
+            key: string;
+            /** Rows */
+            rows: components["schemas"]["StatementRowOut"][];
+            /** Total */
+            total: string;
+        };
         /** SettingIn */
         SettingIn: {
             /** Scope */
@@ -5455,6 +5672,31 @@ export interface components {
             head_office: components["schemas"]["BranchIn"];
             /** @default web */
             client: components["schemas"]["ClientKind"];
+        };
+        /**
+         * StatementRowOut
+         * @description One line of a statement: an account, or a calculated line (``account_id`` empty, ``key`` says
+         *     which).
+         */
+        StatementRowOut: {
+            /** Account Id */
+            account_id: string | null;
+            /**
+             * Key
+             * @description Calculated lines: profit_year, profit_earlier
+             */
+            key?: string | null;
+            /** Code */
+            code: string | null;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Amount
+             * @description As the section reads it: income and liabilities credit-positive
+             */
+            amount: string;
         };
         /** StockDocIn */
         StockDocIn: {
@@ -11224,6 +11466,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VatBoxLineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    profit_loss: {
+        parameters: {
+            query: {
+                business_id: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitLossOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    balance_sheet: {
+        parameters: {
+            query: {
+                business_id: string;
+                as_of: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceSheetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    day_book: {
+        parameters: {
+            query: {
+                business_id: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayBookOut"];
                 };
             };
             /** @description Validation Error */

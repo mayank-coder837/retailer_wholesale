@@ -30,6 +30,7 @@ from app.modules.platform import attachments
 from app.modules.platform import router as platform_router
 from app.modules.pricing import router as pricing_router
 from app.modules.purchasing import router as purchasing_router
+from app.modules.reporting import router as reporting_router
 from app.modules.sales import router as sales_router
 from app.modules.tax import router as tax_router
 from app.modules.tenancy import router as tenancy_router
@@ -98,6 +99,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(sales_router.router)
     app.include_router(pdc_router.router)
     app.include_router(tax_router.router)
+    app.include_router(reporting_router.router)
     app.include_router(documents_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)

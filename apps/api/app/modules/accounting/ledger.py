@@ -293,9 +293,10 @@ class LedgerLine:
     description: str | None
     debit: Decimal
     credit: Decimal
+    entry_id: uuid.UUID | None = None  # the journal entry the line belongs to (the day book groups by it)
 
 
-def _ledger_select() -> Any:  # a 10-column select; rows map onto LedgerLine
+def _ledger_select() -> Any:  # an 11-column select; rows map onto LedgerLine
     return (
         select(
             JournalLine.entry_date,
@@ -308,10 +309,13 @@ def _ledger_select() -> Any:  # a 10-column select; rows map onto LedgerLine
             JournalLine.description,
             JournalLine.debit,
             JournalLine.credit,
+            JournalLine.entry_id,
         )
         .join(JournalEntry, JournalEntry.id == JournalLine.entry_id)
         .outerjoin(Document, Document.id == JournalEntry.source_document_id)
-        .order_by(JournalLine.entry_date, JournalEntry.posted_at, JournalLine.line_no)
+        # The entry before the line number: entries written in one transaction share posted_at, and their
+        # lines must still come out entry by entry (the day book groups and stops on them).
+        .order_by(JournalLine.entry_date, JournalEntry.posted_at, JournalLine.entry_id, JournalLine.line_no)
     )
 
 
