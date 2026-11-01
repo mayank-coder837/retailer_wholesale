@@ -244,3 +244,32 @@ describe("Reports screens", () => {
     expect(screen.getByRole("link", { name: "الميزانية العمومية" })).toBeInTheDocument();
   });
 });
+
+describe("Day book document names", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await setLanguage("en");
+  });
+
+  it("names stock documents and opens them", async () => {
+    window.location.hash = "#/reports/day-book";
+    const book = DAY_BOOK();
+    book.entries[0] = {
+      ...book.entries[0]!,
+      doc_type: "stock_adjustment",
+      document_id: "s1",
+      number: "SA-2026-00001",
+    };
+    const { api } = shopApi({ signedIn: true, "GET /reports/day-book": { status: 200, body: book } });
+    render(<App api={api} />);
+    const table = await screen.findByRole("table", { name: "Day book" });
+    expect(table).toHaveTextContent("Stock adjustmentSA-2026-00001");
+    expect(within(table).getByRole("link", { name: "SA-2026-00001" })).toHaveAttribute(
+      "href",
+      "/#/inventory/documents/s1",
+    );
+  });
+});

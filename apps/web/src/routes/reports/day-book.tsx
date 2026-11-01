@@ -15,7 +15,7 @@ function docTypeName(t: TFunction, docType: string | null): string {
   return t(`sales.types.${docType}`, {
     defaultValue: t(`purchasing.types.${docType}`, {
       defaultValue: t(`accounts.voucherTypes.${docType}`, {
-        defaultValue: t(`inventory.types.${docType}`, { defaultValue: docType }),
+        defaultValue: t(`inventory.docTypes.${docType}`, { defaultValue: docType }),
       }),
     }),
   });
