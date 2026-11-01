@@ -35,6 +35,7 @@ from app.modules.accounting.models import (
     Role,
 )
 from app.modules.accounting.schemas import (
+    AccountOut,
     AgeingBuckets,
     AgeingOut,
     AgeingRowOut,
@@ -295,6 +296,30 @@ async def list_bills(
         session, business_id, party_id, account_id=account_id, include_settled=include_settled
     )
     return [BillOut.model_validate(b) for b in bills]
+
+
+async def chart_accounts(session: AsyncSession, business_id: uuid.UUID) -> list[AccountOut]:
+    """Every account of the business, archived ones too (a report must name what it shows)."""
+    return await chart.list_accounts(session, business_id, include_archived=True)
+
+
+async def fiscal_year_start(session: AsyncSession, business_id: uuid.UUID, day: date) -> date:
+    """The first day of the fiscal year containing ``day`` (from the business's start month when the year is
+    not created yet)."""
+    year = await periods.find_year(session, business_id, day)
+    if year is not None:
+        return year.start_date
+    business = await tenancy.get_business(session, business_id)
+    return periods.year_bounds(business.fiscal_year_start_month, day).start
+
+
+async def day_book(
+    session: AsyncSession, business_id: uuid.UUID, date_from: date, date_to: date
+) -> list[ledger.LedgerLine]:
+    """Every posted journal line in the period, oldest first, entry by entry; a cancelled document and its
+    mirror are left out (they net to nothing), as on every ledger."""
+    _opening, lines = await ledger.ledger(session, business_id, date_from=date_from, date_to=date_to)
+    return lines
 
 
 async def trial_balance(session: AsyncSession, business_id: uuid.UUID, as_of: date) -> TrialBalanceOut:

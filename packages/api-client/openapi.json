@@ -8533,6 +8533,203 @@
         }
       }
     },
+    "/reports/profit-loss": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Profit Loss",
+        "description": "Income and expenses in the period: sales - cost of goods sold = gross profit; + other income - expenses\n= net profit.",
+        "operationId": "profit_loss",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfitLossOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/balance-sheet": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Balance Sheet",
+        "description": "Assets, liabilities and equity on a date, with the profit not yet closed into equity (R10).",
+        "operationId": "balance_sheet",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceSheetOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/day-book": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Day Book",
+        "description": "Every posted journal entry in the period with its lines, oldest first (at most 500 entries).",
+        "operationId": "day_book",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayBookOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/{doc_id}/cancel": {
       "post": {
         "tags": [
@@ -10364,6 +10561,74 @@
           "value"
         ],
         "title": "BalanceOut"
+      },
+      "BalanceSheetOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "fiscal_year_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Fiscal Year Start"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/SectionOut"
+            },
+            "type": "array",
+            "title": "Assets"
+          },
+          "liabilities": {
+            "items": {
+              "$ref": "#/components/schemas/SectionOut"
+            },
+            "type": "array",
+            "title": "Liabilities"
+          },
+          "equity": {
+            "$ref": "#/components/schemas/SectionOut",
+            "description": "With the profit not yet closed into equity (open question R10)"
+          },
+          "total_assets": {
+            "type": "string",
+            "title": "Total Assets"
+          },
+          "total_liabilities": {
+            "type": "string",
+            "title": "Total Liabilities"
+          },
+          "total_equity": {
+            "type": "string",
+            "title": "Total Equity"
+          },
+          "balanced": {
+            "type": "boolean",
+            "title": "Balanced",
+            "description": "Assets = liabilities + equity (checked, not assumed)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "as_of",
+          "fiscal_year_start",
+          "assets",
+          "liabilities",
+          "equity",
+          "total_assets",
+          "total_liabilities",
+          "total_equity",
+          "balanced"
+        ],
+        "title": "BalanceSheetOut"
       },
       "BarcodeIn": {
         "properties": {
@@ -12356,6 +12621,221 @@
           "server_version"
         ],
         "title": "DatabaseHealthOut"
+      },
+      "DayBookEntryOut": {
+        "properties": {
+          "entry_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entry Id"
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Entry Date"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narration"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/DayBookLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entry_id",
+          "entry_date",
+          "number",
+          "narration",
+          "document_id",
+          "doc_type",
+          "lines"
+        ],
+        "title": "DayBookEntryOut"
+      },
+      "DayBookLineOut": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "party_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Name En"
+          },
+          "party_name_ar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Name Ar"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "debit": {
+            "type": "string",
+            "title": "Debit"
+          },
+          "credit": {
+            "type": "string",
+            "title": "Credit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "party_id",
+          "party_name_en",
+          "party_name_ar",
+          "description",
+          "debit",
+          "credit"
+        ],
+        "title": "DayBookLineOut"
+      },
+      "DayBookOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Date From"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date",
+            "title": "Date To"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/DayBookEntryOut"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "total_debit": {
+            "type": "string",
+            "title": "Total Debit"
+          },
+          "total_credit": {
+            "type": "string",
+            "title": "Total Credit"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "More entries than shown: narrow the dates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "date_from",
+          "date_to",
+          "entries",
+          "total_debit",
+          "total_credit",
+          "truncated"
+        ],
+        "title": "DayBookOut"
       },
       "DepositIn": {
         "properties": {
@@ -15777,6 +16257,52 @@
         "title": "ProductUnitPatch",
         "description": "The factor is fixed once a unit is added (L3: lines converted with it keep their meaning)."
       },
+      "ProfitLossOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Date From"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date",
+            "title": "Date To"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SectionOut"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "gross_profit": {
+            "type": "string",
+            "title": "Gross Profit",
+            "description": "Sales less cost of goods sold"
+          },
+          "net_profit": {
+            "type": "string",
+            "title": "Net Profit",
+            "description": "Gross profit plus other income less expenses; negative: a loss"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "date_from",
+          "date_to",
+          "sections",
+          "gross_profit",
+          "net_profit"
+        ],
+        "title": "ProfitLossOut"
+      },
       "PromotionIn": {
         "properties": {
           "business_id": {
@@ -18438,6 +18964,36 @@
         ],
         "title": "SalesWarningOut"
       },
+      "SectionOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "P&L: sales, cogs, other_income, expenses. Balance sheet: current_assets, fixed_assets, current_liabilities, non_current_liabilities, equity",
+            "examples": [
+              "sales"
+            ]
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/StatementRowOut"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "rows",
+          "total"
+        ],
+        "title": "SectionOut"
+      },
       "SettingIn": {
         "properties": {
           "scope": {
@@ -18530,6 +19086,68 @@
           "head_office"
         ],
         "title": "SignupIn"
+      },
+      "StatementRowOut": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key",
+            "description": "Calculated lines: profit_year, profit_earlier"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount",
+            "description": "As the section reads it: income and liabilities credit-positive"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "amount"
+        ],
+        "title": "StatementRowOut",
+        "description": "One line of a statement: an account, or a calculated line (``account_id`` empty, ``key`` says\nwhich)."
       },
       "StockDocIn": {
         "properties": {
