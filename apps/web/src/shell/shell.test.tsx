@@ -177,7 +177,7 @@ describe("App shell", () => {
     expect(screen.queryByRole("heading", { name: "Sales invoice (F8)" })).not.toBeInTheDocument();
   });
 
-  it("navigates from the sidebar to built areas and to areas still to come", async () => {
+  it("navigates from the sidebar to the areas", async () => {
     const { api } = shopApi({ signedIn: true, "GET /products": { status: 200, body: [] } });
     render(<App api={api} />);
     await screen.findByRole("heading", { name: "Welcome, Fatima Owner" });
@@ -186,7 +186,8 @@ describe("App shell", () => {
     expect(await screen.findByRole("heading", { name: "Products" })).toBeInTheDocument(); // built in M1.2
 
     await userEvent.click(screen.getByRole("link", { name: "Reports" }));
-    expect(await screen.findByText("Reports arrives in Phase 1.")).toBeInTheDocument();
+    const accounts = await screen.findByRole("region", { name: "Accounts" }); // built in M1.11
+    expect(within(accounts).getByRole("link", { name: "Balance sheet" })).toBeInTheDocument();
   });
 
   it("keeps settings in their own menu and folds the phone menu after a choice", async () => {

@@ -1389,5 +1389,123 @@
     "partyPurchaseHint": "E.g. reverse charge for a supplier outside the UAE.",
     "asEachItem": "As each item",
     "noVat": "No VAT"
+  },
+  "reports": {
+    "title": "Reports",
+    "menu": "Reports menu",
+    "nav": {
+      "all": "All reports",
+      "profitLoss": "Profit and loss",
+      "balanceSheet": "Balance sheet",
+      "dayBook": "Day book"
+    },
+    "period": "Period",
+    "presets": {
+      "this_month": "This month",
+      "last_month": "Last month",
+      "this_year": "This fiscal year",
+      "custom": "Other dates"
+    },
+    "from": "From",
+    "to": "To",
+    "asOf": "On",
+    "pickDates": "Choose the first and last day of the period.",
+    "periodShown": "{{from}} to {{to}}",
+    "nothing": "Nothing in this period.",
+    "errors": {
+      "invalid_report_period": "The period is not valid: check its first and last day.",
+      "generic": "The report could not be loaded. Try again."
+    },
+    "pl": {
+      "sales": "Sales",
+      "cogs": "Cost of goods sold",
+      "other_income": "Other income",
+      "expenses": "Expenses",
+      "total": {
+        "sales": "Total sales",
+        "cogs": "Total cost of goods sold",
+        "other_income": "Total other income",
+        "expenses": "Total expenses"
+      },
+      "grossProfit": "Gross profit",
+      "netProfit": "Net profit",
+      "netLoss": "Net loss"
+    },
+    "bs": {
+      "current_assets": "Current assets",
+      "fixed_assets": "Fixed assets",
+      "current_liabilities": "Current liabilities",
+      "non_current_liabilities": "Non-current liabilities",
+      "equity": "Equity",
+      "total": {
+        "current_assets": "Total current assets",
+        "fixed_assets": "Total fixed assets",
+        "current_liabilities": "Total current liabilities",
+        "non_current_liabilities": "Total non-current liabilities",
+        "equity": "Total equity"
+      },
+      "totalAssets": "Total assets",
+      "totalLiabilitiesEquity": "Total liabilities and equity",
+      "unbalanced": "Assets do not equal liabilities and equity. This should never happen: tell your administrator.",
+      "notClosed": "not yet closed into equity",
+      "yearNote": "This fiscal year started on {{start}}. Profit is shown in equity until the year is closed."
+    },
+    "dayBook": {
+      "entry": "Journal entry",
+      "none": "No entries were posted in this period.",
+      "truncated": "Showing the first {{count}} entries. Choose a shorter period to see the rest.",
+      "account": "Account",
+      "party": "Customer or supplier",
+      "total_one": "Total of {{count}} entry",
+      "total_other": "Total of {{count}} entries"
+    },
+    "groups": {
+      "accounts": "Accounts",
+      "parties": "Customers and suppliers",
+      "stock": "Stock",
+      "vat": "VAT"
+    },
+    "list": {
+      "profitLoss": {
+        "title": "Profit and loss",
+        "what": "Sales, costs and the profit for a period."
+      },
+      "balanceSheet": {
+        "title": "Balance sheet",
+        "what": "What the business owns and owes on a date."
+      },
+      "trialBalance": {
+        "title": "Trial balance",
+        "what": "Every account's balance; debits equal credits."
+      },
+      "dayBook": {
+        "title": "Day book",
+        "what": "Every posted entry in a period, with its lines."
+      },
+      "ageing": {
+        "title": "Ageing",
+        "what": "What customers owe and suppliers are owed, by days late."
+      },
+      "statements": {
+        "title": "Statements",
+        "what": "A customer's or supplier's ledger: open a party."
+      },
+      "cheques": {
+        "title": "Cheques (PDC)",
+        "what": "Post-dated cheques by the month they mature."
+      },
+      "stock": {
+        "title": "Stock and its value",
+        "what": "Quantities by warehouse and their value at cost."
+      },
+      "negativeStock": {
+        "title": "Negative stock",
+        "what": "Items sold before they were received."
+      },
+      "vatReturn": {
+        "title": "VAT return",
+        "what": "The VAT 201 boxes for a period, with their documents."
+      }
+    }
   }
 }
