@@ -16,7 +16,16 @@ from app.modules.catalog import service as catalog
 from app.modules.catalog.models import BarcodeKind, ProductType
 from app.modules.catalog.products import InvalidBarcodeError, InvalidProductError
 from app.modules.catalog.schemas import BarcodeIn, ProductIn
-from app.modules.imports.kinds.base import Context, Field, Option, Reader, Row, RowResult, from_validation
+from app.modules.imports.kinds.base import (
+    Context,
+    Field,
+    KindDefaults,
+    Option,
+    Reader,
+    Row,
+    RowResult,
+    from_validation,
+)
 from app.modules.imports.values import normal_header
 
 TYPE_WORDS = {
@@ -189,7 +198,7 @@ def _unit_words(units: dict[str, Any]) -> dict[str, str]:
     return words
 
 
-class Products:
+class Products(KindDefaults):
     key = "products"
     label_en = "Items"
     label_ar = "الأصناف"

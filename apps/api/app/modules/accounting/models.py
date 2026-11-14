@@ -405,7 +405,8 @@ class VoucherAllocation(TenantScoped, Base):
             "(allocation_type = 'against_ref') = (bill_id IS NOT NULL)", name="bill_for_against_ref"
         ),
         CheckConstraint(
-            "allocation_type IN ('new_ref', 'advance') OR (reference IS NULL AND due_date IS NULL)",
+            "allocation_type IN ('new_ref', 'advance') "
+            "OR (reference IS NULL AND due_date IS NULL AND bill_date IS NULL)",
             name="reference_for_new_bills",
         ),
     )
@@ -417,4 +418,5 @@ class VoucherAllocation(TenantScoped, Base):
     bill_id: Mapped[uuid.UUID | None]
     reference: Mapped[str | None] = mapped_column(String(100))
     due_date: Mapped[date | None] = mapped_column(Date)
+    bill_date: Mapped[date | None] = mapped_column(Date)
     amount: Mapped[Decimal] = mapped_column(Numeric(19, 4))

@@ -121,6 +121,10 @@ class AllocationIn(BaseModel):
         description="Name of a new bill (new_ref; advance: optional)",
     )
     due_date: date | None = None
+    bill_date: date | None = Field(
+        default=None,
+        description="New reference: the invoice's own date, when older than this voucher (opening bills)",
+    )
 
     @model_validator(mode="after")
     def _shape(self) -> "AllocationIn":
@@ -129,9 +133,9 @@ class AllocationIn(BaseModel):
         if self.type is AllocationType.NEW_REF and self.reference is None:
             raise ValueError("a new reference needs a name")
         if self.type not in (AllocationType.NEW_REF, AllocationType.ADVANCE) and (
-            self.reference or self.due_date
+            self.reference or self.due_date or self.bill_date
         ):
-            raise ValueError("only a new reference or an advance has a name and a due date")
+            raise ValueError("only a new reference or an advance has a name, a due date and a bill date")
         return self
 
 

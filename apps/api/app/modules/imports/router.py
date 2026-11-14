@@ -12,13 +12,14 @@ from app.core.authz import PermissionSet
 from app.core.deps import PrincipalDep, SettingsDep, TenantSessionDep
 from app.core.storage import Storage
 from app.modules.identity.authz import get_permissions
-from app.modules.imports import kinds, service
+from app.modules.imports import kinds, reconciliation, service
 from app.modules.imports.schemas import (
     ImportBatchOut,
     ImportCheckIn,
     ImportCheckOut,
     ImportKindOut,
     ImportUploadOut,
+    ReconciliationOut,
 )
 
 router = APIRouter(tags=["imports"])
@@ -100,6 +101,14 @@ async def list_imports(
     return [ImportBatchOut.model_validate(b) for b in await service.list_batches(session, business_id, limit)]
 
 
+@router.get("/imports/reconciliation", operation_id="get_import_reconciliation")
+async def get_import_reconciliation(
+    perms: Signed, session: TenantSessionDep, business_id: uuid.UUID
+) -> ReconciliationOut:
+    perms.require_see("import.view", business_id)
+    return await reconciliation.reconcile(session, business_id)
+
+
 @router.get("/imports/{batch_id}", operation_id="get_import")
 async def get_import(batch_id: uuid.UUID, perms: Signed, session: TenantSessionDep) -> ImportBatchOut:
     batch = await service.get_batch(session, batch_id)
@@ -141,4 +150,16 @@ async def commit_import(
     perms.require("import.post", batch.business_id)
     _require_kind(perms, batch.kind, batch.business_id)
     done = await service.commit(session, storage, batch_id, who=_who(perms, principal, batch.business_id))
+    return ImportBatchOut.model_validate(done)
+
+
+@router.post("/imports/{batch_id}/undo", operation_id="undo_import")
+async def undo_import(
+    batch_id: uuid.UUID, perms: Signed, session: TenantSessionDep, principal: PrincipalDep
+) -> ImportBatchOut:
+    batch = await service.get_batch(session, batch_id)
+    perms.require("import.post", batch.business_id)
+    for permission in kinds.get(batch.kind).undo_permissions:
+        perms.require(permission, batch.business_id)
+    done = await service.undo(session, batch_id, who=_who(perms, principal, batch.business_id))
     return ImportBatchOut.model_validate(done)

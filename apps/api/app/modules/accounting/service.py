@@ -304,6 +304,30 @@ async def chart_accounts(session: AsyncSession, business_id: uuid.UUID) -> list[
     return await chart.list_accounts(session, business_id, include_archived=True)
 
 
+async def posting_day_problem(session: AsyncSession, business: Business, day: date) -> str | None:
+    """Why ``day`` cannot be posted to, without creating anything: ``no_fiscal_year`` or ``period_closed``."""
+    year = await periods.find_year(session, business.id, day)
+    if year is None:
+        return None if periods.may_create_year(business, day) else "no_fiscal_year"
+    if (await periods.period_of(session, year, day)).status != PeriodStatus.OPEN:
+        return "period_closed"
+    return None
+
+
+async def bill_keys(session: AsyncSession, business_id: uuid.UUID) -> set[tuple[uuid.UUID, str, uuid.UUID]]:
+    """(party, reference lower case, ledger) of the bills in the books, except those of a cancelled document
+    (imports skip a bill already there; an undone import leaves nothing behind)."""
+    rows = await session.execute(
+        select(Bill.party_id, Bill.reference, Bill.account_id)
+        .outerjoin(Document, Document.id == Bill.document_id)
+        .where(
+            Bill.business_id == business_id,
+            (Document.id.is_(None)) | (Document.status != DocumentStatus.CANCELLED.value),
+        )
+    )
+    return {(party_id, reference.lower(), account_id) for party_id, reference, account_id in rows}
+
+
 async def create_account(session: AsyncSession, tenant_id: uuid.UUID, data: AccountIn) -> AccountOut:
     """A new ledger on the chart (the Chart of accounts screen and imports use this one door)."""
     return await chart.create_account(session, tenant_id, data)
@@ -431,6 +455,7 @@ async def open_party_bill(
     due_date: date | None,
     document_id: uuid.UUID | None,
     is_advance: bool = False,
+    bill_date: date | None = None,
 ) -> uuid.UUID:
     """A bill-wise open item for a posted party line (an invoice, a supplier bill, an advance)."""
     bill = await ledger.open_bill(
@@ -441,6 +466,7 @@ async def open_party_bill(
         due_date=due_date,
         is_advance=is_advance,
         document_id=document_id,
+        bill_date=bill_date,
     )
     return bill.id
 

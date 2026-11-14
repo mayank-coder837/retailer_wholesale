@@ -8922,6 +8922,54 @@
         }
       }
     },
+    "/imports/reconciliation": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Get Import Reconciliation",
+        "operationId": "get_import_reconciliation",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/imports/{batch_id}": {
       "get": {
         "tags": [
@@ -9035,6 +9083,54 @@
         ],
         "summary": "Commit Import",
         "operationId": "commit_import",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBatchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{batch_id}/undo": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Undo Import",
+        "operationId": "undo_import",
         "security": [
           {
             "HTTPBearer": []
@@ -10175,6 +10271,19 @@
               }
             ],
             "title": "Due Date"
+          },
+          "bill_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill Date",
+            "description": "New reference: the invoice's own date, when older than this voucher (opening bills)"
           }
         },
         "type": "object",
@@ -10231,6 +10340,19 @@
               }
             ],
             "title": "Due Date"
+          },
+          "bill_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill Date",
+            "description": "New reference: the invoice's own date, when older than this voucher (opening bills)"
           }
         },
         "type": "object",
@@ -13614,6 +13736,11 @@
             "type": "integer",
             "title": "Exists"
           },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "description": "Rows with nothing to import (zero balances, control accounts)"
+          },
           "errors": {
             "type": "integer",
             "title": "Errors"
@@ -13625,6 +13752,12 @@
             "type": "array",
             "title": "Rows",
             "description": "Rows with problems first, then the first rows without"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary",
+            "description": "What the kind adds up from the rows: totals, dates, expected balances"
           },
           "truncated": {
             "type": "boolean",
@@ -13638,6 +13771,7 @@
           "total",
           "new",
           "exists",
+          "skipped",
           "errors",
           "rows",
           "truncated"
@@ -13841,6 +13975,7 @@
             "enum": [
               "new",
               "exists",
+              "skipped",
               "error"
             ],
             "title": "Status"
@@ -13855,6 +13990,30 @@
             },
             "type": "array",
             "title": "Problems"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Why a row is skipped, in plain words"
+          },
+          "note_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Code",
+            "description": "Stable code of the note, to translate"
           }
         },
         "type": "object",
@@ -18539,6 +18698,166 @@
           "may_go_below_min"
         ],
         "title": "QuoteOut"
+      },
+      "ReconciliationOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "imported": {
+            "type": "boolean",
+            "title": "Imported",
+            "description": "An opening trial balance has been imported (and not undone)"
+          },
+          "batch_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Id"
+          },
+          "opening_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Date"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationRowOut"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "file_debit": {
+            "type": "string",
+            "title": "File Debit"
+          },
+          "file_credit": {
+            "type": "string",
+            "title": "File Credit"
+          },
+          "books_debit": {
+            "type": "string",
+            "title": "Books Debit"
+          },
+          "books_credit": {
+            "type": "string",
+            "title": "Books Credit"
+          },
+          "equity_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equity Code"
+          },
+          "equity_balance": {
+            "type": "string",
+            "title": "Equity Balance",
+            "description": "Opening balance equity on the opening date; 0.00 when all ties"
+          },
+          "ties": {
+            "type": "boolean",
+            "title": "Ties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "imported",
+          "batch_id",
+          "opening_date",
+          "rows",
+          "file_debit",
+          "file_credit",
+          "books_debit",
+          "books_credit",
+          "equity_code",
+          "equity_balance",
+          "ties"
+        ],
+        "title": "ReconciliationOut"
+      },
+      "ReconciliationRowOut": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar"
+          },
+          "control": {
+            "type": "boolean",
+            "title": "Control",
+            "description": "Receivable / payable / stock: its books balance comes from bills and stock"
+          },
+          "file_debit": {
+            "type": "string",
+            "title": "File Debit"
+          },
+          "file_credit": {
+            "type": "string",
+            "title": "File Credit"
+          },
+          "file_balance": {
+            "type": "string",
+            "title": "File Balance",
+            "description": "Debit positive"
+          },
+          "books_balance": {
+            "type": "string",
+            "title": "Books Balance",
+            "description": "In the books on the opening date, debit positive"
+          },
+          "difference": {
+            "type": "string",
+            "title": "Difference",
+            "description": "Books less file; 0.00 when they agree"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "code",
+          "name_en",
+          "name_ar",
+          "control",
+          "file_debit",
+          "file_credit",
+          "file_balance",
+          "books_balance",
+          "difference"
+        ],
+        "title": "ReconciliationRowOut"
       },
       "RefreshIn": {
         "properties": {

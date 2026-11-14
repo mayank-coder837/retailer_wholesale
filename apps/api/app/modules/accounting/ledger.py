@@ -110,8 +110,10 @@ async def open_bill(
     due_date: date | None,
     is_advance: bool,
     document_id: uuid.UUID | None,
+    bill_date: date | None = None,
 ) -> Bill:
-    """A new open item in the line's direction (a new reference or an advance)."""
+    """A new open item in the line's direction (a new reference or an advance); dated as the line unless the
+    invoice is older (opening bills)."""
     assert line.party_id is not None
     bill = Bill(
         tenant_id=line.tenant_id,
@@ -119,7 +121,7 @@ async def open_bill(
         party_id=line.party_id,
         account_id=line.account_id,
         reference=reference,
-        bill_date=line.entry_date,
+        bill_date=bill_date or line.entry_date,
         due_date=due_date,
         direction=direction_of(line).value,
         amount=amount,
