@@ -28,7 +28,7 @@ class ImportOptionOut(BaseModel):
     values: list[str]
     default: str
     required: bool
-    kind: Literal["choice", "date"]
+    kind: Literal["choice", "date", "branch"]
 
 
 class ImportKindOut(BaseModel):

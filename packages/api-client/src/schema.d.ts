@@ -3942,7 +3942,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "choice" | "date";
+            kind: "choice" | "date" | "branch";
         };
         /** ImportProblem */
         ImportProblem: {

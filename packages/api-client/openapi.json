@@ -13916,7 +13916,8 @@
             "type": "string",
             "enum": [
               "choice",
-              "date"
+              "date",
+              "branch"
             ],
             "title": "Kind"
           }
