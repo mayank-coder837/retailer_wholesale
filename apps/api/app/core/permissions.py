@@ -32,6 +32,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "membership": (VIEW, CREATE, EDIT, DELETE),
     "role": (VIEW, CREATE, EDIT, DELETE),
     "audit": (VIEW, EXPORT),
+    "import": (VIEW, CREATE, POST),  # import wizards (M1.12): upload and check, then import
     "backup": (VIEW, CREATE),  # local runtime: list backups, back up now (restores need Windows admin)
     # Masters
     "unit": _MASTER,

@@ -90,7 +90,7 @@ class InvalidProductError(UnprocessableError):
     title = "The product is not valid"
 
 
-def _check_purchase_code(product_type: str, code: str | None) -> None:
+def check_purchase_code(product_type: str, code: str | None) -> None:
     """Blocked VAT (SR-B) is for expenses: on goods kept in stock it would change their cost (R8). Refused
     here as well as on the purchase, so the default never leads to a purchase that cannot post."""
     from app.modules.tax import codes as tax
@@ -420,7 +420,7 @@ async def create_product(session: AsyncSession, tenant_id: uuid.UUID, data: Prod
     if data.brand_id is not None:
         await setup.get_brand(session, data.brand_id)
     custom = await setup.validate_custom_fields(session, CustomFieldEntity.PRODUCT, data.custom_fields)
-    _check_purchase_code(data.product_type.value, data.purchase_tax_code)
+    check_purchase_code(data.product_type.value, data.purchase_tax_code)
     product = Product(
         id=new_id(),
         tenant_id=tenant_id,
@@ -502,7 +502,7 @@ async def update_product(session: AsyncSession, product_id: uuid.UUID, data: Pro
         if field in fields:
             setattr(product, field, getattr(data, field))
     if "purchase_tax_code" in fields:  # only a code being set: a code saved earlier never blocks other edits
-        _check_purchase_code(product.product_type, product.purchase_tax_code)
+        check_purchase_code(product.product_type, product.purchase_tax_code)
     if data.archived is not None:
         product.archived_at = datetime.now(UTC) if data.archived else None
     await session.flush()
@@ -740,6 +740,22 @@ async def lookup_barcode(session: AsyncSession, code: str) -> BarcodeLookupOut:
 
 
 # --- for the pricing module (M1.3): read the item, set unit prices ----------------------------------------
+
+
+@dataclass(frozen=True)
+class ItemIndex:
+    """Which items the books already know, to recognise one in a file (imports). SKUs are lower case."""
+
+    products: dict[str, uuid.UUID]  # product SKU → product id
+    variants: dict[str, uuid.UUID]  # variant SKU → variant id
+    barcodes: dict[str, uuid.UUID]  # barcode → variant id
+
+
+async def item_index(session: AsyncSession) -> ItemIndex:
+    products = {sku.lower(): pid for pid, sku in await session.execute(select(Product.id, Product.sku))}
+    variants = {sku.lower(): vid for vid, sku in await session.execute(select(Variant.id, Variant.sku))}
+    barcodes = {code: vid for vid, code in await session.execute(select(Barcode.variant_id, Barcode.code))}
+    return ItemIndex(products, variants, barcodes)
 
 
 @dataclass(frozen=True)

@@ -10,6 +10,7 @@
 
 import re
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -162,6 +163,30 @@ async def list_parties(
     if not include_archived:
         query = query.where(Party.archived_at.is_(None))
     return [PartySummary.model_validate(p) for p in await session.scalars(query)]
+
+
+@dataclass(frozen=True)
+class PartyIndex:
+    """Who is already in the books, to recognise a party in a file (imports, M1.12). Keys are lower case."""
+
+    by_trn: dict[str, uuid.UUID]
+    by_name: dict[str, uuid.UUID]  # English and Arabic names
+    by_code: dict[str, uuid.UUID]
+
+
+async def identity_index(session: AsyncSession) -> PartyIndex:
+    """Every party of the tenant, archived ones included (a returning customer is not a new one)."""
+    by_trn: dict[str, uuid.UUID] = {}
+    by_name: dict[str, uuid.UUID] = {}
+    by_code: dict[str, uuid.UUID] = {}
+    rows = await session.execute(select(Party.id, Party.code, Party.trn, Party.name_en, Party.name_ar))
+    for party_id, code, trn, name_en, name_ar in rows:
+        by_code[code.lower()] = party_id
+        if trn:
+            by_trn[trn] = party_id
+        by_name.setdefault(" ".join(name_en.lower().split()), party_id)
+        by_name.setdefault(" ".join(name_ar.lower().split()), party_id)
+    return PartyIndex(by_trn, by_name, by_code)
 
 
 # --- writing -----------------------------------------------------------------------------------------------

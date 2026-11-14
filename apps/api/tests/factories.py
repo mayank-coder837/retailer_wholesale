@@ -64,6 +64,7 @@ from app.modules.catalog.schemas import (
 )
 from app.modules.documents.models import DocumentLine, LineDirection
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
+from app.modules.imports.models import ImportBatch
 from app.modules.inventory import documents as stock_documents
 from app.modules.inventory.models import AverageCost, Batch, StockBalance, StockMove
 from app.modules.inventory.schemas import StockDocIn, StockDocType, StockLineIn
@@ -692,6 +693,24 @@ async def _pdc_intended_bill(session: AsyncSession, seed: TenantSeed) -> Any:
     return await session.scalar(select(PdcIntendedBill.id).where(PdcIntendedBill.pdc_id == pdc.id))
 
 
+async def _import_batch(session: AsyncSession, seed: TenantSeed) -> Any:
+    batch = ImportBatch(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        business_id=seed.business_id,
+        kind="parties",
+        filename="customers.csv",
+        file_key=f"{seed.tenant_id}/imports/test",
+        sha256="0" * 64,
+        size=1,
+        headers=["Name"],
+        row_count=0,
+    )
+    session.add(batch)
+    await session.flush()
+    return batch.id
+
+
 # --- inventory (M1.6) --------------------------------------------------------------------------------------
 
 
@@ -837,6 +856,7 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "document_line": _document_line,
     "pdc": _pdc,
     "pdc_intended_bill": _pdc_intended_bill,
+    "import_batch": _import_batch,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.

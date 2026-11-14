@@ -1963,6 +1963,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Import Kinds */
+        get: operations["list_import_kinds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/templates/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Import Template */
+        get: operations["download_import_template"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports"];
+        put?: never;
+        /** Upload Import */
+        post: operations["upload_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{batch_id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Import */
+        post: operations["check_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{batch_id}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit Import */
+        post: operations["commit_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -2879,6 +2982,18 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_import */
+        Body_upload_import: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Kind */
+            kind: string;
+            /** File */
+            file: string;
+        };
         /** BounceIn */
         BounceIn: {
             /**
@@ -3624,6 +3739,244 @@ export interface components {
             product: string;
             /** Version */
             version: string;
+        };
+        /** ImportBatchOut */
+        ImportBatchOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Filename */
+            filename: string;
+            /** Size */
+            size: number;
+            /** Sha256 */
+            sha256: string;
+            /** Headers */
+            headers: string[];
+            /** Row Count */
+            row_count: number;
+            /** Mapping */
+            mapping: {
+                [key: string]: unknown;
+            };
+            /** Options */
+            options: {
+                [key: string]: unknown;
+            };
+            /** Counts */
+            counts: {
+                [key: string]: unknown;
+            };
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Committed At */
+            committed_at: string | null;
+        };
+        /** ImportCheckIn */
+        ImportCheckIn: {
+            /**
+             * Mapping
+             * @description Field key → 0-based column of the file (null: the file has none)
+             */
+            mapping: {
+                [key: string]: number | null;
+            };
+            /** Options */
+            options?: {
+                [key: string]: string;
+            };
+        };
+        /** ImportCheckOut */
+        ImportCheckOut: {
+            /**
+             * Batch Id
+             * Format: uuid
+             */
+            batch_id: string;
+            /** Total */
+            total: number;
+            /** New */
+            new: number;
+            /** Exists */
+            exists: number;
+            /** Errors */
+            errors: number;
+            /**
+             * Rows
+             * @description Rows with problems first, then the first rows without
+             */
+            rows: components["schemas"]["ImportRowOut"][];
+            /**
+             * Truncated
+             * @description More rows exist than are listed here; the counts cover all of them
+             */
+            truncated: boolean;
+        };
+        /** ImportFieldOut */
+        ImportFieldOut: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Required */
+            required: boolean;
+            /** Example */
+            example: string;
+            /** Hint En */
+            hint_en: string;
+            /** Hint Ar */
+            hint_ar: string;
+        };
+        /** ImportKindOut */
+        ImportKindOut: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Description En */
+            description_en: string;
+            /** Description Ar */
+            description_ar: string;
+            /** Order */
+            order: number;
+            /** Fields */
+            fields: components["schemas"]["ImportFieldOut"][];
+            /** Options */
+            options: components["schemas"]["ImportOptionOut"][];
+            /** Permissions */
+            permissions: string[];
+        };
+        /** ImportOptionOut */
+        ImportOptionOut: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Values */
+            values: string[];
+            /** Default */
+            default: string;
+            /** Required */
+            required: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "choice" | "date";
+        };
+        /** ImportProblem */
+        ImportProblem: {
+            /** Field */
+            field: string | null;
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
+        /** ImportRowOut */
+        ImportRowOut: {
+            /**
+             * Number
+             * @description The row number in the file, as Excel shows it
+             */
+            number: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "new" | "exists" | "error";
+            /** Label */
+            label: string;
+            /** Problems */
+            problems: components["schemas"]["ImportProblem"][];
+        };
+        /** ImportUploadOut */
+        ImportUploadOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Filename */
+            filename: string;
+            /** Size */
+            size: number;
+            /** Sha256 */
+            sha256: string;
+            /** Headers */
+            headers: string[];
+            /** Row Count */
+            row_count: number;
+            /** Mapping */
+            mapping: {
+                [key: string]: unknown;
+            };
+            /** Options */
+            options: {
+                [key: string]: unknown;
+            };
+            /** Counts */
+            counts: {
+                [key: string]: unknown;
+            };
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Committed At */
+            committed_at: string | null;
+            /** Suggested Mapping */
+            suggested_mapping: {
+                [key: string]: number | null;
+            };
+            /**
+             * Sample
+             * @description The first rows of the file as text, to recognise columns
+             */
+            sample: string[][];
+            /**
+             * Duplicate Of
+             * @description This exact file was already imported (that batch)
+             */
+            duplicate_of?: string | null;
         };
         /** IntendedBillIn */
         IntendedBillIn: {
@@ -11564,6 +11917,219 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DayBookOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_import_kinds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportKindOut"][];
+                };
+            };
+        };
+    };
+    download_import_template: {
+        parameters: {
+            query?: {
+                lang?: "en" | "ar";
+            };
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_imports: {
+        parameters: {
+            query: {
+                business_id: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_import"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportUploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchOut"];
                 };
             };
             /** @description Validation Error */

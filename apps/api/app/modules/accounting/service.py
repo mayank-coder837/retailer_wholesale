@@ -35,6 +35,7 @@ from app.modules.accounting.models import (
     Role,
 )
 from app.modules.accounting.schemas import (
+    AccountIn,
     AccountOut,
     AgeingBuckets,
     AgeingOut,
@@ -301,6 +302,11 @@ async def list_bills(
 async def chart_accounts(session: AsyncSession, business_id: uuid.UUID) -> list[AccountOut]:
     """Every account of the business, archived ones too (a report must name what it shows)."""
     return await chart.list_accounts(session, business_id, include_archived=True)
+
+
+async def create_account(session: AsyncSession, tenant_id: uuid.UUID, data: AccountIn) -> AccountOut:
+    """A new ledger on the chart (the Chart of accounts screen and imports use this one door)."""
+    return await chart.create_account(session, tenant_id, data)
 
 
 async def fiscal_year_start(session: AsyncSession, business_id: uuid.UUID, day: date) -> date:
