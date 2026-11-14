@@ -6,7 +6,7 @@ call ``record()``. Rows are append-only (see migration 0004).
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -41,6 +41,13 @@ class AuditContext:
 def set_context(session: AsyncSession | Session, context: AuditContext) -> None:
     target = session.sync_session if isinstance(session, AsyncSession) else session
     target.info[AUDIT_KEY] = context
+
+
+def use_client(session: AsyncSession | Session, client: str) -> None:
+    """The rest of this session's changes are audited as made by ``client`` (an import, not a screen)."""
+    target = session.sync_session if isinstance(session, AsyncSession) else session
+    current: AuditContext | None = target.info.get(AUDIT_KEY)
+    set_context(session, replace(current, client=client) if current else AuditContext(None, client=client))
 
 
 def jsonable(value: Any) -> Any:
