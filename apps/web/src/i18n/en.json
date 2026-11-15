@@ -193,6 +193,7 @@
     "stock_adjustment": "Stock adjustments",
     "stock_transfer": "Stock transfers",
     "item_transfer": "Item transfers",
+    "opening_stock": "Opening stock",
     "pdc": "Post-dated cheques",
     "fiscal_period": "Fiscal periods",
     "report": "Reports"
@@ -827,6 +828,7 @@
     },
     "docTypes": {
       "stock_adjustment": "Stock adjustment",
+      "opening_stock": "Opening stock",
       "stock_transfer": "Warehouse transfer",
       "item_transfer": "Item Transfer"
     },

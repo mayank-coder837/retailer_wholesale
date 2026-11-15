@@ -6325,7 +6325,7 @@ export interface components {
          * StockDocType
          * @enum {string}
          */
-        StockDocType: "stock_adjustment" | "stock_transfer" | "item_transfer";
+        StockDocType: "stock_adjustment" | "stock_transfer" | "item_transfer" | "opening_stock";
         /** StockLineIn */
         StockLineIn: {
             /**

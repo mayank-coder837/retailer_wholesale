@@ -24,7 +24,14 @@ from app.modules.inventory import posting as inventory_posting
 from app.modules.inventory import stock
 from app.modules.inventory.models import AverageCost, Batch, MoveType, StockBalance, StockMove
 from app.modules.inventory.posting import batch_by_no, ensure_batch, recost
-from app.modules.inventory.schemas import BalanceOut, BatchOut, ItemLedgerLine, ItemLedgerOut, ValuationOut
+from app.modules.inventory.schemas import (
+    BalanceOut,
+    BatchOut,
+    ItemLedgerLine,
+    ItemLedgerOut,
+    StockDocIn,
+    ValuationOut,
+)
 from app.modules.tenancy import service as tenancy
 from app.modules.tenancy.models import Business
 
@@ -399,3 +406,21 @@ async def warehouse_stock(
 async def batch_no(session: AsyncSession, batch_id: uuid.UUID) -> str | None:
     batch = await session.get(Batch, batch_id)
     return batch.batch_no if batch else None
+
+
+async def post_stock_document(
+    session: AsyncSession,
+    tenant_id: uuid.UUID,
+    data: StockDocIn,
+    *,
+    node_id: uuid.UUID | None,
+    user_id: uuid.UUID | None,
+) -> uuid.UUID:
+    """A stock document saved and posted in one step, through the checks of one typed by hand (imports)."""
+    from app.modules.inventory import documents  # documents build on this service
+
+    draft = await documents.create_draft(session, tenant_id, data)
+    doc, _warnings = await documents.post(
+        session, draft.id, node_id=node_id, user_id=user_id, may_override_lock=False, override_reason=None
+    )
+    return doc.id
