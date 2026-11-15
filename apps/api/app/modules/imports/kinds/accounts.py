@@ -12,7 +12,16 @@ from pydantic import ValidationError
 from app.modules.accounting import service as accounting
 from app.modules.accounting.models import TYPE_NATURES, AccountType, Nature
 from app.modules.accounting.schemas import AccountIn
-from app.modules.imports.kinds.base import Context, Field, Option, Reader, Row, RowResult, from_validation
+from app.modules.imports.kinds.base import (
+    Context,
+    Field,
+    KindDefaults,
+    Option,
+    Reader,
+    Row,
+    RowResult,
+    from_validation,
+)
 from app.modules.imports.values import normal_header
 
 FIELDS = (
@@ -107,7 +116,7 @@ def _field_of(path: tuple[str | int, ...]) -> str | None:
     return names.get(str(path[0])) if path else None
 
 
-class Accounts:
+class Accounts(KindDefaults):
     key = "accounts"
     label_en = "Chart of accounts"
     label_ar = "دليل الحسابات"

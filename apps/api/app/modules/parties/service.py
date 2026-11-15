@@ -172,6 +172,7 @@ class PartyIndex:
     by_trn: dict[str, uuid.UUID]
     by_name: dict[str, uuid.UUID]  # English and Arabic names
     by_code: dict[str, uuid.UUID]
+    roles: dict[uuid.UUID, tuple[bool, bool]]  # (is customer, is supplier)
 
 
 async def identity_index(session: AsyncSession) -> PartyIndex:
@@ -179,14 +180,26 @@ async def identity_index(session: AsyncSession) -> PartyIndex:
     by_trn: dict[str, uuid.UUID] = {}
     by_name: dict[str, uuid.UUID] = {}
     by_code: dict[str, uuid.UUID] = {}
-    rows = await session.execute(select(Party.id, Party.code, Party.trn, Party.name_en, Party.name_ar))
-    for party_id, code, trn, name_en, name_ar in rows:
+    roles: dict[uuid.UUID, tuple[bool, bool]] = {}
+    rows = await session.execute(
+        select(
+            Party.id,
+            Party.code,
+            Party.trn,
+            Party.name_en,
+            Party.name_ar,
+            Party.is_customer,
+            Party.is_supplier,
+        )
+    )
+    for party_id, code, trn, name_en, name_ar, is_customer, is_supplier in rows:
         by_code[code.lower()] = party_id
+        roles[party_id] = (is_customer, is_supplier)
         if trn:
             by_trn[trn] = party_id
         by_name.setdefault(" ".join(name_en.lower().split()), party_id)
         by_name.setdefault(" ".join(name_ar.lower().split()), party_id)
-    return PartyIndex(by_trn, by_name, by_code)
+    return PartyIndex(by_trn, by_name, by_code, roles)
 
 
 # --- writing -----------------------------------------------------------------------------------------------

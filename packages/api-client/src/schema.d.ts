@@ -2015,6 +2015,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/imports/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import Reconciliation */
+        get: operations["get_import_reconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/imports/{batch_id}": {
         parameters: {
             query?: never;
@@ -2060,6 +2077,23 @@ export interface paths {
         put?: never;
         /** Commit Import */
         post: operations["commit_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/{batch_id}/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Undo Import */
+        post: operations["undo_import"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2526,6 +2560,11 @@ export interface components {
             reference?: string | null;
             /** Due Date */
             due_date?: string | null;
+            /**
+             * Bill Date
+             * @description New reference: the invoice's own date, when older than this voucher (opening bills)
+             */
+            bill_date?: string | null;
         };
         /** AllocationOut */
         AllocationOut: {
@@ -2544,6 +2583,11 @@ export interface components {
             reference?: string | null;
             /** Due Date */
             due_date?: string | null;
+            /**
+             * Bill Date
+             * @description New reference: the invoice's own date, when older than this voucher (opening bills)
+             */
+            bill_date?: string | null;
         };
         /**
          * AllocationType
@@ -3817,6 +3861,11 @@ export interface components {
             new: number;
             /** Exists */
             exists: number;
+            /**
+             * Skipped
+             * @description Rows with nothing to import (zero balances, control accounts)
+             */
+            skipped: number;
             /** Errors */
             errors: number;
             /**
@@ -3824,6 +3873,13 @@ export interface components {
              * @description Rows with problems first, then the first rows without
              */
             rows: components["schemas"]["ImportRowOut"][];
+            /**
+             * Summary
+             * @description What the kind adds up from the rows: totals, dates, expected balances
+             */
+            summary?: {
+                [key: string]: unknown;
+            };
             /**
              * Truncated
              * @description More rows exist than are listed here; the counts cover all of them
@@ -3886,7 +3942,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "choice" | "date";
+            kind: "choice" | "date" | "branch";
         };
         /** ImportProblem */
         ImportProblem: {
@@ -3908,11 +3964,21 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "new" | "exists" | "error";
+            status: "new" | "exists" | "skipped" | "error";
             /** Label */
             label: string;
             /** Problems */
             problems: components["schemas"]["ImportProblem"][];
+            /**
+             * Note
+             * @description Why a row is skipped, in plain words
+             */
+            note?: string | null;
+            /**
+             * Note Code
+             * @description Stable code of the note, to translate
+             */
+            note_code?: string | null;
         };
         /** ImportUploadOut */
         ImportUploadOut: {
@@ -5522,6 +5588,80 @@ export interface components {
              * @default vat_exclusive
              */
             price_mode: components["schemas"]["PriceMode"];
+        };
+        /** ReconciliationOut */
+        ReconciliationOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Imported
+             * @description An opening trial balance has been imported (and not undone)
+             */
+            imported: boolean;
+            /** Batch Id */
+            batch_id: string | null;
+            /** Opening Date */
+            opening_date: string | null;
+            /** Rows */
+            rows: components["schemas"]["ReconciliationRowOut"][];
+            /** File Debit */
+            file_debit: string;
+            /** File Credit */
+            file_credit: string;
+            /** Books Debit */
+            books_debit: string;
+            /** Books Credit */
+            books_credit: string;
+            /** Equity Code */
+            equity_code: string | null;
+            /**
+             * Equity Balance
+             * @description Opening balance equity on the opening date; 0.00 when all ties
+             */
+            equity_balance: string;
+            /** Ties */
+            ties: boolean;
+        };
+        /** ReconciliationRowOut */
+        ReconciliationRowOut: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Control
+             * @description Receivable / payable / stock: its books balance comes from bills and stock
+             */
+            control: boolean;
+            /** File Debit */
+            file_debit: string;
+            /** File Credit */
+            file_credit: string;
+            /**
+             * File Balance
+             * @description Debit positive
+             */
+            file_balance: string;
+            /**
+             * Books Balance
+             * @description In the books on the opening date, debit positive
+             */
+            books_balance: string;
+            /**
+             * Difference
+             * @description Books less file; 0.00 when they agree
+             */
+            difference: string;
         };
         /** RefreshIn */
         RefreshIn: {
@@ -12046,6 +12186,37 @@ export interface operations {
             };
         };
     };
+    get_import_reconciliation: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_import: {
         parameters: {
             query?: never;
@@ -12113,6 +12284,37 @@ export interface operations {
         };
     };
     commit_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    undo_import: {
         parameters: {
             query?: never;
             header?: never;

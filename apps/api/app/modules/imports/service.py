@@ -17,13 +17,14 @@ from collections.abc import Callable
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import audit
 from app.core.errors import ConflictError, NotFoundError, UnprocessableError
 from app.core.ids import new_id
 from app.core.storage import Storage
+from app.modules.documents import service as documents
 from app.modules.imports import kinds, mapping
 from app.modules.imports.kinds.base import Context, Kind, Option, RowResult
 from app.modules.imports.models import BatchStatus, ImportBatch
@@ -73,6 +74,21 @@ class ImportHasErrorsError(UnprocessableError):
 class InvalidOptionError(UnprocessableError):
     code = "invalid_import_option"
     title = "That choice is not valid for this import"
+
+
+class OpeningAlreadyImportedError(ConflictError):
+    code = "opening_already_imported"
+    title = "An opening trial balance is already imported: undo it first"
+
+
+class NotUndoableError(UnprocessableError):
+    code = "not_undoable"
+    title = "This kind of import cannot be undone"
+
+
+class NotCommittedError(ConflictError):
+    code = "import_not_committed"
+    title = "Only an import that was done can be undone"
 
 
 class ImportFileTooLargeError(UnprocessableError):
@@ -189,7 +205,26 @@ async def upload(
     )
 
 
-def _options(kind: Kind, given: dict[str, str]) -> dict[str, str]:
+async def _branch(session: AsyncSession, business_id: uuid.UUID, value: str) -> str:
+    """The branch an opening voucher belongs to: the one chosen, else the head office."""
+    branches = await tenancy.list_branches(session, business_id)
+    if value:
+        try:
+            wanted = uuid.UUID(value)
+        except ValueError as exc:
+            raise InvalidOptionError("Choose one of this business's branches.", option="branch") from exc
+        if all(b.id != wanted for b in branches):
+            raise InvalidOptionError("That branch belongs to another business.", option="branch")
+        return str(wanted)
+    head = next((b for b in branches if b.is_head_office), None) or next(iter(branches), None)
+    if head is None:
+        raise InvalidOptionError("The business has no branch.", option="branch")
+    return str(head.id)
+
+
+async def _options(
+    session: AsyncSession, kind: Kind, given: dict[str, str], business_id: uuid.UUID
+) -> dict[str, str]:
     """The file-wide choices, each checked against what the kind allows; missing ones take their default."""
     known: dict[str, Option] = {o.key: o for o in kind.options}
     for key in given:
@@ -210,23 +245,10 @@ def _options(kind: Kind, given: dict[str, str]) -> dict[str, str]:
             if day is None:
                 raise InvalidOptionError("Choose a date.", option=option.key)
             value = day.isoformat()
+        if option.kind == "branch":
+            value = await _branch(session, business_id, value)
         chosen[option.key] = value
     return chosen
-
-
-def _context(session: AsyncSession, batch: ImportBatch, options: dict[str, str], who: "Who") -> Context:
-    return Context(
-        session=session,
-        tenant_id=batch.tenant_id,
-        business_id=batch.business_id,
-        branch_id=None,
-        user_id=who.user_id,
-        node_id=who.node_id,
-        options=options,
-        may_override_lock=who.may_override_lock,
-        allows=who.allows,
-        batch_id=batch.id,
-    )
 
 
 class Who:
@@ -245,8 +267,47 @@ class Who:
         self.allows = allows
 
 
+async def _context(session: AsyncSession, batch: ImportBatch, options: dict[str, str], who: Who) -> Context:
+    business = await tenancy.get_business(session, batch.business_id)
+    return Context(
+        session=session,
+        tenant_id=batch.tenant_id,
+        business_id=batch.business_id,
+        branch_id=uuid.UUID(options["branch"]) if "branch" in options else None,
+        user_id=who.user_id,
+        node_id=who.node_id,
+        options=options,
+        may_override_lock=who.may_override_lock,
+        allows=who.allows,
+        batch_id=batch.id,
+        currency=business.base_currency,
+        filename=batch.filename,
+    )
+
+
 async def _read(storage: Storage, batch: ImportBatch) -> Table:
     return await asyncio.to_thread(read_table, batch.filename, await storage.get(batch.file_key))
+
+
+async def _ensure_single(session: AsyncSession, batch: ImportBatch, kind: Kind) -> None:
+    """An opening trial balance is imported once per business; Undo makes room for another."""
+    if not kind.once_per_business:
+        return
+    # Two imports of the same kind committing at once must not both pass: one waits for the other.
+    await session.execute(
+        text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
+        {"key": f"import:{batch.business_id}:{batch.kind}"},
+    )
+    other = await session.scalar(
+        select(ImportBatch.id).where(
+            ImportBatch.business_id == batch.business_id,
+            ImportBatch.kind == batch.kind,
+            ImportBatch.status == BatchStatus.COMMITTED.value,
+            ImportBatch.id != batch.id,
+        )
+    )
+    if other is not None:
+        raise OpeningAlreadyImportedError(imported_batch=str(other))
 
 
 async def _results(
@@ -255,7 +316,7 @@ async def _results(
     kind = kinds.get(batch.kind)
     table = await _read(storage, batch)
     chosen = mapping.check_mapping(batch.mapping, kind.fields, len(table.headers))
-    ctx = _context(session, batch, _options(kind, batch.options), who)
+    ctx = await _context(session, batch, await _options(session, kind, batch.options, batch.business_id), who)
     return kind, ctx, await kind.check(ctx, mapping.rows_of(table, chosen))
 
 
@@ -264,6 +325,7 @@ def _count(results: list[RowResult]) -> dict[str, int]:
         "total": len(results),
         "new": sum(r.status == "new" for r in results),
         "exists": sum(r.status == "exists" for r in results),
+        "skipped": sum(r.status == "skipped" for r in results),
         "errors": sum(r.status == "error" for r in results),
     }
 
@@ -272,7 +334,17 @@ def _listing(results: list[RowResult]) -> tuple[list[ImportRowOut], bool]:
     bad = [r for r in results if r.status == "error"]
     rest = [r for r in results if r.status != "error"]
     shown = bad[:LISTED_ERRORS] + rest[:LISTED_OTHERS]
-    rows = [ImportRowOut(number=r.number, status=r.status, label=r.label, problems=r.problems) for r in shown]
+    rows = [
+        ImportRowOut(
+            number=r.number,
+            status=r.status,
+            label=r.label,
+            problems=r.problems,
+            note=r.note,
+            note_code=r.note_code,
+        )
+        for r in shown
+    ]
     return rows, len(shown) < len(results)
 
 
@@ -289,17 +361,19 @@ async def check(
     if batch.status not in (BatchStatus.UPLOADED.value, BatchStatus.CHECKED.value):
         raise ImportClosedError(batch_status=batch.status)
     kind = kinds.get(batch.kind)
+    await _ensure_single(session, batch, kind)
     table = await _read(storage, batch)
     batch.mapping = mapping.check_mapping(columns, kind.fields, len(table.headers))
-    batch.options = _options(kind, options)
-    ctx = _context(session, batch, batch.options, who)
+    batch.options = await _options(session, kind, options, batch.business_id)
+    ctx = await _context(session, batch, batch.options, who)
     results = await kind.check(ctx, mapping.rows_of(table, batch.mapping))
     counts = _count(results)
-    batch.counts = counts
+    summary = await kind.summary(ctx, results)
+    batch.counts = {**counts, "summary": summary}
     batch.status = BatchStatus.CHECKED.value
     await session.flush()
     rows, truncated = _listing(results)
-    return ImportCheckOut(batch_id=batch.id, rows=rows, truncated=truncated, **counts)
+    return ImportCheckOut(batch_id=batch.id, rows=rows, truncated=truncated, summary=summary, **counts)
 
 
 async def commit(session: AsyncSession, storage: Storage, batch_id: uuid.UUID, *, who: Who) -> ImportBatch:
@@ -311,16 +385,39 @@ async def commit(session: AsyncSession, storage: Storage, batch_id: uuid.UUID, *
     earlier = await _imported_before(session, batch)
     if earlier is not None:
         raise AlreadyImportedError(duplicate_of=str(earlier))
+    await _ensure_single(session, batch, kinds.get(batch.kind))
     audit.use_client(session, "import")
     kind, ctx, results = await _results(session, storage, batch, who)
     counts = _count(results)
     if counts["errors"]:
         raise ImportHasErrorsError(errors=counts["errors"], total=counts["total"])
     applied = await kind.apply(ctx, results)
-    batch.counts = counts
-    batch.result = {"counts": applied, "rows": counts}
+    batch.counts = {**counts, "summary": await kind.summary(ctx, results)}
+    batch.result = {"counts": applied, "rows": counts, **ctx.record}
     batch.status = BatchStatus.COMMITTED.value
     batch.committed_at = datetime.now(UTC)
+    await session.flush()
+    return batch
+
+
+async def undo(session: AsyncSession, batch_id: uuid.UUID, *, who: Who) -> ImportBatch:
+    """Cancels the vouchers an opening import posted (only while their periods are open), so the same file
+    can be imported again. All or nothing. A payment already allocated to an opening bill is kept: it becomes
+    an advance on that payment, as when any invoice is cancelled."""
+    batch = await get_batch(session, batch_id, lock=True)
+    if not kinds.get(batch.kind).undoable:
+        raise NotUndoableError(kind=batch.kind)
+    if batch.status != BatchStatus.COMMITTED.value:
+        raise NotCommittedError(batch_status=batch.status)
+    audit.use_client(session, "import")
+    for document_id in reversed(batch.result.get("documents", [])):
+        await documents.cancel(
+            session,
+            uuid.UUID(document_id),
+            user_id=who.user_id,
+            reason=f"Import of {batch.filename} undone",
+        )
+    batch.status = BatchStatus.UNDONE.value
     await session.flush()
     return batch
 

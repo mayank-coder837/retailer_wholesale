@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from app.modules.imports.kinds.base import (
     Context,
     Field,
+    KindDefaults,
     Option,
     Reader,
     Row,
@@ -223,7 +224,7 @@ class _CodeSequence:
         return f"{prefix}{self.top[prefix]:04d}"
 
 
-class Parties:
+class Parties(KindDefaults):
     key = "parties"
     label_en = "Customers and suppliers"
     label_ar = "العملاء والموردون"

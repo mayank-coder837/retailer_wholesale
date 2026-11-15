@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.imports.readers import Cell
 from app.modules.imports.values import CellError, clean_text, parse_date, parse_decimal
 
-Status = Literal["new", "exists", "error"]
+Status = Literal["new", "exists", "skipped", "error"]
 YES_NO = {
     **dict.fromkeys(("yes", "y", "true", "1", "نعم"), True),
     **dict.fromkeys(("no", "n", "false", "0", "لا"), False),
@@ -44,7 +44,7 @@ class Option:
     values: tuple[str, ...]
     default: str
     required: bool = False
-    kind: Literal["choice", "date"] = "choice"
+    kind: Literal["choice", "date", "branch"] = "choice"
 
 
 class ImportProblem(BaseModel):
@@ -66,6 +66,8 @@ class RowResult:
     label: str
     problems: list[ImportProblem] = field(default_factory=list)
     prepared: Any = None  # what apply() writes; never leaves the server
+    note: str | None = None  # why a row is skipped, in plain words
+    note_code: str | None = None  # the same, stable, for the screens to translate
 
 
 @dataclass
@@ -80,6 +82,9 @@ class Context:
     may_override_lock: bool = False
     allows: Callable[[str], bool] = field(default=lambda _permission: True)  # does the importer hold this?
     batch_id: uuid.UUID | None = None
+    currency: str = "AED"
+    filename: str = ""
+    record: dict[str, Any] = field(default_factory=dict)  # kept on the batch's result (apply fills it)
 
 
 class Kind(Protocol):
@@ -94,10 +99,26 @@ class Kind(Protocol):
         str, ...
     ]  # held on top of import.post (an import never lets anyone do more than a screen)
     order: int
+    once_per_business: bool  # a second file of this kind is refused until the first is undone
+    undoable: bool  # Undo cancels what the batch created
+    undo_permissions: tuple[str, ...]  # held to undo it (cancelling what it posted)
 
     async def check(self, ctx: Context, rows: list[Row]) -> list[RowResult]: ...
 
+    async def summary(self, ctx: Context, results: list[RowResult]) -> dict[str, Any]: ...
+
     async def apply(self, ctx: Context, results: list[RowResult]) -> dict[str, Any]: ...
+
+
+class KindDefaults:
+    """What a kind that is not an opening balance does not need to say."""
+
+    once_per_business = False
+    undoable = False
+    undo_permissions: tuple[str, ...] = ()
+
+    async def summary(self, ctx: Context, results: list[RowResult]) -> dict[str, Any]:
+        return {}
 
 
 class Reader:
@@ -165,10 +186,18 @@ class Reader:
     def add(self, key: str | None, code: str, message: str) -> None:
         self.problems.append(ImportProblem(field=key, code=code, message=message))
 
-    def result(self, status: Status, label: str, prepared: Any = None) -> RowResult:
+    def result(
+        self,
+        status: Status,
+        label: str,
+        prepared: Any = None,
+        *,
+        note: tuple[str, str] | None = None,
+    ) -> RowResult:
         if self.problems:
             return RowResult(self.row.number, "error", label, self.problems)
-        return RowResult(self.row.number, status, label, [], prepared)
+        code, text = note if note else (None, None)
+        return RowResult(self.row.number, status, label, [], prepared, text, code)
 
 
 def from_validation(

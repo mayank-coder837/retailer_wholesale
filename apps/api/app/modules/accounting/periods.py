@@ -142,15 +142,19 @@ async def year_for_posting(session: AsyncSession, business: Business, day: date)
     year = await find_year(session, business.id, day)
     if year is not None:
         return year
-    today = business_today(business)
-    current = year_bounds(business.fiscal_year_start_month, today)
+    if not may_create_year(business, day):
+        raise NoFiscalYearError(date=day.isoformat())
+    return await create_year(session, business, day)
+
+
+def may_create_year(business: Business, day: date) -> bool:
+    """Only the current and the next fiscal year are created on their own; an older one is made on purpose."""
+    current = year_bounds(business.fiscal_year_start_month, business_today(business))
     allowed = {
         current.start,
         year_bounds(business.fiscal_year_start_month, current.end + timedelta(days=1)).start,
     }
-    if year_bounds(business.fiscal_year_start_month, day).start not in allowed:
-        raise NoFiscalYearError(date=day.isoformat())
-    return await create_year(session, business, day)
+    return year_bounds(business.fiscal_year_start_month, day).start in allowed
 
 
 async def period_of(session: AsyncSession, year: FiscalYear, day: date) -> FiscalPeriod:

@@ -207,7 +207,9 @@ async def _check(session: AsyncSession, data: VoucherIn) -> Checked:
         if raw.allocations:
             if raw.party_id is None:
                 raise _invalid("Only party lines are settled bill-wise.", field=f"{where}.allocations")
-            _check_allocations(raw.allocations, debit or credit, currency, f"{where}.allocations")
+            _check_allocations(
+                raw.allocations, debit or credit, currency, f"{where}.allocations", data.doc_date
+            )
             allocations[i] = raw.allocations
         lines.append(
             posting.Line(
@@ -238,7 +240,7 @@ async def _check(session: AsyncSession, data: VoucherIn) -> Checked:
     except posting.UnbalancedError as exc:
         raise _invalid(str(exc), field="lines") from exc
     if data.allocations:
-        _check_allocations(data.allocations, posted.total, currency, "allocations")
+        _check_allocations(data.allocations, posted.total, currency, "allocations", data.doc_date)
         allocations[HEADER] = data.allocations
     return Checked(business, voucher, posted, allocations)
 
@@ -270,9 +272,15 @@ def _role_accounts(roles: dict[Role, uuid.UUID]) -> posting.Accounts:
     return posting.Accounts(roles[Role.VAT_INPUT], roles[Role.VAT_OUTPUT], roles[Role.ROUNDING])
 
 
-def _check_allocations(items: list[AllocationIn], amount: Decimal, currency: str, where: str) -> None:
+def _check_allocations(
+    items: list[AllocationIn], amount: Decimal, currency: str, where: str, day: date
+) -> None:
     for item in items:
         _check_money(item.amount, currency, where)
+        if item.bill_date is not None and item.bill_date > day:
+            raise _invalid("A bill cannot be dated after the voucher that opens it.", field=where)
+        if item.due_date is not None and item.due_date < (item.bill_date or day):
+            raise _invalid("A bill cannot be due before it is dated.", field=where)
     allocated = sum((item.amount for item in items), ZERO)
     if allocated != amount:
         raise _invalid(
@@ -321,6 +329,7 @@ def _allocation_row(doc: Document, line_id: uuid.UUID | None, item: AllocationIn
         bill_id=item.bill_id,
         reference=item.reference,
         due_date=item.due_date,
+        bill_date=item.bill_date,
         amount=item.amount,
     )
 
@@ -428,6 +437,7 @@ async def _stored_input(session: AsyncSession, doc: Document) -> VoucherIn:
                 bill_id=a.bill_id,
                 reference=a.reference,
                 due_date=a.due_date,
+                bill_date=a.bill_date,
             )
         )
     lines = [
@@ -587,6 +597,7 @@ async def _settle(
                 due_date=due,
                 is_advance=item.type is AllocationType.ADVANCE,
                 document_id=doc.id,
+                bill_date=item.bill_date,
             )
 
 
