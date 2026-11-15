@@ -17,11 +17,13 @@ class MappingError(UnprocessableError):
     title = "Match every required field to a column"
 
 
-def suggest(headers: list[str], fields: tuple[Field, ...]) -> Mapping:
+def suggest(headers: list[str], fields: tuple[Field, ...], *, canonical: bool = False) -> Mapping:
     """The best column for each field: an exact header match first, then a header containing one of its words.
 
     A column is suggested for one field only; required fields choose first.
     """
+    if canonical:  # the headers are the field keys themselves
+        return {f.key: (headers.index(f.key) if f.key in headers else None) for f in fields}
     columns = [normal_header(h) for h in headers]
     taken: set[int] = set()
     suggestion: Mapping = dict.fromkeys(f.key for f in fields)

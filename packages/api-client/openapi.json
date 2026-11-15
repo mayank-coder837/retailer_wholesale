@@ -13883,6 +13883,30 @@
         ],
         "title": "ImportKindOut"
       },
+      "ImportNoteOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable code, for the screen to translate"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ImportNoteOut"
+      },
       "ImportOptionOut": {
         "properties": {
           "key": {
@@ -14119,6 +14143,14 @@
             },
             "type": "object",
             "title": "Suggested Mapping"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/ImportNoteOut"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "What the reader found out about the file"
           },
           "sample": {
             "items": {

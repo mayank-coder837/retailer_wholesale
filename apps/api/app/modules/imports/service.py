@@ -34,6 +34,7 @@ from app.modules.imports.schemas import (
     ImportCheckOut,
     ImportFieldOut,
     ImportKindOut,
+    ImportNoteOut,
     ImportOptionOut,
     ImportRowOut,
     ImportUploadOut,
@@ -176,7 +177,7 @@ async def upload(
     await tenancy.get_business(session, business_id)
     if len(data) > max_bytes:
         raise ImportFileTooLargeError(max_bytes=max_bytes)
-    table = await asyncio.to_thread(read_table, filename, data)  # parsing is slow work: off the event loop
+    table = await asyncio.to_thread(read_table, filename, data, kind.key)  # slow work: off the event loop
     batch_id = new_id()
     key = f"{tenant_id}/imports/{batch_id}"
     # Written before the row commits: a rolled-back upload leaves an orphan file, never a row without a file.
@@ -199,7 +200,8 @@ async def upload(
     await session.refresh(batch)
     return ImportUploadOut(
         **ImportBatchOut.model_validate(batch).model_dump(),
-        suggested_mapping=mapping.suggest(table.headers, kind.fields),
+        suggested_mapping=mapping.suggest(table.headers, kind.fields, canonical=table.canonical),
+        notes=[ImportNoteOut(code=n.code, message=n.message, count=n.count) for n in table.notes],
         sample=[[_text(c) for c in row] for row in table.rows[:SAMPLE_ROWS]],
         duplicate_of=await _imported_before(session, batch),
     )
@@ -286,7 +288,7 @@ async def _context(session: AsyncSession, batch: ImportBatch, options: dict[str,
 
 
 async def _read(storage: Storage, batch: ImportBatch) -> Table:
-    return await asyncio.to_thread(read_table, batch.filename, await storage.get(batch.file_key))
+    return await asyncio.to_thread(read_table, batch.filename, await storage.get(batch.file_key), batch.kind)
 
 
 async def _ensure_single(session: AsyncSession, batch: ImportBatch, kind: Kind) -> None:
