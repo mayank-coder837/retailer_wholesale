@@ -22,6 +22,7 @@ from app.modules.imports.kinds.parties import ROLE_WORDS
 from app.modules.parties import service as parties
 
 ZERO = Decimal("0.0000")
+MAX_AMOUNT = Decimal(10**13)
 CUSTOMER, SUPPLIER = "customer", "supplier"
 SIDE_WORDS = {
     **dict.fromkeys(("dr", "debit", "مدين"), "dr"),
@@ -220,7 +221,9 @@ class PartyBills(KindDefaults):
                 "unknown_party",
                 f"'{text}' is not a customer or supplier yet; import the party first.",
             )
-        if amount is not None and amount != to_currency(amount, ctx.currency):
+        if amount is not None and abs(amount) >= MAX_AMOUNT:
+            reader.add("amount", "too_large", "This amount is too large to be right.")
+        elif amount is not None and amount != to_currency(amount, ctx.currency):
             reader.add("amount", "decimals", f"{ctx.currency} amounts have no more than 2 decimal places.")
         if bill_date is not None and bill_date > day:
             reader.add("bill_date", "after_opening", "The invoice is dated after the opening date.")

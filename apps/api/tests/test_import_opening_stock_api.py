@@ -170,6 +170,10 @@ async def test_stock_rows_with_problems_are_named(client: AsyncClient) -> None:
         "bolt-1,,5,,1,,,\n"  # 16 the same item and warehouse twice
         "FAB-100,,abc,,1,,,\n"  # 17 not a number
         ",,5,,1,,,\n"  # 18 no item
+        "FAB-100,,5,,0,,,\n"  # 19 a zero cost
+        "FAB-100,,10000000000,,1,,,\n"  # 20 a quantity too large to be right
+        "FAB-100,,5,,99999999999,,,\n"  # 21 a cost too large to be right
+        "Cotton fabric,,5,,2,,,\n"  # 22 found by its name: fine
     )
     batch = await upload(b, "opening_stock", csv_file(file))
     checked = await check(b, batch, **OPENING)
@@ -191,6 +195,10 @@ async def test_stock_rows_with_problems_are_named(client: AsyncClient) -> None:
     assert found[16] == [("item", "duplicate_in_file")]
     assert found[17] == [("quantity", "not_a_number")]
     assert found[18] == [("item", "required")]
+    assert found[19] == [("unit_cost", "zero_cost")]
+    assert found[20] == [("quantity", "too_large")]
+    assert found[21] == [("unit_cost", "too_large")]
+    assert 22 not in found
     assert (await commit(b, batch, 422))["code"] == "import_has_errors"
     assert await stock(b) == {}
 
@@ -203,6 +211,27 @@ async def test_a_second_file_cannot_double_the_stock(client: AsyncClient) -> Non
     assert problems(checked) == {2: [("item", "stock_exists")]}
     assert "10" in checked["rows"][0]["problems"][0]["message"]
     assert (checked["new"], checked["errors"]) == (1, 1)
+
+
+async def test_a_batch_cannot_be_doubled_either(client: AsyncClient) -> None:
+    b, _wh = await stocked_shop(client, "batch12s@shop.ae")
+    header = "Item,Qty,Cost,Batch,Expiry\n"
+    await run(b, "opening_stock", header + "MED-1,50,3,B-1,31/12/2027\n", **OPENING)
+    again = await upload(
+        b, "opening_stock", csv_file(header + "MED-1,5,3,B-1,31/12/2027\nMED-1,5,3,B-2,31/12/2027\n")
+    )
+    checked = await check(b, again, **OPENING)
+    assert problems(checked) == {2: [("item", "stock_exists")]}  # B-1 is there; B-2 is a new batch
+    assert (checked["new"], checked["errors"]) == (1, 1)
+
+
+async def test_an_item_is_found_by_its_name_when_the_name_is_unique(client: AsyncClient) -> None:
+    b, _wh = await stocked_shop(client, "names12s@shop.ae")
+    await run(b, "products", "SKU,Name\nFAB-200,Cotton fabric\n")  # a second item with the same name
+    batch = await upload(b, "opening_stock", csv_file("Item,Qty,Cost\nBolt,3,2\nCotton fabric,3,2\n"))
+    checked = await check(b, batch, **OPENING)
+    assert problems(checked) == {3: [("item", "ambiguous_item")]}
+    assert checked["new"] == 1
 
 
 async def test_a_quantity_can_carry_its_unit_as_tally_writes_it(client: AsyncClient) -> None:

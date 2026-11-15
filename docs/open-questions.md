@@ -22,6 +22,7 @@ accountant reviews remain open.
 | R12 | VAT on imported outstanding invoices (M1.12): imported bills carry no VAT split — their VAT was reported in the old system's returns, so the VAT return here leaves them out; the VAT payable / receivable balances come in through the trial balance. Confirm? | Not in the VAT return |
 | R13 | Control accounts in an imported trial balance (M1.12): receivables, payables and inventory are not posted from the trial balance; they come from the imported bills and stock, and any difference stays in `opening_balance_equity` and is shown by the reconciliation (never forced to zero). Or should a difference go to a suspense account? | Difference stays in opening balance equity |
 | R14 | Tally exports (M1.12c): the XML reader follows Tally's documented structure, including the Dr / Cr sign and group mapping. Please send one real export (ledger masters with bills, and stock items) so it can be checked. | Built from the documented structure |
+| R15 | Opening stock at zero cost (M1.12b-2): the import refuses a cost of zero, because a blank cost exported as 0 would bring the goods in at no value and make their average cost zero (later sales would show no cost of goods sold). If some goods really cost nothing (free samples), how should they come in? | Refused; enter the real cost |
 
 Also for the accountant before e-invoicing go-live: an invoice already sent through the ASP can only be reversed
 with a credit note, never cancelled ([A7](decisions-round-1.md#rules-to-build)).

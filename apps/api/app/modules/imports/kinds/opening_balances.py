@@ -17,6 +17,7 @@ from app.modules.imports.kinds.base import Context, Field, KindDefaults, Option,
 from app.modules.imports.values import normal_header
 
 ZERO = Decimal("0.0000")
+MAX_AMOUNT = Decimal(10**13)
 CONTROL_TYPES = frozenset({*CONTROL, AccountType.STOCK})
 FIELDS = (
     Field(
@@ -115,6 +116,8 @@ class OpeningBalances(KindDefaults):
         if balance is not None and debit is None and credit is None:
             debit, credit = (balance, ZERO) if balance > 0 else (ZERO, -balance)
         d, c = debit or ZERO, credit or ZERO
+        if max(d, c) >= MAX_AMOUNT:
+            reader.add(None, "too_large", "This amount is too large to be right.")
         for key, value in (("debit", d), ("credit", c)):
             if value != to_currency(value, ctx.currency):
                 reader.add(key, "decimals", f"{ctx.currency} amounts have no more than 2 decimal places.")

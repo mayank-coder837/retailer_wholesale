@@ -12,12 +12,23 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+from pydantic import ValidationError
+
 from app.modules.catalog import products as catalog
 from app.modules.catalog.models import ProductType
 from app.modules.catalog.products import InvalidProductError, StockItem
 from app.modules.documents.models import LineDirection
 from app.modules.imports.kinds import opening
-from app.modules.imports.kinds.base import Context, Field, KindDefaults, Option, Reader, Row, RowResult
+from app.modules.imports.kinds.base import (
+    Context,
+    Field,
+    KindDefaults,
+    Option,
+    Reader,
+    Row,
+    RowResult,
+    from_validation,
+)
 from app.modules.imports.kinds.products import UNIT_ALIASES
 from app.modules.imports.values import CellError, normal_header, parse_decimal
 from app.modules.inventory import service as inventory
@@ -28,7 +39,10 @@ from app.modules.tenancy import service as tenancy
 ZERO = Decimal("0.0000")
 COST_PLACES = Decimal("0.000001")  # a unit cost has up to 6 decimals
 DOCUMENT_LINES = 400
-_QTY_UNIT = re.compile(r"^\s*([-\d.,\s]+?)\s*([^\d\s.,-][^\d]*)$")  # Tally: "10 Nos"
+MAX_QUANTITY = Decimal(10**9)  # beyond these a number is a typing slip, and would overflow the books
+MAX_COST = Decimal(10**9)
+MAX_VALUE = Decimal(10**13)
+_QTY_UNIT = re.compile(r"^\s*([-\d.,\s]+?)\s*([^\d\s.,-]\S*)$")  # Tally: "10 Nos", "5 m2"
 FIELDS = (
     Field(
         "item",
@@ -122,6 +136,17 @@ def _split_quantity(text: str) -> tuple[str, str | None]:
     return (match[1], match[2].strip()) if match else (text, None)
 
 
+def _field_of(path: tuple[str | int, ...]) -> str | None:
+    names = {
+        "qty": "quantity",
+        "unit": "unit",
+        "unit_cost": "unit_cost",
+        "batch_no": "batch_no",
+        "expiry_date": "expiry_date",
+    }
+    return names.get(str(path[0])) if path else None
+
+
 class OpeningStock(KindDefaults):
     key = "opening_stock"
     label_en = "Opening stock"
@@ -170,6 +195,12 @@ class OpeningStock(KindDefaults):
                 return None
             found = variants[0]
         if found is None:
+            named = index.names.get(" ".join(key.split()), [])
+            if len(named) > 1:
+                reader.add("item", "ambiguous_item", f"'{text}' matches several items: use the SKU.")
+                return None
+            found = named[0] if named else None
+        if found is None:
             reader.add("item", "unknown_item", f"'{text}' is not an item yet; import the items first.")
             return None
         if found not in items:
@@ -194,7 +225,8 @@ class OpeningStock(KindDefaults):
         label = text or "?"
         item = await self._item(ctx, reader, index, items, text) if text else None
         quantity, suffix = self._quantity_cell(reader)
-        unit_text = reader.text("unit") or suffix
+        unit_column = reader.text("unit")
+        unit_text = unit_column or suffix
         unit_cost, value = reader.decimal("unit_cost"), reader.decimal("value")
         warehouse = self._warehouse(reader, by_name, default)
         batch_no = reader.text("batch_no", limit=60)
@@ -207,7 +239,13 @@ class OpeningStock(KindDefaults):
                 "skipped", label, note=("zero_quantity", "Nothing to import: the quantity is zero.")
             )
         unit = self._unit(reader, item, unit_text)
+        if unit_column and suffix and unit is not None and self._unit_code(item, suffix) not in (None, unit):
+            reader.add(
+                "unit", "unit_conflict", f"The quantity says '{suffix}' but the unit is '{unit_column}'."
+            )
         cost = self._cost(reader, quantity, unit_cost, value)
+        if cost is not None and fils(quantity * cost) >= MAX_VALUE:
+            reader.add("quantity", "too_large", "This quantity at this cost is too large to be right.")
         self._tracking(reader, item, batch_no, expiry)
         self._quantity(reader, item, unit, quantity)
         if reader.problems or unit is None or cost is None:
@@ -219,20 +257,23 @@ class OpeningStock(KindDefaults):
             )
             return reader.result("new", label)
         seen[key] = row.number
-        if not batch_no:
-            there = await inventory.warehouse_stock(ctx.session, warehouse, item.variant_id, None)
-            if there != 0:
-                reader.add("item", "stock_exists", f"{item.sku} already has {there} in this warehouse.")
-                return reader.result("new", label)
-        line = StockLineIn(
-            variant_id=item.variant_id,
-            unit=unit,
-            qty=quantity,
-            direction=LineDirection.IN,
-            unit_cost=cost,
-            batch_no=batch_no,
-            expiry_date=expiry,
-        )
+        there = await inventory.warehouse_stock_of(ctx.session, warehouse, item.variant_id, batch_no)
+        if there != 0:
+            reader.add("item", "stock_exists", f"{item.sku} already has {there} in this warehouse.")
+            return reader.result("new", label)
+        try:
+            line = StockLineIn(
+                variant_id=item.variant_id,
+                unit=unit,
+                qty=quantity,
+                direction=LineDirection.IN,
+                unit_cost=cost,
+                batch_no=batch_no,
+                expiry_date=expiry,
+            )
+        except ValidationError as exc:
+            from_validation(reader, exc, _field_of)
+            return reader.result("new", label)
         return reader.result("new", label, Line(warehouse, item.variant_id, line, fils(quantity * cost)))
 
     def _quantity_cell(self, reader: Reader) -> tuple[Decimal | None, str | None]:
@@ -242,10 +283,14 @@ class OpeningStock(KindDefaults):
             return None, None
         number, suffix = _split_quantity(raw)
         try:
-            return parse_decimal(number), suffix
+            quantity = parse_decimal(number)
         except CellError as exc:
             reader.add("quantity", exc.code, f"Quantity: {exc}")
             return None, suffix
+        if quantity is not None and abs(quantity) >= MAX_QUANTITY:
+            reader.add("quantity", "too_large", "This quantity is too large to be right.")
+            return None, suffix
+        return quantity, suffix
 
     def _warehouse(
         self, reader: Reader, by_name: dict[str, uuid.UUID], default: uuid.UUID | None
@@ -260,14 +305,17 @@ class OpeningStock(KindDefaults):
             reader.add("warehouse", "unknown_warehouse", f"'{text}' is not a warehouse of this branch.")
         return found
 
-    def _unit(self, reader: Reader, item: StockItem, text: str | None) -> str | None:
-        if text is None:
-            return item.base_unit
+    def _unit_code(self, item: StockItem, text: str) -> str | None:
         words = {normal_header(code): code for code in item.units}
         for alias, code in UNIT_ALIASES.items():
             if code in item.units:
                 words.setdefault(normal_header(alias), code)
-        found = words.get(normal_header(text))
+        return words.get(normal_header(text))
+
+    def _unit(self, reader: Reader, item: StockItem, text: str | None) -> str | None:
+        if text is None:
+            return item.base_unit
+        found = self._unit_code(item, text)
         if found is None:
             reader.add("unit", "unknown_unit", f"{item.sku} has no unit '{text}'.")
         return found
@@ -275,12 +323,20 @@ class OpeningStock(KindDefaults):
     def _cost(
         self, reader: Reader, quantity: Decimal, unit_cost: Decimal | None, value: Decimal | None
     ) -> Decimal | None:
-        if unit_cost is not None and value is not None:
+        if (unit_cost is not None and unit_cost >= MAX_COST) or (value is not None and value >= MAX_VALUE):
+            reader.add("unit_cost", "too_large", "This cost is too large to be right.")
+        elif unit_cost is not None and value is not None:
             reader.add("value", "cost_and_value", "Give a unit cost or a total value, not both.")
         elif unit_cost is None and value is None:
             reader.add("unit_cost", "no_cost", "Opening stock needs a cost: a unit cost or a total value.")
         elif (unit_cost is not None and unit_cost < 0) or (value is not None and value < 0):
             reader.add("unit_cost", "negative", "A cost is zero or more.")
+        elif unit_cost == 0 or value == 0:
+            reader.add(
+                "unit_cost",
+                "zero_cost",
+                "A cost of zero would make the average cost zero: give the real cost.",
+            )
         elif unit_cost is not None:
             if unit_cost != unit_cost.quantize(COST_PLACES):
                 reader.add("unit_cost", "decimals", "A unit cost has at most 6 decimal places.")

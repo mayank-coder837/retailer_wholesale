@@ -403,6 +403,19 @@ async def warehouse_stock(
     return await stock.warehouse_qty(session, warehouse_id, variant_id, batch_id)
 
 
+async def warehouse_stock_of(
+    session: AsyncSession, warehouse_id: uuid.UUID, variant_id: uuid.UUID, batch_no: str | None
+) -> Decimal:
+    """What is in the warehouse of an item, or of one batch by number (0 for a batch not yet known)."""
+    batch_id: uuid.UUID | None = None
+    if batch_no is not None:
+        batch = await batch_by_no(session, variant_id, batch_no)
+        if batch is None:
+            return QTY_ZERO
+        batch_id = batch.id
+    return await stock.warehouse_qty(session, warehouse_id, variant_id, batch_id)
+
+
 async def batch_no(session: AsyncSession, batch_id: uuid.UUID) -> str | None:
     batch = await session.get(Batch, batch_id)
     return batch.batch_no if batch else None

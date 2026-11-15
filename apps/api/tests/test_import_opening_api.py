@@ -284,6 +284,14 @@ async def test_trial_balance_rows_with_problems_are_named(client: AsyncClient) -
     assert await balances(b) == {}
 
 
+async def test_amounts_too_large_to_be_right_are_row_errors_not_crashes(client: AsyncClient) -> None:
+    b = await shop(client, "huge@shop.ae")
+    tb = await upload(b, "opening_balances", csv_file("Account,Debit\n1110,99999999999999\n"))
+    assert problems(await check(b, tb, **OPENING)) == {2: [(None, "too_large")]}
+    bills = await upload(b, "party_bills", csv_file("Party,Ref,Amount\nAli Traders,R1,99999999999999\n"))
+    assert problems(await check(b, bills, **OPENING)) == {2: [("amount", "too_large")]}
+
+
 async def test_the_balance_column_cannot_be_mixed_with_debit_and_credit(client: AsyncClient) -> None:
     b = await books(client, "mixed@shop.ae")
     batch = await upload(b, "opening_balances", csv_file("Account,Debit,Balance\n1110,5,5\n"))

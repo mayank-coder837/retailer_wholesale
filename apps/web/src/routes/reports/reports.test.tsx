@@ -272,4 +272,23 @@ describe("Day book document names", () => {
       "/#/inventory/documents/s1",
     );
   });
+
+  it("names opening stock and opens it as a stock document", async () => {
+    window.location.hash = "#/reports/day-book";
+    const book = DAY_BOOK();
+    book.entries[0] = {
+      ...book.entries[0]!,
+      doc_type: "opening_stock",
+      document_id: "s2",
+      number: "OS-2026-00001",
+    };
+    const { api } = shopApi({ signedIn: true, "GET /reports/day-book": { status: 200, body: book } });
+    render(<App api={api} />);
+    const table = await screen.findByRole("table", { name: "Day book" });
+    expect(table).toHaveTextContent("Opening stockOS-2026-00001");
+    expect(within(table).getByRole("link", { name: "OS-2026-00001" })).toHaveAttribute(
+      "href",
+      "/#/inventory/documents/s2",
+    );
+  });
 });
