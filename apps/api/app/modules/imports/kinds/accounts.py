@@ -30,8 +30,9 @@ FIELDS = (
         "Account code",
         "رمز الحساب",
         ("code", "account code", "ledger code", "a/c code", "no", "رمز", "رقم الحساب"),
-        required=True,
         example="6300",
+        hint_en="the first free code in the group when empty",
+        hint_ar="أول رمز متاح في المجموعة عند تركه فارغا",
     ),
     Field(
         "name_en",
@@ -132,11 +133,14 @@ class Accounts(KindDefaults):
         by_code = {a.code.lower(): a for a in chart}
         groups = {a.code.lower(): a for a in chart if a.is_group and a.archived_at is None}
         groups |= {normal_header(a.name_en): a for a in chart if a.is_group and a.archived_at is None}
+        taken = set(by_code)
+        names = {normal_header(n): a for a in chart if not a.is_group for n in (a.name_en, a.name_ar)}
         seen: dict[str, int] = {}
+        seen_names: dict[str, int] = {}
         results: list[RowResult] = []
         for row in rows:
             reader = Reader(row, FIELDS)
-            code = reader.text("code", required=True, limit=20)
+            code = reader.text("code", limit=20)
             name = reader.text("name_en", required=True, limit=200)
             arabic = reader.text("name_ar", limit=200) or name
             label = f"{code} {name}" if code and name else (code or name or "?")
@@ -148,13 +152,31 @@ class Accounts(KindDefaults):
                 )
             elif code:
                 seen[code.lower()] = row.number
+            if code is None and name:  # no code: the name is what says it is the same account
+                key = normal_header(name)
+                if key in seen_names:
+                    reader.add("name_en", "duplicate_in_file", f"{name} is also on row {seen_names[key]}.")
+                else:
+                    seen_names[key] = row.number
+                if key in names and not reader.problems:
+                    results.append(reader.result("exists", label))
+                    continue
             if code and code.lower() in by_code and not reader.problems:
                 results.append(reader.result("exists", label))
                 continue
             results.append(
-                self._build(ctx, reader, label, code, name, arabic, parent_text, kind_text, groups)
+                self._build(ctx, reader, label, code, name, arabic, parent_text, kind_text, groups, taken)
             )
         return results
+
+    def _free_code(self, group_code: str, taken: set[str]) -> str:
+        """The first free code in a group: 6010, 6020… under 6000 (group.1, group.2… if it is no number)."""
+        step = 1
+        while True:
+            candidate = str(int(group_code) + 10 * step) if group_code.isdigit() else f"{group_code}.{step}"
+            if candidate.lower() not in taken:
+                return candidate
+            step += 1
 
     def _build(
         self,
@@ -167,6 +189,7 @@ class Accounts(KindDefaults):
         parent_text: str | None,
         kind_text: str | None,
         groups: dict[str, Any],
+        taken: set[str],
     ) -> RowResult:
         parent = (
             (groups.get(parent_text.lower()) or groups.get(normal_header(parent_text)))
@@ -192,8 +215,12 @@ class Accounts(KindDefaults):
             reader.add(
                 "type", "wrong_group", f"A {account_type.value} account cannot sit under {parent.name_en}."
             )
+        if code is None and parent is not None and name:
+            code = self._free_code(parent.code, taken)
+            label = f"{code} {name}"
         if reader.problems or code is None or name is None or arabic is None or parent is None:
             return reader.result("new", label)
+        taken.add(code.lower())
         try:
             data = AccountIn(
                 business_id=ctx.business_id,

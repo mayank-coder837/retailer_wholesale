@@ -14120,6 +14120,14 @@
             "type": "object",
             "title": "Suggested Mapping"
           },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "What the reader found out about the file"
+          },
           "sample": {
             "items": {
               "items": {

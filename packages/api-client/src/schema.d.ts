@@ -4034,6 +4034,11 @@ export interface components {
                 [key: string]: number | null;
             };
             /**
+             * Notes
+             * @description What the reader found out about the file
+             */
+            notes?: string[];
+            /**
              * Sample
              * @description The first rows of the file as text, to recognise columns
              */

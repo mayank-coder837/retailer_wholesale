@@ -10,7 +10,7 @@ from typing import Any
 
 from app.core.money import to_currency
 from app.modules.accounting import service as accounting
-from app.modules.accounting.models import CONTROL, AccountType
+from app.modules.accounting.models import CONTROL, AccountType, Role
 from app.modules.accounting.schemas import AccountOut, VoucherLineIn
 from app.modules.imports.kinds import opening
 from app.modules.imports.kinds.base import Context, Field, KindDefaults, Option, Reader, Row, RowResult
@@ -19,6 +19,12 @@ from app.modules.imports.values import normal_header
 ZERO = Decimal("0.0000")
 MAX_AMOUNT = Decimal(10**13)
 CONTROL_TYPES = frozenset({*CONTROL, AccountType.STOCK})
+# Files that add up customers, suppliers and stock (a Tally export) name the control accounts by role.
+ROLE_KEYS = {
+    "@receivable": Role.AR_CONTROL,
+    "@payable": Role.AP_CONTROL,
+    "@inventory": Role.INVENTORY,
+}
 FIELDS = (
     Field(
         "account",
@@ -90,6 +96,9 @@ class OpeningBalances(KindDefaults):
         await opening.check_opening_day(ctx)
         chart = await accounting.chart_accounts(ctx.session, ctx.business_id)
         by_code = {a.code.lower(): a for a in chart}
+        by_id = {a.id: a for a in chart}
+        roles = await accounting.role_accounts(ctx.session, ctx.business_id)
+        by_code |= {key: by_id[roles[role]] for key, role in ROLE_KEYS.items() if role in roles}
         by_name = _by_name(chart)
         equity = await opening.equity_account(ctx)
         seen: dict[str, int] = {}

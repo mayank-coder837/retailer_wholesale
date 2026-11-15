@@ -1,12 +1,13 @@
 """Reading a Tally master export (XML) into the rows of an import kind (M1.12c). Pure, no database.
 
-One export file serves every kind: the reader takes out the rows the chosen kind needs and returns them as a
-``Table`` whose headers are the kind's field keys, so the columns are matched without asking. Nothing is posted
-here; everything after reading is shared with the Excel and CSV imports.
+One export file serves every kind: the reader takes out the rows the chosen kind needs and returns them as
+a ``Table`` whose headers are the kind's field keys, so the columns are matched without asking. Nothing is
+posted here; everything after reading is shared with the Excel and CSV imports.
 
-Tally writes a debit balance as a *negative* number and a credit as positive. The file is checked against itself
-(customers, cash, bank and stock are normally debits) and what it shows is used; a file with nothing to judge by
-is read the way Tally writes. The file is untrusted: ``defusedxml`` refuses entities and external references.
+Tally writes a debit balance as a *negative* number and a credit as positive. The file is checked against
+itself (customers, cash, bank and stock are normally debits) and what it shows is used; a file with nothing
+to judge by is read the way Tally writes. The file is untrusted: ``defusedxml`` refuses entities and
+external references.
 """
 
 import json
