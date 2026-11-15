@@ -65,6 +65,7 @@ class ImportBatchOut(BaseModel):
 
 class ImportUploadOut(ImportBatchOut):
     suggested_mapping: Mapping
+    notes: list[str] = Field(default_factory=list, description="What the reader found out about the file")
     sample: list[list[str]] = Field(description="The first rows of the file as text, to recognise columns")
     duplicate_of: uuid.UUID | None = Field(
         default=None, description="This exact file was already imported (that batch)"

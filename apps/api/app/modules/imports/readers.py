@@ -11,7 +11,7 @@ import io
 import re
 import zipfile
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any
@@ -48,11 +48,17 @@ class Table:
     headers: list[str]
     rows: list[list[Cell]]
     numbers: list[int]
+    canonical: bool = False  # headers are the kind's own field keys (a Tally export): no matching needed
+    notes: list[str] = field(default_factory=list)  # what the reader found out about the file
 
 
-def read_table(filename: str, data: bytes) -> Table:
-    """Reads CSV or ``.xlsx`` by the file's own bytes (browsers guess content types badly)."""
+def read_table(filename: str, data: bytes, kind: str | None = None) -> Table:
+    """Reads CSV, ``.xlsx`` or a Tally ``.xml`` export (for the kind chosen) by the file's own bytes."""
     name = filename.lower()
+    if name.endswith(".xml"):
+        from app.modules.imports import tally  # the reader builds on this module
+
+        return tally.read_tally(data, kind)
     if data.startswith(_XLSX_MAGIC):
         return read_xlsx(data)
     if name.endswith((".xls", ".xlsb", ".xlsm")):
@@ -62,7 +68,7 @@ def read_table(filename: str, data: bytes) -> Table:
         )
     if name.endswith((".csv", ".txt", ".tsv")):
         return read_csv(data)
-    raise UnreadableFileError("Upload a CSV or Excel (.xlsx) file.", filename=filename)
+    raise UnreadableFileError("Upload a CSV, Excel (.xlsx) or Tally (.xml) file.", filename=filename)
 
 
 def decode(data: bytes) -> str:

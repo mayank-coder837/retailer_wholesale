@@ -1,0 +1,31 @@
+{
+  "$comment": "How Tally's reserved groups map to this app (M1.12c). Keys are lower case. 'role' ledgers are customers / suppliers / stock (taken from the party and stock imports, not made into accounts); the others give an account 'type' and the chart group 'parent' (a code on the default chart) a new account sits in. A custom Tally group follows its parent chain up to one of these. A group not listed here is left unmapped on purpose, so the check names the row.",
+  "groups": {
+    "sundry debtors": { "role": "customer" },
+    "sundry creditors": { "role": "supplier" },
+    "stock-in-hand": { "role": "stock" },
+    "bank accounts": { "type": "bank", "parent": "1100" },
+    "cash-in-hand": { "type": "cash", "parent": "1100" },
+    "current assets": { "type": "current_asset", "parent": "1100" },
+    "deposits (asset)": { "type": "current_asset", "parent": "1100" },
+    "loans & advances (asset)": { "type": "current_asset", "parent": "1100" },
+    "misc. expenses (asset)": { "type": "current_asset", "parent": "1100" },
+    "fixed assets": { "type": "fixed_asset", "parent": "1700" },
+    "investments": { "type": "fixed_asset", "parent": "1700" },
+    "current liabilities": { "type": "current_liability", "parent": "2100" },
+    "bank od a/c": { "type": "current_liability", "parent": "2100" },
+    "provisions": { "type": "current_liability", "parent": "2100" },
+    "duties & taxes": { "type": "tax", "parent": "2100" },
+    "loans (liability)": { "type": "non_current_liability", "parent": "2500" },
+    "secured loans": { "type": "non_current_liability", "parent": "2500" },
+    "unsecured loans": { "type": "non_current_liability", "parent": "2500" },
+    "capital account": { "type": "equity", "parent": "3000" },
+    "reserves & surplus": { "type": "equity", "parent": "3000" },
+    "sales accounts": { "type": "sales", "parent": "4000" },
+    "direct incomes": { "type": "other_income", "parent": "4000" },
+    "indirect incomes": { "type": "other_income", "parent": "4000" },
+    "purchase accounts": { "type": "cogs", "parent": "5000" },
+    "direct expenses": { "type": "cogs", "parent": "5000" },
+    "indirect expenses": { "type": "expense", "parent": "6000" }
+  }
+}
