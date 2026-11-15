@@ -16,7 +16,7 @@ type DocState = components["schemas"]["CorrectedOut"];
 type Linked = components["schemas"]["LinkedDocOut"];
 
 const PURCHASE = ["purchase_order", "goods_receipt", "purchase_bill", "purchase_return"];
-const STOCK = ["stock_adjustment", "stock_transfer", "item_transfer"];
+const STOCK = ["stock_adjustment", "stock_transfer", "item_transfer", "opening_stock"];
 const SALES = [
   "quotation",
   "proforma_invoice",

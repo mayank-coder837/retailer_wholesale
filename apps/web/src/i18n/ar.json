@@ -193,6 +193,7 @@
     "stock_adjustment": "تسويات المخزون",
     "stock_transfer": "تحويلات المخزون",
     "item_transfer": "تحويل الأصناف",
+    "opening_stock": "المخزون الافتتاحي",
     "pdc": "الشيكات المؤجلة",
     "fiscal_period": "الفترات المالية",
     "report": "التقارير"
@@ -831,6 +832,7 @@
     },
     "docTypes": {
       "stock_adjustment": "تسوية مخزون",
+      "opening_stock": "مخزون افتتاحي",
       "stock_transfer": "تحويل بين المستودعات",
       "item_transfer": "تحويل أصناف"
     },

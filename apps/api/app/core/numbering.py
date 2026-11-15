@@ -37,6 +37,7 @@ PREFIXES: dict[str, str] = {
     "stock_adjustment": "SA",
     "stock_transfer": "ST",
     "item_transfer": "IT",
+    "opening_stock": "OS",
 }
 
 

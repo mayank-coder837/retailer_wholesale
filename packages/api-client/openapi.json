@@ -20766,7 +20766,8 @@
         "enum": [
           "stock_adjustment",
           "stock_transfer",
-          "item_transfer"
+          "item_transfer",
+          "opening_stock"
         ],
         "title": "StockDocType"
       },

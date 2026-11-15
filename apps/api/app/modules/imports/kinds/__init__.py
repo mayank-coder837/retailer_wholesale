@@ -4,12 +4,13 @@ from app.core.errors import NotFoundError
 from app.modules.imports.kinds.accounts import Accounts
 from app.modules.imports.kinds.base import Kind
 from app.modules.imports.kinds.opening_balances import OpeningBalances
+from app.modules.imports.kinds.opening_stock import OpeningStock
 from app.modules.imports.kinds.parties import Parties
 from app.modules.imports.kinds.party_bills import PartyBills
 from app.modules.imports.kinds.products import Products
 
 KINDS: dict[str, Kind] = {
-    k.key: k for k in (Accounts(), Parties(), Products(), OpeningBalances(), PartyBills())
+    k.key: k for k in (Accounts(), Parties(), Products(), OpeningBalances(), PartyBills(), OpeningStock())
 }
 
 

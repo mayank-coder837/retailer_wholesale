@@ -65,6 +65,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "stock_adjustment": _DOCUMENT,
     "stock_transfer": _DOCUMENT,
     "item_transfer": _DOCUMENT,
+    "opening_stock": _DOCUMENT,
     # Cheques, periods, reports
     "pdc": (VIEW, CREATE, EDIT, POST, EXPORT),
     "fiscal_period": (VIEW, EDIT),

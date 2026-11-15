@@ -81,7 +81,14 @@ def problems(checked: dict[str, Any]) -> dict[int, list[tuple[str | None, str]]]
 async def test_kinds_and_templates(client: AsyncClient) -> None:
     b = await books(client, "kinds@shop.ae")
     kinds = await ok(await client.get("/imports/kinds", headers=b.h))
-    assert [k["key"] for k in kinds] == ["accounts", "parties", "products", "opening_balances", "party_bills"]
+    assert [k["key"] for k in kinds] == [
+        "accounts",
+        "parties",
+        "products",
+        "opening_balances",
+        "party_bills",
+        "opening_stock",
+    ]
     parties = next(k for k in kinds if k["key"] == "parties")
     assert [f["key"] for f in parties["fields"] if f["required"]] == ["name_en"]
     assert parties["options"][0]["key"] == "default_type"

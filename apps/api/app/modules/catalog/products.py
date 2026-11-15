@@ -749,13 +749,28 @@ class ItemIndex:
     products: dict[str, uuid.UUID]  # product SKU → product id
     variants: dict[str, uuid.UUID]  # variant SKU → variant id
     barcodes: dict[str, uuid.UUID]  # barcode → variant id
+    product_variants: dict[str, list[uuid.UUID]]  # product SKU → its variants (one, unless it has attributes)
+    names: dict[str, list[uuid.UUID]]  # product name, English or Arabic, lower case → variants
 
 
 async def item_index(session: AsyncSession) -> ItemIndex:
     products = {sku.lower(): pid for pid, sku in await session.execute(select(Product.id, Product.sku))}
     variants = {sku.lower(): vid for vid, sku in await session.execute(select(Variant.id, Variant.sku))}
     barcodes = {code: vid for vid, code in await session.execute(select(Barcode.variant_id, Barcode.code))}
-    return ItemIndex(products, variants, barcodes)
+    product_variants: dict[str, list[uuid.UUID]] = {}
+    for sku, variant_id in await session.execute(
+        select(Product.sku, Variant.id)
+        .join(Variant, Variant.product_id == Product.id)
+        .order_by(Variant.created_at)
+    ):
+        product_variants.setdefault(sku.lower(), []).append(variant_id)
+    names: dict[str, list[uuid.UUID]] = {}
+    for variant_id, name_en, name_ar in await session.execute(
+        select(Variant.id, Product.name_en, Product.name_ar).join(Product, Product.id == Variant.product_id)
+    ):
+        for name in {" ".join(name_en.lower().split()), " ".join(name_ar.lower().split())}:
+            names.setdefault(name, []).append(variant_id)
+    return ItemIndex(products, variants, barcodes, product_variants, names)
 
 
 @dataclass(frozen=True)

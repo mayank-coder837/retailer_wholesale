@@ -115,8 +115,13 @@ async def _check(session: AsyncSession, data: StockDocIn) -> Checked:
         if item.product_type != ProductType.STOCK:
             raise _invalid(f"{item.sku} is not kept in stock.", field=f"{where}.variant_id")
         unit, quantity = item.quantity(raw.qty, raw.unit)
+        opening = data.doc_type is StockDocType.OPENING_STOCK
         direction = raw.direction if data.doc_type is not StockDocType.STOCK_TRANSFER else LineDirection.OUT
-        if raw.unit_cost is not None and not (
+        if opening:
+            direction = LineDirection.IN  # opening stock only brings goods in
+            if raw.unit_cost is None:
+                raise _invalid("Opening stock needs the cost of each item.", field=f"{where}.unit_cost")
+        elif raw.unit_cost is not None and not (
             data.doc_type is StockDocType.STOCK_ADJUSTMENT and direction is LineDirection.IN
         ):
             raise _invalid("Only goods coming in on an adjustment have a cost.", field=f"{where}.unit_cost")
@@ -332,7 +337,10 @@ async def post(
     )
     await stock.lock_business(session, business.id)
     roles = await accounting.role_accounts(session, business.id)
-    for role in (Role.INVENTORY, Role.STOCK_ADJUSTMENT, Role.STOCK_COST_ADJUSTMENT):
+    needed: tuple[Role, ...] = (Role.INVENTORY, Role.STOCK_ADJUSTMENT, Role.STOCK_COST_ADJUSTMENT)
+    if doc.doc_type == StockDocType.OPENING_STOCK:
+        needed = (*needed, Role.OPENING_BALANCE_EQUITY)
+    for role in needed:
         if role not in roles:
             raise _invalid(f"Give the role {role.value} an account first.", role=role.value)
     journal = ValueJournal(roles[Role.INVENTORY])
@@ -394,6 +402,21 @@ async def post(
                     counter_account_id=roles[Role.STOCK_ADJUSTMENT],
                     document_line_id=row.id,
                 )
+            total += abs((await run(spec)).value)
+    elif kind is StockDocType.OPENING_STOCK:
+        for row in rows:  # goods in at the cost given, against opening balance equity
+            assert row.unit_cost is not None
+            batch_id = await ensure_batch(session, doc.tenant_id, row)
+            spec = stock.Spec(
+                MoveType.OPENING,
+                warehouse,
+                _item(row),
+                row.qty_base,
+                batch_id,
+                value=costing.fils(row.qty_entered * row.unit_cost),
+                counter_account_id=roles[Role.OPENING_BALANCE_EQUITY],
+                document_line_id=row.id,
+            )
             total += abs((await run(spec)).value)
     elif kind is StockDocType.STOCK_TRANSFER:
         assert doc.to_warehouse_id is not None

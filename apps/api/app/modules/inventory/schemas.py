@@ -19,6 +19,7 @@ class StockDocType(StrEnum):
     STOCK_ADJUSTMENT = "stock_adjustment"
     STOCK_TRANSFER = "stock_transfer"
     ITEM_TRANSFER = "item_transfer"
+    OPENING_STOCK = "opening_stock"  # goods in the warehouse on the day the books start (imports, M1.12)
 
 
 class StockLineIn(BaseModel):
