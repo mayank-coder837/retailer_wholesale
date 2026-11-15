@@ -279,6 +279,8 @@ def _check_allocations(
         _check_money(item.amount, currency, where)
         if item.bill_date is not None and item.bill_date > day:
             raise _invalid("A bill cannot be dated after the voucher that opens it.", field=where)
+        if item.due_date is not None and item.due_date < (item.bill_date or day):
+            raise _invalid("A bill cannot be due before it is dated.", field=where)
     allocated = sum((item.amount for item in items), ZERO)
     if allocated != amount:
         raise _invalid(

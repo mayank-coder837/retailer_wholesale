@@ -224,7 +224,7 @@ class PartyBills(KindDefaults):
             reader.add("amount", "decimals", f"{ctx.currency} amounts have no more than 2 decimal places.")
         if bill_date is not None and bill_date > day:
             reader.add("bill_date", "after_opening", "The invoice is dated after the opening date.")
-        if due_date is not None and bill_date is not None and due_date < bill_date:
+        if due_date is not None and due_date < (bill_date or day):
             reader.add("due_date", "due_before_invoice", "The due date is before the invoice date.")
         if reader.problems or party_id is None or reference is None or amount is None:
             return reader.result("new", label)
@@ -235,6 +235,9 @@ class PartyBills(KindDefaults):
             return reader.result(
                 "skipped", label, note=("zero_amount", "Nothing to import: the amount is zero.")
             )
+        if amount < 0 and side is not None:
+            reader.add("side", "sign_and_mark", "Use a minus sign or a Dr / Cr mark, not both.")
+            return reader.result("new", label)
         normal = "dr" if customer else "cr"
         advance = amount < 0 or (side is not None and side != normal)
         key = (party_id, reference.lower(), customer)
@@ -331,6 +334,7 @@ class PartyBills(KindDefaults):
         return {
             "bills": sum(not b.advance for b in bills),
             "advances": sum(b.advance for b in bills),
-            "skipped": len(results) - len(bills),
+            "exists": sum(r.status == "exists" for r in results),
+            "skipped": sum(r.status == "skipped" for r in results),
             "vouchers": vouchers,
         }

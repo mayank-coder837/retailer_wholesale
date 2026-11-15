@@ -212,7 +212,7 @@ class OpeningBalances(KindDefaults):
                 for ln in lines
                 if ln.control
             ],
-            "equity_side": "credit" if net > 0 else "debit",
+            "equity_side": next(iter(opening.equity_side(net)), None),  # None: nothing goes to equity
             "equity_amount": str(abs(net)),
         }
 

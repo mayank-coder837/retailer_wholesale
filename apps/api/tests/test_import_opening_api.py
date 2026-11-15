@@ -156,7 +156,7 @@ async def test_the_trial_balance_and_the_bills_tie_to_the_source(client: AsyncCl
         Decimal(500),
     ]
     done = await commit(b, bills)
-    assert done["result"]["counts"] == {"bills": 4, "advances": 2, "skipped": 0, "vouchers": 1}
+    assert done["result"]["counts"] == {"bills": 4, "advances": 2, "exists": 0, "skipped": 0, "vouchers": 1}
 
     final = await balances(b)
     assert final["1200"] == Decimal(8000)
@@ -436,6 +436,7 @@ async def test_bill_rows_with_problems_are_named(client: AsyncClient) -> None:
         f"Ali Traders,r7,,,100,\n"  # 9: the same reference again
         f"Mill,,,,100,\n"  # 10: no reference
         f"Ali Traders,R8,,,0,\n"  # 11: zero: nothing to import
+        f"Ali Traders,R9,,{day(60)},100,\n"  # 12: due before the opening date, no invoice date
     )
     batch = await upload(b, "party_bills", csv_file(file))
     checked = await check(b, batch, **OPENING)
@@ -448,11 +449,21 @@ async def test_bill_rows_with_problems_are_named(client: AsyncClient) -> None:
         7: [("ledger", "wrong_role")],
         9: [("reference", "duplicate_in_file")],
         10: [("reference", "required")],
+        12: [("due_date", "due_before_invoice")],
     }
     statuses = {r["number"]: r["status"] for r in checked["rows"]}
     assert (statuses[8], statuses[11]) == ("new", "skipped")  # a zero amount has nothing to import
     assert (await commit(b, batch, 422))["code"] == "import_has_errors"
     assert await balances(b) == {}
+
+
+async def test_a_minus_sign_and_a_dr_cr_mark_together_are_not_guessed(client: AsyncClient) -> None:
+    b = await books(client, "signmark@shop.ae")
+    file = "Party,Ref,Amount,Dr/Cr\nMill,R1,-500,Cr\nMill,R2,-500,\nMill,R3,500,Dr\n"
+    checked = await check(b, await upload(b, "party_bills", csv_file(file)), **OPENING)
+    assert problems(checked) == {
+        2: [("side", "sign_and_mark")]
+    }  # R2 (a minus) and R3 (a mark) are each clear
 
 
 async def test_a_party_that_is_both_needs_a_side(client: AsyncClient) -> None:

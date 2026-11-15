@@ -106,6 +106,7 @@ async def get_import_reconciliation(
     perms: Signed, session: TenantSessionDep, business_id: uuid.UUID
 ) -> ReconciliationOut:
     perms.require_see("import.view", business_id)
+    perms.require_see("report.view", business_id)  # it shows ledger balances
     return await reconciliation.reconcile(session, business_id)
 
 

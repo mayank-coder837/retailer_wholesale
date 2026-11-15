@@ -401,8 +401,9 @@ async def commit(session: AsyncSession, storage: Storage, batch_id: uuid.UUID, *
 
 
 async def undo(session: AsyncSession, batch_id: uuid.UUID, *, who: Who) -> ImportBatch:
-    """Cancels the vouchers an opening import posted (only while their periods are open and nothing later
-    depends on their bills), so the same file can be imported again. All or nothing."""
+    """Cancels the vouchers an opening import posted (only while their periods are open), so the same file
+    can be imported again. All or nothing. A payment already allocated to an opening bill is kept: it becomes
+    an advance on that payment, as when any invoice is cancelled."""
     batch = await get_batch(session, batch_id, lock=True)
     if not kinds.get(batch.kind).undoable:
         raise NotUndoableError(kind=batch.kind)
