@@ -153,9 +153,9 @@ def test_stock_items_become_items_and_opening_stock() -> None:
 
 
 def test_the_sign_convention_is_found_from_the_file_either_way() -> None:
-    assert "minus sign" in tally.read_export(DATA).notes[0]
+    assert tally.read_export(DATA).notes[0].code == "debit_negative"
     flipped = plain_convention(TEXT).encode("utf8")
-    assert "positive numbers" in tally.read_export(flipped).notes[0]
+    assert tally.read_export(flipped).notes[0].code == "debit_positive"
     for kind in ("opening_balances", "party_bills", "opening_stock"):
         assert rows_of(kind, flipped) == rows_of(kind)  # the same figures, however the file writes a debit
 
@@ -203,6 +203,78 @@ def test_a_group_tally_calls_something_else_is_left_for_the_check_to_name() -> N
     assert first["name_en"] == "Cash"
 
 
+def test_two_long_item_names_get_different_skus_and_the_loop_ends() -> None:
+    long = "Industrial grade cotton fabric roll for upholstery and curtains, "
+    text = TEXT.replace(
+        '<STOCKITEM NAME="Bolt" RESERVEDNAME="">',
+        f'<STOCKITEM NAME="{long}type A" RESERVEDNAME=""><BASEUNITS>m</BASEUNITS></STOCKITEM>'
+        f'<STOCKITEM NAME="{long}type B" RESERVEDNAME=""><BASEUNITS>m</BASEUNITS></STOCKITEM>'
+        '<STOCKITEM NAME="Bolt" RESERVEDNAME="">',
+    )
+    skus = [r["sku"] for r in rows_of("products", text.encode("utf8"))]
+    assert len(skus) == len(set(skus)) == 5
+    assert all(len(sku) <= 50 for sku in skus)
+
+
+def test_a_batch_wise_item_keeps_tallys_primary_batch_and_others_do_not() -> None:
+    kept = TEXT.replace("<BATCHNAME>B-1</BATCHNAME>", "<BATCHNAME>Primary Batch</BATCHNAME>")
+    medicine = next(r for r in rows_of("opening_stock", kept.encode("utf8")) if r["item"] == "Medicine")
+    assert medicine["batch_no"] == "Primary Batch"  # the item is kept by batch, so it needs one
+    plain = kept.replace("<ISBATCHWISEON>Yes</ISBATCHWISEON>", "").replace(
+        '<EXPIRYPERIOD JOBDATE="20271231" TYPE="Days">31-Dec-27</EXPIRYPERIOD>', ""
+    )
+    medicine = next(r for r in rows_of("opening_stock", plain.encode("utf8")) if r["item"] == "Medicine")
+    assert medicine["batch_no"] == ""  # not batch-wise: the placeholder means nothing
+
+
+@pytest.mark.parametrize(
+    ("period", "days"),
+    [("30 Days", 30), ("45", 45), ("1 Month", 30), ("2 Weeks", 14), ("99999999 days", None), ("soon", None)],
+)
+def test_a_credit_period_has_a_unit_and_a_believable_size(period: str, days: int | None) -> None:
+    assert tally._days(period) == days
+
+
+def test_a_date_far_in_the_future_is_not_read() -> None:
+    text = TEXT.replace("<BILLDATE>20260215</BILLDATE>", "<BILLDATE>99990101</BILLDATE>")
+    inv = next(r for r in rows_of("party_bills", text.encode("utf8")) if r["reference"] == "INV-1")
+    assert (inv["bill_date"], inv["due_date"]) == ("", "")
+
+
+def test_negative_stock_is_not_made_positive() -> None:
+    text = TEXT.replace("<OPENINGBALANCE>120 m</OPENINGBALANCE>", "<OPENINGBALANCE>-120 m</OPENINGBALANCE>")
+    cotton = next(r for r in rows_of("opening_stock", text.encode("utf8")) if r["item"] == "Cotton fabric")
+    assert cotton["quantity"] == "-120"  # the stock import then names the row
+
+
+def test_a_stock_in_hand_ledger_is_not_added_on_top_of_the_stock_items() -> None:
+    text = TEXT.replace(
+        '<LEDGER NAME="Staff welfare" RESERVEDNAME="">',
+        '<LEDGER NAME="Closing stock" RESERVEDNAME=""><PARENT>Stock-in-Hand</PARENT>'
+        "<OPENINGBALANCE>-999.00</OPENINGBALANCE></LEDGER>"
+        '<LEDGER NAME="Staff welfare" RESERVEDNAME="">',
+    )
+    inventory = next(
+        r for r in rows_of("opening_balances", text.encode("utf8")) if r["account"] == "@inventory"
+    )
+    assert Decimal(inventory["debit"]) == Decimal(1360)
+
+
+async def test_a_code_given_later_in_the_file_is_not_taken_by_an_earlier_row(client: AsyncClient) -> None:
+    b = await books(client, "codes12c@shop.ae")
+    batch = await upload(b, "accounts", b"Code,Name,Group\n,First new,6000\n6010,Second new,6000\n")
+    checked = await check(b, batch)
+    assert (checked["new"], checked["errors"]) == (2, 0), problems(checked)
+    await commit(b, batch)
+    chart = {
+        a["name_en"]: a["code"]
+        for a in await ok(
+            await client.get("/accounts", params={"business_id": b.shop.business_id}, headers=b.h)
+        )
+    }
+    assert (chart["Second new"], chart["First new"]) == ("6010", "6020")
+
+
 # --- the whole export, kind by kind, through the API -------------------------------------------------------
 
 
@@ -219,7 +291,8 @@ async def test_a_tally_export_brings_the_whole_opening_position_and_it_ties(clie
 
     async def step(kind: str, **options: str) -> dict[str, object]:
         batch = await upload(b, kind, DATA, "masters.xml")
-        assert "minus sign" in batch["notes"][0]
+        assert batch["notes"][0]["code"] == "debit_negative"
+        assert "minus sign" in batch["notes"][0]["message"]
         assert all(index is not None for index in batch["suggested_mapping"].values() if index is not None)
         checked = await check(b, batch, **options)
         assert checked["errors"] == 0, problems(checked)

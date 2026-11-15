@@ -22,7 +22,7 @@ from typing import Any
 from defusedxml.common import DefusedXmlException
 from defusedxml.ElementTree import ParseError, fromstring
 
-from app.modules.imports.readers import Table, UnreadableFileError
+from app.modules.imports.readers import Note, Table, UnreadableFileError
 from app.modules.imports.values import CellError, clean_text, is_blank, parse_date, parse_decimal
 
 Node = Any
@@ -33,7 +33,8 @@ _ILLEGAL = re.compile(r"&#(?:[0-8]|1[12]|1[4-9]|2\d|3[01]);|[\x00-\x08\x0b\x0c\x
 _DECLARATION = re.compile(r"^\s*<\?xml[^>]*\?>")
 _DR_CR = re.compile(r"\b(dr|cr)\b\.?", re.IGNORECASE)
 _QTY_UNIT = re.compile(r"^\s*(-?[\d.,]+)\s*(.*?)\s*$")
-_DAYS = re.compile(r"(\d+)")
+_PERIOD = re.compile(r"(\d+)\s*(days?|weeks?|months?)?", re.IGNORECASE)
+MAX_DAYS = 3650
 TRN_TAGS = ("TAXREGISTRATIONNUMBER", "VATTINNUMBER", "PARTYGSTIN", "VATTINNO", "TRN")
 EMIRATES = ("abu dhabi", "dubai", "sharjah", "ajman", "umm al quwain", "ras al khaimah", "fujairah")
 
@@ -98,7 +99,7 @@ class Export:
     ledgers: list[Ledger]
     stock: list[Stock]
     convention: str  # "tally": a debit is written as a negative number; "plain": as a positive one
-    notes: list[str] = field(default_factory=list)
+    notes: list[Note] = field(default_factory=list)
 
 
 # --- reading the file ------------------------------------------------------------------------------------
@@ -181,16 +182,23 @@ def _day(text: str | None) -> date | None:
         return None
     compact = re.fullmatch(r"(\d{4})(\d{2})(\d{2})", (text or "").strip())
     try:
-        if compact:
+        if compact and 1990 <= int(compact[1]) <= 2100:
             return date(int(compact[1]), int(compact[2]), int(compact[3]))
+        if compact:
+            return None
         return parse_date(text)
     except (CellError, ValueError):
         return None
 
 
 def _days(text: str | None) -> int | None:
-    found = _DAYS.search(text or "")
-    return int(found[1]) if found else None
+    """``30 Days`` → 30, ``1 Month`` → 30, ``2 Weeks`` → 14; None when absent or not believable."""
+    found = _PERIOD.search(text or "")
+    if not found:
+        return None
+    unit = (found[2] or "day").lower()
+    days = int(found[1]) * (7 if unit.startswith("week") else 30 if unit.startswith("month") else 1)
+    return days if days <= MAX_DAYS else None
 
 
 def _quantity(text: str | None) -> tuple[Decimal, str | None]:
@@ -199,7 +207,7 @@ def _quantity(text: str | None) -> tuple[Decimal, str | None]:
     if not match:
         return ZERO, None
     number = _number(match[1])
-    return (abs(number) if number is not None else ZERO), (match[2] or None)
+    return (number if number is not None else ZERO), (match[2] or None)
 
 
 def _detect(raw_ledgers: list[tuple[dict[str, str] | None, str | None]], raw_stock: list[str | None]) -> str:
@@ -233,9 +241,9 @@ def read_export(data: bytes) -> Export:
         [_text(n, "OPENINGVALUE") for n in stock_nodes],
     )
     notes = [
-        "Debit balances are written with a minus sign in this file (as Tally does)."
+        Note("debit_negative", "Debit balances are written with a minus sign in this file (as Tally does).")
         if convention == "tally"
-        else "Debit balances are written as positive numbers in this file."
+        else Note("debit_positive", "Debit balances are written as positive numbers in this file.")
     ]
     return Export(
         [_ledger(n, spec, convention) for n, spec in ledger_nodes],
@@ -357,7 +365,11 @@ def _parties(export: Export) -> tuple[list[str], list[list[str]]]:
         )
     if dropped:
         export.notes.append(
-            f"{dropped} address(es) were left out because the file names no emirate for them."
+            Note(
+                "addresses_left_out",
+                f"{dropped} address(es) were left out because the file names no emirate for them.",
+                dropped,
+            )
         )
     return headers, rows
 
@@ -378,6 +390,8 @@ def _opening_balances(export: Export) -> tuple[list[str], list[list[str]]]:
     rows: list[list[str]] = []
     control = {"customer": ZERO, "supplier": ZERO, "stock": sum((s.value for s in export.stock), ZERO)}
     for ledger in export.ledgers:
+        if ledger.role == "stock" and export.stock:
+            continue  # the stock items already make up the inventory
         if ledger.role in control:
             control[ledger.role or ""] += ledger.balance
         elif ledger.balance:
@@ -427,7 +441,8 @@ def _products(export: Export) -> tuple[list[str], list[list[str]]]:
         sku, n = sku_of(item), 1
         while sku in used:
             n += 1
-            sku = f"{sku_of(item)}-{n}"[:50]
+            suffix = f"-{n}"
+            sku = f"{sku_of(item)[: 50 - len(suffix)]}{suffix}"
         used.add(sku)
         expiry = any(a.expiry for a in item.allocations)
         rows.append(
@@ -453,7 +468,10 @@ def _opening_stock(export: Export) -> tuple[list[str], list[list[str]]]:
         if real:
             for a in real:
                 godown = "" if (a.godown or "").lower() == "main location" else (a.godown or "")
-                batch = "" if (a.batch or "").lower() == "primary batch" else (a.batch or "")
+                placeholder = (a.batch or "").lower() == "primary batch" and not (
+                    item.batch_tracked or a.expiry
+                )
+                batch = "" if placeholder else (a.batch or "")
                 rows.append([item.name, godown, str(a.qty), unit, str(a.value), batch, _iso(a.expiry)])
         elif item.qty:
             rows.append([item.name, "", str(item.qty), unit, str(item.value), "", ""])

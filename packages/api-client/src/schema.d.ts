@@ -3924,6 +3924,21 @@ export interface components {
             /** Permissions */
             permissions: string[];
         };
+        /** ImportNoteOut */
+        ImportNoteOut: {
+            /**
+             * Code
+             * @description Stable code, for the screen to translate
+             */
+            code: string;
+            /** Message */
+            message: string;
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+        };
         /** ImportOptionOut */
         ImportOptionOut: {
             /** Key */
@@ -4037,7 +4052,7 @@ export interface components {
              * Notes
              * @description What the reader found out about the file
              */
-            notes?: string[];
+            notes?: components["schemas"]["ImportNoteOut"][];
             /**
              * Sample
              * @description The first rows of the file as text, to recognise columns

@@ -22,7 +22,7 @@ from app.modules.imports.kinds.base import (
     RowResult,
     from_validation,
 )
-from app.modules.imports.values import normal_header
+from app.modules.imports.values import clean_text, normal_header
 
 FIELDS = (
     Field(
@@ -133,7 +133,7 @@ class Accounts(KindDefaults):
         by_code = {a.code.lower(): a for a in chart}
         groups = {a.code.lower(): a for a in chart if a.is_group and a.archived_at is None}
         groups |= {normal_header(a.name_en): a for a in chart if a.is_group and a.archived_at is None}
-        taken = set(by_code)
+        taken = set(by_code) | {c.lower() for row in rows if (c := clean_text(row.values.get("code")))}
         names = {normal_header(n): a for a in chart if not a.is_group for n in (a.name_en, a.name_ar)}
         seen: dict[str, int] = {}
         seen_names: dict[str, int] = {}

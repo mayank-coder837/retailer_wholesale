@@ -63,9 +63,17 @@ class ImportBatchOut(BaseModel):
     committed_at: datetime | None
 
 
+class ImportNoteOut(BaseModel):
+    code: str = Field(description="Stable code, for the screen to translate")
+    message: str
+    count: int = 0
+
+
 class ImportUploadOut(ImportBatchOut):
     suggested_mapping: Mapping
-    notes: list[str] = Field(default_factory=list, description="What the reader found out about the file")
+    notes: list[ImportNoteOut] = Field(
+        default_factory=list, description="What the reader found out about the file"
+    )
     sample: list[list[str]] = Field(description="The first rows of the file as text, to recognise columns")
     duplicate_of: uuid.UUID | None = Field(
         default=None, description="This exact file was already imported (that batch)"

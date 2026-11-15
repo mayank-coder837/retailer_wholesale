@@ -34,6 +34,7 @@ from app.modules.imports.schemas import (
     ImportCheckOut,
     ImportFieldOut,
     ImportKindOut,
+    ImportNoteOut,
     ImportOptionOut,
     ImportRowOut,
     ImportUploadOut,
@@ -200,7 +201,7 @@ async def upload(
     return ImportUploadOut(
         **ImportBatchOut.model_validate(batch).model_dump(),
         suggested_mapping=mapping.suggest(table.headers, kind.fields, canonical=table.canonical),
-        notes=table.notes,
+        notes=[ImportNoteOut(code=n.code, message=n.message, count=n.count) for n in table.notes],
         sample=[[_text(c) for c in row] for row in table.rows[:SAMPLE_ROWS]],
         duplicate_of=await _imported_before(session, batch),
     )

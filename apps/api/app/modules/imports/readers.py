@@ -42,6 +42,15 @@ class TooManyRowsError(UnprocessableError):
 
 
 @dataclass(frozen=True)
+class Note:
+    """Something the reader found out about the file; ``code`` is stable, for the screens to translate."""
+
+    code: str
+    message: str
+    count: int = 0
+
+
+@dataclass(frozen=True)
 class Table:
     """What the file holds. ``numbers[i]`` is the row number a person sees in Excel for ``rows[i]``."""
 
@@ -49,7 +58,7 @@ class Table:
     rows: list[list[Cell]]
     numbers: list[int]
     canonical: bool = False  # headers are the kind's own field keys (a Tally export): no matching needed
-    notes: list[str] = field(default_factory=list)  # what the reader found out about the file
+    notes: list[Note] = field(default_factory=list)  # what the reader found out about the file
 
 
 def read_table(filename: str, data: bytes, kind: str | None = None) -> Table:
