@@ -14,7 +14,7 @@
       "name_ar": "Ø§Ù„Ù…Ø¯ÙŠØ±",
       "description": "Runs the business day to day; cannot change roles, delete users, change account settings or post into locked periods.",
       "include": ["*"],
-      "exclude": ["role.create", "role.edit", "role.delete", "membership.delete", "tenant.edit", "period.override_lock"]
+      "exclude": ["role.create", "role.edit", "role.delete", "membership.delete", "tenant.edit", "period.override_lock", "sync.view", "sync.post"]
     },
     {
       "system_key": "salesperson",

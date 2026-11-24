@@ -192,13 +192,17 @@ async def _apply_entry(session: AsyncSession, tables: dict[str, list[str]], entr
     columns = tables.get(entry.table)
     if columns is None:
         raise UnknownTableError(table=entry.table)
+    if entry.op == "delete" and entry.table == "user_account":
+        return  # accounts are never deleted by sync
     if entry.op == "delete":
         delete = f'DELETE FROM "{entry.table}" WHERE id = :id'  # noqa: S608 - a name checked against the models
         await session.execute(text(delete), {"id": entry.row_id})
     else:
-        await session.execute(
-            text(_upsert_sql(entry.table, columns, update=entry.op == "update")), {"p": entry.payload}
-        )
+        # A user account is a global row shared by every tenant: a batch may add one (a member's account
+        # reaches the cloud with their membership) but never change one that exists, or one tenant could take
+        # over another's.
+        update = entry.op == "update" and entry.table != "user_account"
+        await session.execute(text(_upsert_sql(entry.table, columns, update=update)), {"p": entry.payload})
 
 
 async def apply(

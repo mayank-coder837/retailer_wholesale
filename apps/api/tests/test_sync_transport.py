@@ -176,3 +176,85 @@ async def test_per_month_checksums_agree_once_synced_and_name_the_month_that_doe
     await pusher(cloud_http, app_sessionmaker, tenant, node, "tr5@shop.ae").cycle()
     here, there = await both()
     assert service.differing_periods(here, there) == []
+
+
+async def test_a_document_made_in_the_cloud_is_numbered_by_the_branch_and_the_number_syncs_back(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    b, tenant, node = await made_something(client, "tr6@shop.ae")
+    await send_all(app_sessionmaker, cloud, tenant, node)
+    async with cloud() as c, c.begin():  # the cloud's own node, as a real deployment has
+        await apply_context(c, tenant_id=tenant)
+        await c.execute(
+            text("INSERT INTO node (id, tenant_id, kind, name) VALUES (:i, :t, 'cloud', 'Cloud')"),
+            {"i": uuid.uuid4(), "t": tenant},
+        )
+    sync = pusher(cloud_http, app_sessionmaker, tenant, node, "tr6@shop.ae")
+    await sync.cycle()
+
+    login = await ok(
+        await cloud_http.post("/auth/login", json={"email": "tr6@shop.ae", "password": PASSWORD})
+    )
+    cloud_h = {"Authorization": f"Bearer {login['access_token']}"}
+    draft = await ok(
+        await cloud_http.post(
+            "/vouchers",
+            json=b.voucher(
+                "receipt", [{"party_id": b.customer, "amount": "40", "allocations": []}], account_id=b.cash
+            ),
+            headers=cloud_h,
+        ),
+        201,
+    )
+    assert draft["status"] == "draft"
+    # The cloud may not number a branch's document: it waits for the branch.
+    refused = await cloud_http.post(f"/vouchers/{draft['id']}/post", json={}, headers=cloud_h)
+    assert (refused.status_code, refused.json()["code"]) == (409, "not_number_owner")
+    owners = await count(
+        cloud, tenant, f"SELECT count(*) FROM numbering_series WHERE owner_node_id <> '{node}'"
+    )
+    assert owners == 0, "the cloud never became the owner of a branch's series"
+
+    await sync.cycle()  # the draft reaches the branch
+    posted = await ok(await b.client.post(f"/vouchers/{draft['id']}/post", json={}, headers=b.h))
+    assert posted["number"]
+    await sync.cycle()  # and the number goes back up
+    there = await ok(await cloud_http.get(f"/vouchers/{draft['id']}", headers=cloud_h))
+    assert (there["status"], there["number"]) == ("posted", posted["number"])
+
+
+async def test_a_push_cannot_change_another_tenants_user_and_a_manager_cannot_sync(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    _b, tenant, node = await made_something(client, "tr7@shop.ae")
+    await send_all(app_sessionmaker, cloud, tenant, node)
+    victim = await made_something(client, "victim@shop.ae")
+    await send_all(app_sessionmaker, cloud, victim[1], victim[2])
+    async with cloud() as c, c.begin():
+        before = await c.scalar(text("SELECT password_hash FROM user_account WHERE email = 'victim@shop.ae'"))
+    # tr7's node pushes a row that would replace the victim's account (their password hash) with its own.
+    async with app_sessionmaker() as s, s.begin():
+        stolen = await s.scalar(
+            text("SELECT to_jsonb(u)::text FROM user_account u WHERE email = 'tr7@shop.ae'")
+        )
+        victim_id = await s.scalar(text("SELECT id FROM user_account WHERE email = 'victim@shop.ae'"))
+    forged = stolen.replace(stolen.split('"id": "')[1].split('"')[0], str(victim_id)).replace(
+        "tr7@", "victim@"
+    )
+    login = await ok(
+        await cloud_http.post("/auth/login", json={"email": "tr7@shop.ae", "password": PASSWORD})
+    )
+    h = {"Authorization": f"Bearer {login['access_token']}"}
+    entry = {
+        "seq": 10**9,
+        "node_id": str(node),
+        "table": "user_account",
+        "row_id": str(victim_id),
+        "op": "update",
+        "payload": forged,
+    }
+    pushed = await cloud_http.post("/sync/push", json={"node_id": str(node), "entries": [entry]}, headers=h)
+    assert pushed.status_code == 200  # accepted as a no-op: existing accounts are never changed by a batch
+    async with cloud() as c, c.begin():
+        after = await c.scalar(text("SELECT password_hash FROM user_account WHERE email = 'victim@shop.ae'"))
+    assert after == before

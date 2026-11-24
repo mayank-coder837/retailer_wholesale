@@ -8,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,7 +43,7 @@ PREFIXES: dict[str, str] = {
 
 class NotNumberOwnerError(ConflictError):
     code = "not_number_owner"
-    title = "Only the branch's main PC can number this document"
+    title = "Only the branch's main PC can number this document: it waits for the branch"
 
 
 class NumberNotAvailableError(ConflictError):
@@ -80,6 +80,15 @@ async def _lock_series(
 ) -> NumberingSeries:
     if doc_type not in PREFIXES:
         raise UnknownDocumentTypeError(doc_type=doc_type)
+    # A branch's series belong to that branch's main PC, whoever asks first: the cloud looking at a branch's
+    # series before it has synced must not become its owner (the numbers would clash later, ADR 0010).
+    branch_owner = await session.scalar(
+        text(
+            "SELECT id FROM node WHERE branch_id = :b AND kind = 'branch_main_pc' "
+            "ORDER BY created_at, id LIMIT 1"
+        ),
+        {"b": branch_id},
+    )
     await session.execute(
         insert(NumberingSeries)
         .values(
@@ -89,7 +98,7 @@ async def _lock_series(
             doc_type=doc_type,
             fiscal_year=fiscal_year,
             prefix=PREFIXES[doc_type],
-            owner_node_id=node_id,
+            owner_node_id=branch_owner or node_id,
         )
         .on_conflict_do_nothing(index_elements=["branch_id", "doc_type", "fiscal_year"])
     )
