@@ -81,7 +81,7 @@ async def test_buy_by_the_roll_sell_by_the_metre_on_credit_and_clear_the_cheque(
         201,
     )
     line = receipt["lines"][0]
-    assert (line["qty_entered"], line["uom_entered"], line["qty_base"]) == ("10.000000", "roll", "500.000000")
+    assert (line["qty"], line["unit"], line["qty_base"]) == ("10.000000", "roll", "500.000000")
     bill = await ok(
         await client.post(
             "/purchase-documents",
@@ -140,7 +140,9 @@ async def test_buy_by_the_roll_sell_by_the_metre_on_credit_and_clear_the_cheque(
 
     bank = accounts["1150"]
     await ok(
-        await client.post(f"/pdcs/{pdc['id']}/deposit", json={"bank_account_id": bank, "date": str(TODAY)}, headers=h)
+        await client.post(
+            f"/pdcs/{pdc['id']}/deposit", json={"bank_account_id": bank, "date": str(TODAY)}, headers=h
+        )
     )
     cleared = await ok(
         await client.post(
