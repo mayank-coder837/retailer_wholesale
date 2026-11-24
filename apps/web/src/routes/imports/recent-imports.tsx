@@ -6,10 +6,25 @@ import { useTranslation } from "react-i18next";
 import { useApi } from "@/api/use-api";
 import { Button } from "@/components/ui/button";
 import { unwrap } from "@/routes/catalog/queries";
-import { errorText, label, OPENING_KINDS, useImports, type ImportKind } from "@/routes/imports/queries";
+import {
+  businessDay,
+  errorText,
+  label,
+  OPENING_KINDS,
+  useImports,
+  type ImportKind,
+} from "@/routes/imports/queries";
 
 /** The imports done lately, with Undo for an opening import that can still be taken back. */
-export function RecentImports({ businessId, kinds }: { businessId: string; kinds: ImportKind[] }) {
+export function RecentImports({
+  businessId,
+  timeZone,
+  kinds,
+}: {
+  businessId: string;
+  timeZone: string;
+  kinds: ImportKind[];
+}) {
   const { t, i18n } = useTranslation();
   const api = useApi();
   const queryClient = useQueryClient();
@@ -54,7 +69,7 @@ export function RecentImports({ businessId, kinds }: { businessId: string; kinds
               return (
                 <tr key={b.id}>
                   <td className="py-1.5 tabular-nums" dir="ltr">
-                    {b.created_at.slice(0, 10)}
+                    {businessDay(b.created_at, timeZone)}
                   </td>
                   <td className="py-1.5">{kind ? label(kind, i18n.language) : b.kind}</td>
                   <td className="py-1.5" dir="ltr">

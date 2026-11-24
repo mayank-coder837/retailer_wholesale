@@ -83,9 +83,14 @@ export async function downloadTemplate(api: ApiClient, kind: string, lang: "en" 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${kind}-template.csv`;
+  link.download = `${kind}-template-${lang}.csv`;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000); // not at once: some browsers cancel the download
+}
+
+/** A moment as the business's own calendar date ("2026-11-15"), not UTC's. */
+export function businessDay(moment: string, timeZone: string): string {
+  return new Date(moment).toLocaleDateString("en-CA", { timeZone });
 }
 
 /** The name of a kind, field or option in the language of the screen. */

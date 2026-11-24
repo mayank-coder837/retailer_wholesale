@@ -95,7 +95,7 @@ export function ImportPage() {
       {stage === 0 && kinds.data && (
         <>
           <PickStep kinds={kinds.data} onPick={choose} />
-          <RecentImports businessId={current.id} kinds={kinds.data} />
+          <RecentImports businessId={current.id} timeZone={current.time_zone} kinds={kinds.data} />
         </>
       )}
 
@@ -151,7 +151,13 @@ export function ImportPage() {
             </p>
           )}
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setResult(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                commit.reset();
+                setResult(null);
+              }}
+            >
               {t("import.check.back")}
             </Button>
             <Button
