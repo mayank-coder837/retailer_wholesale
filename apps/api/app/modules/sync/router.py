@@ -89,3 +89,14 @@ async def pull(
     perms.require("sync.view")
     entries, cursor = await service.pull(session, principal.tenant_id, node_id, after, limit=limit)
     return PullOut(entries=to_io(entries), cursor=cursor)
+
+
+class ChecksumOut(BaseModel):
+    journal: dict[str, list[str]] = Field(description="Month -> [lines, total debit, total credit]")
+    stock: dict[str, list[str]] = Field(description="Month -> [moves, total quantity, total value]")
+
+
+@router.get("/checksum", operation_id="sync_checksum")
+async def checksum(perms: Signed, session: TenantSessionDep, business_id: uuid.UUID) -> ChecksumOut:
+    perms.require("sync.view")
+    return ChecksumOut(**await service.checksum(session, business_id))

@@ -240,3 +240,36 @@ async def apply(
     else:
         await _save(session, tenant_id, sender, pulled_seq=cursor if cursor is not None else done)
     return done
+
+
+async def checksum(session: AsyncSession, business_id: uuid.UUID) -> dict[str, dict[str, list[str]]]:
+    """Per month: how many journal lines / stock moves there are and what they add up to. Two databases that
+    hold the same books give the same answer; the first month that differs says where to look (ADR 0010)."""
+    journal = await session.execute(
+        text(
+            "SELECT to_char(entry_date, 'YYYY-MM'), count(*), sum(debit), sum(credit) FROM journal_line "
+            "WHERE business_id = :b GROUP BY 1 ORDER BY 1"
+        ),
+        {"b": business_id},
+    )
+    stock = await session.execute(
+        text(
+            "SELECT to_char(move_date, 'YYYY-MM'), count(*), sum(qty_base), sum(value) FROM stock_move "
+            "WHERE business_id = :b GROUP BY 1 ORDER BY 1"
+        ),
+        {"b": business_id},
+    )
+    return {
+        "journal": {r[0]: [str(r[1]), str(r[2]), str(r[3])] for r in journal},
+        "stock": {r[0]: [str(r[1]), str(r[2]), str(r[3])] for r in stock},
+    }
+
+
+def differing_periods(a: dict[str, dict[str, list[str]]], b: dict[str, dict[str, list[str]]]) -> list[str]:
+    """The months (``journal:2026-11``) where two checksums disagree."""
+    out: list[str] = []
+    for kind in ("journal", "stock"):
+        for period in sorted(set(a.get(kind, {})) | set(b.get(kind, {}))):
+            if a.get(kind, {}).get(period) != b.get(kind, {}).get(period):
+                out.append(f"{kind}:{period}")
+    return out

@@ -12,6 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.db import apply_context
+from app.modules.sync import service
 from app.modules.sync.client import CloudSync
 from tests.factories import PASSWORD
 from tests.test_pricing_api import ok
@@ -141,3 +142,38 @@ async def test_only_a_signed_in_account_with_the_sync_permission_may_use_it(
         await cloud_http.get("/sync/pull", params={"node_id": str(node)}, headers=owner)
     ).status_code == 200
     _ = b
+
+
+async def test_per_month_checksums_agree_once_synced_and_name_the_month_that_does_not(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    b, tenant, node = await made_something(client, "tr5@shop.ae")
+    await send_all(app_sessionmaker, cloud, tenant, node)
+    await b.invoice("75", "INV-4")  # not on the cloud yet
+    business = uuid.UUID(b.shop.business_id)
+
+    async def both() -> tuple[dict[str, dict[str, list[str]]], dict[str, dict[str, list[str]]]]:
+        async with app_sessionmaker() as s, s.begin():
+            await apply_context(s, tenant_id=tenant)
+            here = await service.checksum(s, business)
+        token = (
+            await ok(
+                await cloud_http.post("/auth/login", json={"email": "tr5@shop.ae", "password": PASSWORD})
+            )
+        )["access_token"]
+        there = await ok(
+            await cloud_http.get(
+                "/sync/checksum",
+                params={"business_id": str(business)},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        )
+        return here, there
+
+    here, there = await both()
+    assert (
+        here["journal"] and service.differing_periods(here, there) == [f"journal:{min(here['journal'])}"]
+    ) or (service.differing_periods(here, there))
+    await pusher(cloud_http, app_sessionmaker, tenant, node, "tr5@shop.ae").cycle()
+    here, there = await both()
+    assert service.differing_periods(here, there) == []
