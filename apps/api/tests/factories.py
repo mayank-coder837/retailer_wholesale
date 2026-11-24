@@ -20,6 +20,7 @@ from app.core import jobs, numbering
 from app.core.ids import new_id
 from app.core.platform_models import Attachment, AuditLog, IdempotencyKey, IndustryPackApplication, Setting
 from app.core.security import hash_password
+from app.core.sync import SyncState
 from app.modules.accounting import accounts as accounting_accounts
 from app.modules.accounting import periods as accounting_periods
 from app.modules.accounting import vouchers
@@ -711,6 +712,13 @@ async def _ai_action(session: AsyncSession, seed: TenantSeed) -> Any:
     return action.id
 
 
+async def _sync_state(session: AsyncSession, seed: TenantSeed) -> Any:
+    row = SyncState(id=new_id(), tenant_id=seed.tenant_id, node_id=new_id())
+    session.add(row)
+    await session.flush()
+    return row.id
+
+
 async def _import_batch(session: AsyncSession, seed: TenantSeed) -> Any:
     batch = ImportBatch(
         id=new_id(),
@@ -876,12 +884,13 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "pdc_intended_bill": _pdc_intended_bill,
     "import_batch": _import_batch,
     "ai_action": _ai_action,
+    "sync_state": _sync_state,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.
 TENANT_COLUMN = {"tenant": "id"}
 # Tenant tables that are never synced to the cloud (local queues) and tables the app may only append to.
-NOT_SYNCED = frozenset({"sync_outbox", "outbox_event", "idempotency_key"})
+NOT_SYNCED = frozenset({"sync_outbox", "sync_state", "outbox_event", "idempotency_key"})
 APPEND_ONLY = frozenset({"audit_log", "journal_entry", "journal_line", "bill_allocation", "stock_move"})
 # Rows a trigger guards against every change but one column: claiming them is tried by inserting a copy.
 GUARDED = frozenset({"bill"})
