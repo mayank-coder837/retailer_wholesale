@@ -33,6 +33,7 @@ RESOURCES: dict[str, tuple[str, ...]] = {
     "role": (VIEW, CREATE, EDIT, DELETE),
     "audit": (VIEW, EXPORT),
     "import": (VIEW, CREATE, POST),  # import wizards (M1.12): upload and check, then import
+    "ai_assistant": (VIEW, CREATE),  # the assistant (M1.13): see its history, ask it to do things
     "backup": (VIEW, CREATE),  # local runtime: list backups, back up now (restores need Windows admin)
     # Masters
     "unit": _MASTER,
