@@ -35,6 +35,11 @@ def _json(value: Any) -> Any:
     return value
 
 
+def _amount_text(value: Decimal) -> str:
+    """Amounts as the books keep them, four places, so the screen and the tests never see "5000" vs "5000.0000"."""
+    return str(value.quantize(Decimal("0.0001")))
+
+
 class Nothing(BaseModel):
     pass
 
@@ -188,7 +193,9 @@ async def _allocations(
 ) -> tuple[list[AllocationIn], dict[str, Any]]:
     """The named bill gets what it can hold; any rest stays on account (never an advance by guess)."""
     if args.bill_reference is None:
-        return [AllocationIn(type=AllocationType.ON_ACCOUNT, amount=args.amount)], {}
+        return [AllocationIn(type=AllocationType.ON_ACCOUNT, amount=args.amount)], {
+            "on_account": _amount_text(args.amount)
+        }
     bills = await accounting.list_bills(ctx.session, ctx.business_id, args.party_id)
     wanted = args.bill_reference.strip().lower()
     match = next(
@@ -200,7 +207,11 @@ async def _allocations(
     rows = [AllocationIn(type=AllocationType.AGAINST_REF, amount=settled, bill_id=match.id)]
     if args.amount > settled:
         rows.append(AllocationIn(type=AllocationType.ON_ACCOUNT, amount=args.amount - settled))
-    return rows, {"bill": match.reference, "settled": str(settled), "on_account": str(args.amount - settled)}
+    return rows, {
+        "bill": match.reference,
+        "settled": _amount_text(settled),
+        "on_account": _amount_text(args.amount - settled),
+    }
 
 
 async def _draft(
@@ -226,7 +237,7 @@ async def _draft(
         "document_id": str(doc.id),
         "doc_type": kind.value,
         "party": party.name_en,
-        "amount": str(args.amount),
+        "amount": _amount_text(args.amount),
         **facts,
     }
 

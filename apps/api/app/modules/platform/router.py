@@ -41,6 +41,7 @@ class AuditOut(BaseModel):
     actor_user_id: uuid.UUID | None
     via_ai: bool
     on_behalf_of_user_id: uuid.UUID | None
+    ai_trace_id: uuid.UUID | None
     client: str | None
     request_id: str | None
     action: str

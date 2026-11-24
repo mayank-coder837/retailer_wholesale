@@ -64,6 +64,7 @@ from app.modules.catalog.schemas import (
 )
 from app.modules.documents.models import DocumentLine, LineDirection
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
+from app.modules.ai.models import AiAction
 from app.modules.imports.models import ImportBatch
 from app.modules.inventory import documents as stock_documents
 from app.modules.inventory.models import AverageCost, Batch, StockBalance, StockMove
@@ -693,6 +694,23 @@ async def _pdc_intended_bill(session: AsyncSession, seed: TenantSeed) -> Any:
     return await session.scalar(select(PdcIntendedBill.id).where(PdcIntendedBill.pdc_id == pdc.id))
 
 
+async def _ai_action(session: AsyncSession, seed: TenantSeed) -> Any:
+    action = AiAction(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        business_id=seed.business_id,
+        user_id=new_id(),
+        trace_id=new_id(),
+        tool="find_party",
+        risk="read",
+        status="done",
+        args={"name": "x"},
+    )
+    session.add(action)
+    await session.flush()
+    return action.id
+
+
 async def _import_batch(session: AsyncSession, seed: TenantSeed) -> Any:
     batch = ImportBatch(
         id=new_id(),
@@ -857,6 +875,7 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "pdc": _pdc,
     "pdc_intended_bill": _pdc_intended_bill,
     "import_batch": _import_batch,
+    "ai_action": _ai_action,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.

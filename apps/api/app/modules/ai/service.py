@@ -186,7 +186,7 @@ async def confirm(ctx: ToolContext, action_id: uuid.UUID) -> AiAction:
     if row.status == ActionStatus.CONFIRMED:
         return row  # a second click does not run it twice
     if row.status != ActionStatus.PENDING:
-        raise ActionNotPendingError(status=row.status)
+        raise ActionNotPendingError(current=row.status)
     tool = REGISTRY[row.tool]
     ctx = replace(ctx, trace_id=row.trace_id)
     args, _stored, refusal = await _gate(ctx, tool, row.args)
@@ -209,7 +209,7 @@ async def reject(ctx: ToolContext, action_id: uuid.UUID) -> AiAction:
     if row.status == ActionStatus.REJECTED:
         return row
     if row.status != ActionStatus.PENDING:
-        raise ActionNotPendingError(status=row.status)
+        raise ActionNotPendingError(current=row.status)
     _decided(row, ctx, ActionStatus.REJECTED)
     return row
 

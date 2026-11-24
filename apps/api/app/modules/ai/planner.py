@@ -81,7 +81,7 @@ _PAYMENT = re.compile(
 )
 _PAYMENT_AR = re.compile(
     rf"^(?:دفعت|دفعنا|سددت|سددنا|حولت)\s+{_AMOUNT}\s*{_CURRENCY}\s*(?P<how>نقدا|نقداً|تحويل|بنك)?\s*"
-    rf"(?:(?:إلى|الى)\s+|لـ|ل\s+)(?P<party>.+?){_REF}$"
+    rf"(?:(?:إلى|الى)\s+|لـ|ل)(?P<party>.+?){_REF}$"
 )
 _WHO_OWES_ME = re.compile(
     r"^(?:who owes me|who owes us|receivables?|outstanding (?:from|customers)|customers? (?:who )?owe|"
