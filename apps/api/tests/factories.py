@@ -38,6 +38,7 @@ from app.modules.accounting.models import (
 from app.modules.accounting.models import Role as LedgerRole
 from app.modules.accounting.posting import VoucherType
 from app.modules.accounting.schemas import AccountIn, AllocationIn, VoucherIn, VoucherLineIn
+from app.modules.ai.models import AiAction
 from app.modules.catalog import products as catalog_products
 from app.modules.catalog import service as catalog
 from app.modules.catalog import setup as catalog_setup
@@ -64,7 +65,6 @@ from app.modules.catalog.schemas import (
 )
 from app.modules.documents.models import DocumentLine, LineDirection
 from app.modules.identity.models import Membership, Role, RoleAssignment, RolePermission, UserAccount
-from app.modules.ai.models import AiAction
 from app.modules.imports.models import ImportBatch
 from app.modules.inventory import documents as stock_documents
 from app.modules.inventory.models import AverageCost, Batch, StockBalance, StockMove

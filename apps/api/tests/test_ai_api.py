@@ -1,4 +1,4 @@
-"""The assistant (M1.13): tools, risk tiers, the person's own permissions, the trace and the audit, through the API."""
+"""The assistant (M1.13): tools, risk tiers, the person's own permissions, the trace and the audit."""
 
 from typing import Any
 
@@ -123,7 +123,7 @@ async def test_money_beyond_the_invoice_stays_on_account_not_an_advance(client: 
 async def test_arabic_works_the_same_as_english(client: AsyncClient) -> None:
     b = await books(client, "arabic@shop.ae")
     await b.invoice("900", "INV-5")
-    result = await chat(b, "استلمت ٥٠٠ نقدا من علي مقابل فاتورة INV-5", "ar")
+    result = await chat(b, "استلمت ٥٠٠ نقدا من علي مقابل فاتورة INV-5", "ar")  # noqa: RUF001
     draft = next(a for a in result["actions"] if a["tool"] == "create_draft_receipt")
     assert draft["status"] == "done", result
     assert draft["result"]["settled"] == "500.0000"
@@ -402,3 +402,26 @@ async def test_every_step_of_one_request_shares_a_trace(client: AsyncClient) -> 
     same = [a for a in history if a["trace_id"] == draft["trace_id"]]
     assert {a["tool"] for a in same} == {"find_party", "create_draft_receipt"}
     assert all(a["prompt"] == "Received 5000 cash from Ali Traders against INV-1093" for a in same)
+
+
+async def test_a_document_of_another_business_is_not_reachable_through_this_one(
+    client: AsyncClient,
+) -> None:
+    b = await books(client, "twobiz@shop.ae")
+    draft = await draft_receipt(b)
+    document_id = draft["result"]["document_id"]
+    second = await ok(
+        await client.post(
+            "/businesses", json={"legal_name_en": "Second LLC", "legal_name_ar": "ثانية"}, headers=b.h
+        ),
+        201,
+    )
+    await add_member(client, b.shop, "other@shop.ae", "accountant", business=second["id"])
+    other = bearer(await login(client, "other@shop.ae"))
+    body = {"business_id": second["id"], "tool": "post_voucher", "args": {"document_id": document_id}}
+    asked = await ok(await client.post("/ai/call", json=body, headers=other))
+    assert (asked["status"], asked["error_code"]) == ("failed", "voucher_not_found")
+    cancel = {**body, "tool": "cancel_document", "args": {"document_id": document_id, "reason": "x"}}
+    asked = await ok(await client.post("/ai/call", json=cancel, headers=other))
+    assert asked["status"] == "failed"
+    assert (await voucher(b, document_id))["status"] == "draft"

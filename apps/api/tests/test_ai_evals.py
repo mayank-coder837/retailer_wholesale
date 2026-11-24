@@ -1,7 +1,7 @@
 """The evaluation set (M1.13): sentences in English and Arabic → the tool calls the rule planner must make.
 
-No network and no model: this is what keeps the sentence → tool step honest in CI. When a language-model planner
-is added (question T3) it is held to the same file.
+No network and no model: this keeps the sentence → tool step honest in CI. When a language-model
+planner is added (question T3) it is held to the same file.
 """
 
 import json

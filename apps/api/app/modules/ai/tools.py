@@ -36,7 +36,7 @@ def _json(value: Any) -> Any:
 
 
 def _amount_text(value: Decimal) -> str:
-    """Amounts as the books keep them, four places, so the screen and the tests never see "5000" vs "5000.0000"."""
+    """Amounts as the books keep them, four places ("5000.0000", never "5000")."""
     return str(value.quantize(Decimal("0.0001")))
 
 
@@ -271,8 +271,15 @@ class PostVoucherIn(BaseModel):
     document_id: uuid.UUID
 
 
+def _in_this_business(ctx: ToolContext, business_id: uuid.UUID) -> None:
+    """A document of another business is not found, whatever the person may do in this one."""
+    if business_id != ctx.business_id:
+        raise vouchers.VoucherNotFoundError()
+
+
 async def _post_permission(ctx: ToolContext, args: Any) -> str:
     doc = await vouchers.get_document(ctx.session, args.document_id)
+    _in_this_business(ctx, doc.business_id)
     return f"{doc.doc_type}.post"
 
 
@@ -284,6 +291,7 @@ async def _post_permission(ctx: ToolContext, args: Any) -> str:
     input=PostVoucherIn,
 )
 async def post_voucher(ctx: ToolContext, args: PostVoucherIn) -> dict[str, Any]:
+    _in_this_business(ctx, (await vouchers.get_document(ctx.session, args.document_id)).business_id)
     doc = await vouchers.post(
         ctx.session,
         args.document_id,
@@ -302,6 +310,7 @@ class CancelIn(BaseModel):
 
 async def _cancel_permission(ctx: ToolContext, args: Any) -> str:
     doc = await documents.get_document(ctx.session, args.document_id)
+    _in_this_business(ctx, doc.business_id)
     return f"{doc.doc_type}.cancel"
 
 
@@ -313,6 +322,7 @@ async def _cancel_permission(ctx: ToolContext, args: Any) -> str:
     input=CancelIn,
 )
 async def cancel_document(ctx: ToolContext, args: CancelIn) -> dict[str, Any]:
+    _in_this_business(ctx, (await documents.get_document(ctx.session, args.document_id)).business_id)
     doc = await documents.cancel(ctx.session, args.document_id, user_id=ctx.user_id, reason=args.reason)
     return {"document_id": str(doc.id), "doc_type": doc.doc_type, "number": doc.number, "status": doc.status}
 
