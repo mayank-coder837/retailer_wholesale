@@ -29,6 +29,7 @@ const SETTINGS = [
   { to: "/settings/roles", key: "roles" },
   { to: "/settings/catalog", key: "catalog" },
   { to: "/settings/pricing", key: "pricing" },
+  { to: "/settings/import", key: "import" },
 ] as const;
 
 /** A sidebar entry; on a phone, choosing one folds the menu away. */

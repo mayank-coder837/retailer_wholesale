@@ -41,6 +41,7 @@ class ImportKindOut(BaseModel):
     fields: list[ImportFieldOut]
     options: list[ImportOptionOut]
     permissions: list[str]
+    undoable: bool
 
 
 class ImportBatchOut(BaseModel):

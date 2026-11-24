@@ -3923,6 +3923,8 @@ export interface components {
             options: components["schemas"]["ImportOptionOut"][];
             /** Permissions */
             permissions: string[];
+            /** Undoable */
+            undoable: boolean;
         };
         /** ImportNoteOut */
         ImportNoteOut: {

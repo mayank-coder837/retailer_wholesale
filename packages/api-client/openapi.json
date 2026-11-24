@@ -13867,6 +13867,10 @@
             },
             "type": "array",
             "title": "Permissions"
+          },
+          "undoable": {
+            "type": "boolean",
+            "title": "Undoable"
           }
         },
         "type": "object",
@@ -13879,7 +13883,8 @@
           "order",
           "fields",
           "options",
-          "permissions"
+          "permissions",
+          "undoable"
         ],
         "title": "ImportKindOut"
       },

@@ -119,6 +119,7 @@ def kind_out(kind: Kind) -> ImportKindOut:
         ],
         options=[ImportOptionOut(**vars(o)) for o in kind.options],
         permissions=list(kind.permissions),
+        undoable=kind.undoable,
     )
 
 

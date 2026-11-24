@@ -18,8 +18,25 @@ export function fakeApi(routes: Record<string, Handler | { status: number; body:
   const calls: Recorded[] = [];
   const fetchImpl = (async (input: Request) => {
     const url = new URL(input.url);
-    const text = await input.text();
-    const body = text ? JSON.parse(text) : undefined;
+    // An upload is a form: its fields are recorded, a file as "[file name]". (The text is read by hand: the test
+    // environment's File is not the one the runtime's form parser accepts.)
+    let body: unknown;
+    const type = input.headers.get("Content-Type") ?? "";
+    if (type.includes("multipart/form-data")) {
+      const boundary = /boundary=(.+)$/.exec(type)?.[1] ?? "";
+      const fields: Record<string, string> = {};
+      for (const part of (await input.text()).split(`--${boundary}`)) {
+        const name = /name="([^"]+)"/.exec(part)?.[1];
+        if (!name) continue;
+        const file = /filename="([^"]*)"/.exec(part)?.[1];
+        const value = part.split(/\r?\n\r?\n/)[1]?.replace(/\r?\n$/, "") ?? "";
+        fields[name] = file !== undefined ? `[file ${file}]` : value;
+      }
+      body = fields;
+    } else {
+      const text = await input.text();
+      body = text ? JSON.parse(text) : undefined;
+    }
     calls.push({
       method: input.method,
       path: url.pathname,

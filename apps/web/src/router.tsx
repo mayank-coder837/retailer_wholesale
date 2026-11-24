@@ -44,6 +44,8 @@ import { ItemLedgerPage } from "@/routes/inventory/item-ledger";
 import { NegativeStockPage, StockPage } from "@/routes/inventory/stock";
 import { StockDocumentPage } from "@/routes/inventory/stock-document";
 import { StockEntryRoute } from "@/routes/inventory/stock-entry";
+import { ImportPage } from "@/routes/imports/import-page";
+import { ReconciliationPage } from "@/routes/imports/reconciliation";
 import { LoginPage } from "@/routes/login";
 import { RolesPage } from "@/routes/roles";
 import { SignupPage } from "@/routes/signup";
@@ -133,6 +135,16 @@ const catalogSettingsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/settings/catalog",
   component: CatalogSettingsPage,
+});
+const importRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/settings/import",
+  component: ImportPage,
+});
+const reconciliationRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/settings/import/reconciliation",
+  component: ReconciliationPage,
 });
 const pricingSettingsRoute = createRoute({
   getParentRoute: () => appRoute,
@@ -292,6 +304,8 @@ const routeTree = rootRoute.addChildren([
     partyRoute,
     catalogSettingsRoute,
     pricingSettingsRoute,
+    importRoute,
+    reconciliationRoute,
     salesRoute,
     newSalesRoute,
     salesDocRoute,

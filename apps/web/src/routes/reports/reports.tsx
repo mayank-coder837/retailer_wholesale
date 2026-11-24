@@ -12,6 +12,7 @@ const GROUPS: { key: string; reports: { key: string; to: string }[] }[] = [
       { key: "balanceSheet", to: "/reports/balance-sheet" },
       { key: "trialBalance", to: "/accounts/trial-balance" },
       { key: "dayBook", to: "/reports/day-book" },
+      { key: "openingCheck", to: "/settings/import/reconciliation" },
     ],
   },
   {
