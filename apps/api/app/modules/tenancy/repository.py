@@ -35,12 +35,8 @@ async def list_warehouses(session: AsyncSession, branch_id: uuid.UUID) -> Sequen
     return (await session.scalars(stmt)).all()
 
 
-async def get_main_node(session: AsyncSession) -> Node | None:
-    """The tenant's first branch main PC: the node this local installation writes as."""
-    stmt = (
-        select(Node)
-        .where(Node.kind == NodeKind.BRANCH_MAIN_PC.value)
-        .order_by(Node.created_at, Node.id)
-        .limit(1)
-    )
+async def get_main_node(session: AsyncSession, kind: NodeKind = NodeKind.BRANCH_MAIN_PC) -> Node | None:
+    """The tenant's first node of this kind: a branch installation writes as its branch main PC, the cloud as
+    its cloud node."""
+    stmt = select(Node).where(Node.kind == kind.value).order_by(Node.created_at, Node.id).limit(1)
     return (await session.scalars(stmt)).first()

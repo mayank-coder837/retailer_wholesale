@@ -9,7 +9,7 @@ from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -21,6 +21,11 @@ class Environment(StrEnum):
     DEV = "dev"
     TEST = "test"
     PROD = "prod"
+
+
+class NodeRole(StrEnum):
+    BRANCH = "branch"
+    CLOUD = "cloud"
 
 
 class JobsBackend(StrEnum):
@@ -55,6 +60,14 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 20 * 1024 * 1024
     # Background jobs: the API runs the in-process worker unless disabled (tests drive it directly).
     worker_enabled: bool = True
+
+    # Cloud sync (M2.1, ADR 0010). ``node_role`` says which kind of node this database is: a branch's main PC
+    # writes as its branch node, the cloud as its cloud node. A branch syncs when ``cloud_url`` is set.
+    node_role: NodeRole = NodeRole.BRANCH
+    cloud_url: str | None = None
+    sync_email: str | None = None  # the cloud account this PC signs in as (needs sync.view and sync.post)
+    sync_password: SecretStr | None = None
+    sync_interval_s: float = Field(default=15.0, ge=1.0)
 
     # Local runtime (M0.6, ADR 0008). Set by the desktop app's service configuration on the main PC.
     web_dir: Path | None = None  # built SPA served by the API (same origin for main and office PCs)

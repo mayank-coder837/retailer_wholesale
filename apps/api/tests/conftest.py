@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from app.core.config import Environment, Settings
 from app.core.db import create_engine, create_sessionmaker
 from app.main import create_app
-from tests.cloud_fixtures import cloud, cloud_db  # noqa: F401  (the second database, for sync tests)
+from tests.cloud_fixtures import cloud, cloud_db, cloud_http  # noqa: F401  (the second database, for sync tests)
 
 TEST_DATABASE_URL = os.environ.get(
     "SMARTBIZ_TEST_DATABASE_URL", "postgresql+asyncpg://smartbiz:smartbiz@localhost:5440/smartbiz_test"

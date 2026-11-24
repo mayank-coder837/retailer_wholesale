@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import AuditContext
 from app.core.audit import set_context as set_audit_context
-from app.core.config import Settings
+from app.core.config import NodeRole, Settings
 from app.core.db import apply_context
 from app.core.errors import (
     AccountLockedError,
@@ -69,7 +69,7 @@ async def _issue(
 ) -> IssuedTokens:
     """Creates a refresh token (in ``family_id``, or a new family) and a matching access token."""
     await apply_context(session, tenant_id=tenant_id, user_id=user_id)
-    node = await tenancy.get_main_node(session)
+    node = await tenancy.get_main_node(session, cloud=settings.node_role is NodeRole.CLOUD)
     family = family_id or new_id()
     raw, token_hash = new_refresh_token()
     session.add(

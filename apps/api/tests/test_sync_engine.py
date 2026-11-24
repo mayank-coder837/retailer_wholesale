@@ -155,7 +155,7 @@ async def test_the_cloud_records_what_it_received_as_the_senders_so_it_is_relaye
         for_other, cursor = await service.pull(c, tenant, other, 0, limit=10_000)
         for_sender, sender_cursor = await service.pull(c, tenant, node, 0, limit=10_000)
     assert len(for_other) > 20
-    assert {e.node_id for e in for_other} == {node}
+    assert {e.node_id for e in for_other if e.table != "user_account"} == {node}
     assert for_sender == []  # the sender never gets its own rows back
     assert sender_cursor == cursor > 0  # but its cursor still moves past them
 

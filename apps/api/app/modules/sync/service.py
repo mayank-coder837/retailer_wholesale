@@ -83,6 +83,11 @@ async def _state(
     return (await session.scalars(query)).first()
 
 
+async def state(session: AsyncSession, tenant_id: uuid.UUID, node_id: uuid.UUID) -> SyncState | None:
+    """Where this node's sync stands, or nothing yet."""
+    return await _state(session, tenant_id, node_id, lock=False)
+
+
 async def _save(session: AsyncSession, tenant_id: uuid.UUID, node_id: uuid.UUID, **positions: int) -> None:
     """Moves the saved position forward (never back). The row is made on first use: on the cloud the tenant
     row only exists once the first batch is in, so it cannot be made before."""
@@ -149,7 +154,7 @@ async def pull(
     ]
     cursor = int(rows[-1][0]) if rows else after
     mine = [r for r in rows if r[1] != requester]
-    return _entries(mine), cursor
+    return await _with_users(session, _entries(mine)), cursor
 
 
 async def _with_users(session: AsyncSession, entries: list[Entry]) -> list[Entry]:

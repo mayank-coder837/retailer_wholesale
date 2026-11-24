@@ -34,6 +34,8 @@ from app.modules.pricing import router as pricing_router
 from app.modules.purchasing import router as purchasing_router
 from app.modules.reporting import router as reporting_router
 from app.modules.sales import router as sales_router
+from app.modules.sync import daemon as sync_daemon
+from app.modules.sync import router as sync_router
 from app.modules.tax import router as tax_router
 from app.modules.tenancy import router as tenancy_router
 
@@ -58,7 +60,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             else None
         )
         finder = await discovery.start(settings)
+        syncing = await sync_daemon.start(settings, app.state.sessionmaker)
         yield
+        if syncing is not None:
+            syncing.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await syncing
         if finder is not None:
             finder.close()
         if backups is not None:
@@ -104,6 +111,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(reporting_router.router)
     app.include_router(imports_router.router)
     app.include_router(ai_router.router)
+    app.include_router(sync_router.router)
     app.include_router(documents_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)

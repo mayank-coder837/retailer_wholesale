@@ -8,11 +8,14 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import make_url, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.config import Settings
+from app.core.config import NodeRole, Settings
 from app.core.db import create_engine, create_sessionmaker
+from app.main import create_app
 
 TEST_DATABASE_URL = os.environ.get(
     "SMARTBIZ_TEST_DATABASE_URL", "postgresql+asyncpg://smartbiz:smartbiz@localhost:5440/smartbiz_test"
@@ -58,3 +61,17 @@ async def cloud(settings: Settings, cloud_db: str) -> AsyncIterator[async_sessio
     engine = create_engine(cloud_settings)
     yield create_sessionmaker(engine)
     await engine.dispose()
+
+
+@pytest.fixture
+async def cloud_http(
+    settings: Settings, cloud: async_sessionmaker[AsyncSession], cloud_db: str
+) -> AsyncIterator[AsyncClient]:
+    """The cloud's API (its own app on the cloud database), as a branch PC would reach it over the network."""
+    cloud_settings = settings.model_copy(update={"database_url": cloud_db, "node_role": NodeRole.CLOUD})
+    app: FastAPI = create_app(cloud_settings)
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://cloud") as http,
+    ):
+        yield http

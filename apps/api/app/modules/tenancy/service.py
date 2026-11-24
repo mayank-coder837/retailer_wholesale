@@ -94,8 +94,9 @@ async def create_warehouse(
     return warehouse
 
 
-async def get_main_node(session: AsyncSession) -> Node | None:
-    return await repo.get_main_node(session)
+async def get_main_node(session: AsyncSession, *, cloud: bool = False) -> Node | None:
+    """The node this installation writes as: the branch's main PC, or (on the cloud) the cloud node."""
+    return await repo.get_main_node(session, NodeKind.CLOUD if cloud else NodeKind.BRANCH_MAIN_PC)
 
 
 async def get_tenant(session: AsyncSession, tenant_id: uuid.UUID) -> Tenant:
