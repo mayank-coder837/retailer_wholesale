@@ -1,6 +1,7 @@
-"""The Phase 1 gate (docs/roadmap.md): a trader buys fabric by the roll, sells it by the metre on credit, receives a
-post-dated cheque, deposits it and lets it clear. At the end the trial balance balances, the stock value equals the
-inventory account, and the customer's ledger shows nothing outstanding. Offline: the API and the database only."""
+"""The Phase 1 gate (docs/roadmap.md): a trader buys fabric by the roll, sells it by the metre on credit,
+receives a post-dated cheque, deposits it and lets it clear. At the end the trial balance balances, the
+stock value equals the inventory account, and the customer's ledger shows nothing outstanding.
+Offline: the API and the database only."""
 
 from datetime import timedelta
 from decimal import Decimal
@@ -65,7 +66,7 @@ async def test_buy_by_the_roll_sell_by_the_metre_on_credit_and_clear_the_cheque(
             **more,
         }
 
-    # --- buy: 10 rolls (500 m) at 500 a roll; received into the warehouse, then billed with 5% VAT -------------
+    # --- buy: 10 rolls (500 m) at 500 a roll; received into the warehouse, then billed with 5% VAT ---
     receipt = await ok(
         await client.post(
             "/purchase-documents",
@@ -99,7 +100,7 @@ async def test_buy_by_the_roll_sell_by_the_metre_on_credit_and_clear_the_cheque(
     assert bill["total"] == "5250.0000"  # 5,000 of fabric and 250 VAT
     assert await balance(client, h, accounts, "2120") == 0  # goods received not billed: cleared
 
-    # --- sell: 120 m at 14 a metre on credit, with 5% VAT --------------------------------------------------------
+    # --- sell: 120 m at 14 a metre on credit, with 5% VAT ---
     invoice = await ok(
         await client.post(
             "/sales-documents",
@@ -120,7 +121,7 @@ async def test_buy_by_the_roll_sell_by_the_metre_on_credit_and_clear_the_cheque(
     )
     assert [(b["reference"], b["amount_open"]) for b in bills] == [(invoice["number"], "1764.0000")]
 
-    # --- the customer's cheque: a memo until it clears -----------------------------------------------------------
+    # --- the customer's cheque: a memo until it clears ---
     trial = await ok(await client.get("/trial-balance", params=business, headers=h))
     cheque = {
         **business,
@@ -151,7 +152,7 @@ async def test_buy_by_the_roll_sell_by_the_metre_on_credit_and_clear_the_cheque(
     )
     assert cleared["status"] == "cleared"
 
-    # --- the gate ------------------------------------------------------------------------------------------------
+    # --- the gate ---
     final = await ok(await client.get("/trial-balance", params=business, headers=h))
     assert final["total_debit"] == final["total_credit"], "the trial balance balances"
 
