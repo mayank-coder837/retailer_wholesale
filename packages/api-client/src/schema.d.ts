@@ -2100,6 +2100,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ai/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Ai Tools */
+        get: operations["list_ai_tools"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ai Chat */
+        post: operations["ai_chat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/call": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ai Call */
+        post: operations["ai_call"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Ai Actions */
+        get: operations["list_ai_actions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/actions/{action_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Ai Action */
+        post: operations["confirm_ai_action"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/actions/{action_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Ai Action */
+        post: operations["reject_ai_action"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -2543,6 +2645,113 @@ export interface components {
             /** Name Ar */
             name_ar: string;
         };
+        /** AiActionOut */
+        AiActionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Trace Id
+             * Format: uuid
+             */
+            trace_id: string;
+            /** Tool */
+            tool: string;
+            /** Risk */
+            risk: string;
+            /** Status */
+            status: string;
+            /** Prompt */
+            prompt: string | null;
+            /** Args */
+            args: {
+                [key: string]: unknown;
+            };
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            } | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AiCallIn */
+        AiCallIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Tool */
+            tool: string;
+            /** Args */
+            args?: {
+                [key: string]: unknown;
+            };
+        };
+        /** AiChatIn */
+        AiChatIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /** Text */
+            text: string;
+            /**
+             * Lang
+             * @default en
+             */
+            lang: string;
+        };
+        /** AiChatOut */
+        AiChatOut: {
+            /**
+             * Trace Id
+             * Format: uuid
+             */
+            trace_id: string;
+            /**
+             * Message
+             * @description A stable code when nothing ran: not_understood, party_not_found…
+             */
+            message: string | null;
+            /** Message Facts */
+            message_facts?: {
+                [key: string]: unknown;
+            };
+            /** Actions */
+            actions: components["schemas"]["AiActionOut"][];
+        };
+        /** AiDecideIn */
+        AiDecideIn: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+        };
+        /** AiToolOut */
+        AiToolOut: {
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Risk */
+            risk: string;
+            /** Input Schema */
+            input_schema: {
+                [key: string]: unknown;
+            };
+        };
         /** AllocationIn */
         AllocationIn: {
             type: components["schemas"]["AllocationType"];
@@ -2749,6 +2958,8 @@ export interface components {
             via_ai: boolean;
             /** On Behalf Of User Id */
             on_behalf_of_user_id: string | null;
+            /** Ai Trace Id */
+            ai_trace_id: string | null;
             /** Client */
             client: string | null;
             /** Request Id */
@@ -12354,6 +12565,193 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportBatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ai_tools: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiToolOut"][];
+                };
+            };
+        };
+    };
+    ai_chat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiChatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiChatOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_call: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiCallIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiActionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ai_actions: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiActionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_ai_action: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiDecideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiActionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_ai_action: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiDecideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiActionOut"];
                 };
             };
             /** @description Validation Error */

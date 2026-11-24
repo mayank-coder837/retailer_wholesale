@@ -9172,6 +9172,296 @@
         }
       }
     },
+    "/ai/tools": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "List Ai Tools",
+        "operationId": "list_ai_tools",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiToolOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Ai Tools"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ai/chat": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ai Chat",
+        "operationId": "ai_chat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ai/call": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ai Call",
+        "operationId": "ai_call",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiCallIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiActionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ai/actions": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "List Ai Actions",
+        "operationId": "list_ai_actions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiActionOut"
+                  },
+                  "title": "Response List Ai Actions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/actions/{action_id}/confirm": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Confirm Ai Action",
+        "operationId": "confirm_ai_action",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDecideIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiActionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/actions/{action_id}/reject": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Reject Ai Action",
+        "operationId": "reject_ai_action",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDecideIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiActionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/{doc_id}/cancel": {
       "post": {
         "tags": [
@@ -10216,6 +10506,239 @@
         ],
         "title": "AgeingRowOut"
       },
+      "AiActionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "trace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trace Id"
+          },
+          "tool": {
+            "type": "string",
+            "title": "Tool"
+          },
+          "risk": {
+            "type": "string",
+            "title": "Risk"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "args": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Args"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "trace_id",
+          "tool",
+          "risk",
+          "status",
+          "prompt",
+          "args",
+          "result",
+          "error_code",
+          "decided_at",
+          "created_at"
+        ],
+        "title": "AiActionOut"
+      },
+      "AiCallIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "tool": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Tool"
+          },
+          "args": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Args"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "tool"
+        ],
+        "title": "AiCallIn"
+      },
+      "AiChatIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "lang": {
+            "type": "string",
+            "pattern": "^(en|ar)$",
+            "title": "Lang",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "text"
+        ],
+        "title": "AiChatIn"
+      },
+      "AiChatOut": {
+        "properties": {
+          "trace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trace Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "A stable code when nothing ran: not_understood, party_not_found…"
+          },
+          "message_facts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Message Facts"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/AiActionOut"
+            },
+            "type": "array",
+            "title": "Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trace_id",
+          "message",
+          "actions"
+        ],
+        "title": "AiChatOut"
+      },
+      "AiDecideIn": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id"
+        ],
+        "title": "AiDecideIn"
+      },
+      "AiToolOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "risk": {
+            "type": "string",
+            "title": "Risk"
+          },
+          "input_schema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input Schema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "risk",
+          "input_schema"
+        ],
+        "title": "AiToolOut"
+      },
       "AllocationIn": {
         "properties": {
           "type": {
@@ -10755,6 +11278,18 @@
             ],
             "title": "On Behalf Of User Id"
           },
+          "ai_trace_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Trace Id"
+          },
           "client": {
             "anyOf": [
               {
@@ -10833,6 +11368,7 @@
           "actor_user_id",
           "via_ai",
           "on_behalf_of_user_id",
+          "ai_trace_id",
           "client",
           "request_id",
           "action",

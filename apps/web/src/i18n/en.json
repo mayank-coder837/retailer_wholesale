@@ -99,7 +99,8 @@
     "catalog": "Catalog",
     "pricing": "Pricing",
     "parties": "Customers & suppliers",
-    "import": "Import data"
+    "import": "Import data",
+    "assistant": "Assistant"
   },
   "shell": {
     "business": "Business",
@@ -1759,6 +1760,94 @@
       "fileTotals": "Your file: total debit / total credit",
       "booksTotals": "The books: total debit / total credit",
       "whatToDo": "A difference on receivables, payables or inventory means a bill or a stock line is missing or differs from your file; a difference on another account means the trial balance row was not imported as given. Fix it with Undo and a corrected file, or find the entry in the Day book."
+    }
+  },
+  "assistant": {
+    "title": "Assistant",
+    "hint": "Type what happened, in your own words. The assistant prepares it for you and waits for your yes before anything is final.",
+    "ask": "What would you like to do?",
+    "placeholder": "Received 5,000 cash from Ali Traders against INV-1093",
+    "send": "Ask",
+    "working": "Working…",
+    "answer": "Answer",
+    "waiting": "Waiting for you",
+    "nothingWaiting": "Nothing is waiting for your decision.",
+    "recent": "Recent activity",
+    "noHistory": "Nothing yet.",
+    "confirm": "Confirm",
+    "reject": "Reject",
+    "openDraft": "Open the document",
+    "examples": {
+      "receipt": "Received 5,000 cash from Ali Traders against INV-1093",
+      "payment": "Paid 3,000 to Mill Textiles against BILL-12",
+      "owed": "Who owes me?",
+      "owe": "Who do I owe?"
+    },
+    "tools": {
+      "find_party": "Look up a customer or supplier",
+      "get_open_bills": "Unpaid invoices",
+      "get_receivables_ageing": "What customers owe",
+      "get_payables_ageing": "What is owed to suppliers",
+      "list_industry_packs": "Ready-made setups",
+      "create_draft_receipt": "Draft receipt",
+      "create_draft_payment": "Draft payment",
+      "post_voucher": "Post to the books",
+      "cancel_document": "Cancel a document",
+      "apply_industry_pack": "Apply a setup"
+    },
+    "status": {
+      "done": "Done",
+      "pending": "Waiting for you",
+      "confirmed": "Confirmed",
+      "rejected": "Rejected",
+      "denied": "Not allowed",
+      "failed": "Could not do it"
+    },
+    "risk": {
+      "read": "Looks something up",
+      "draft": "Prepares a draft",
+      "commit": "Changes the books"
+    },
+    "messages": {
+      "not_understood": "I did not understand that. Try one of the examples below the box.",
+      "party_not_found": "I could not find “{{name}}”. Check the spelling, or add them first.",
+      "party_ambiguous": "More than one match for “{{name}}”. Type the full name:",
+      "assistant_not_configured": "The smart assistant is not set up yet. Short sentences like the examples still work."
+    },
+    "summary": {
+      "draft": "{{party}}: {{amount}}",
+      "settles": "Settles {{bill}} for {{amount}}.",
+      "onAccount": "The rest, {{amount}}, stays on account.",
+      "allOnAccount": "All of it stays on account.",
+      "stillDraft": "This is only a draft. Open it, check it and post it.",
+      "willPost": "Will post this draft to the books when you confirm.",
+      "posted": "Posted as {{number}}.",
+      "willCancel": "Will cancel this document when you confirm.",
+      "cancelled": "Cancelled.",
+      "pack": "Will apply the setup “{{code}}”.",
+      "noParties": "No one matches.",
+      "noBills": "No unpaid invoices.",
+      "nobodyOwes": "Nothing is outstanding.",
+      "total": "Total"
+    },
+    "codes": {
+      "generic": "Something went wrong.",
+      "permission_denied": "You do not have permission to do this.",
+      "ai_invalid_arguments": "The request was incomplete.",
+      "bill_not_found": "That invoice or bill is not open for this customer or supplier.",
+      "wrong_party_kind": "This is not that kind of party.",
+      "no_money_account": "There is no cash or bank account to use.",
+      "no_branch": "The business has no branch.",
+      "voucher_not_found": "That document was not found.",
+      "voucher_not_draft": "Only a draft can be posted.",
+      "not_found": "That was not found."
+    },
+    "errors": {
+      "generic": "Something went wrong. Nothing was changed.",
+      "permission_denied": "You do not have permission to use the assistant.",
+      "ai_not_your_action": "Only the person who asked can decide this.",
+      "ai_action_not_pending": "This was already decided.",
+      "ai_action_not_found": "This action no longer exists."
     }
   }
 }

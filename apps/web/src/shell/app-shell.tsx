@@ -23,6 +23,7 @@ const NAV = [
   { to: "/inventory", key: "inventory" },
   { to: "/accounts", key: "accounts" },
   { to: "/reports", key: "reports" },
+  { to: "/assistant", key: "assistant" },
 ] as const;
 
 const SETTINGS = [
