@@ -171,9 +171,8 @@ async def test_per_month_checksums_agree_once_synced_and_name_the_month_that_doe
         return here, there
 
     here, there = await both()
-    assert (
-        here["journal"] and service.differing_periods(here, there) == [f"journal:{min(here['journal'])}"]
-    ) or (service.differing_periods(here, there))
+    assert here["journal"]
+    assert service.differing_periods(here, there) != []  # the branch is ahead: the month shows
     await pusher(cloud_http, app_sessionmaker, tenant, node, "tr5@shop.ae").cycle()
     here, there = await both()
     assert service.differing_periods(here, there) == []
