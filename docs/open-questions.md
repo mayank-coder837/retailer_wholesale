@@ -84,5 +84,5 @@ Labelled L1, L2, … so they never collide with round 1's F1–F7.
 | --- | --- | --- |
 | T1 | Install missing tools | Yes, before M0.1 — [T1](decisions-round-1.md#technical-setup-t1t4) |
 | T2 | Jobs | Celery in the cloud; in-process worker on branch PCs (ADR 0012) — [T2](decisions-round-1.md#technical-setup-t1t4) |
-| T3 | LLM provider | Decide before M1.13 — [T3](decisions-round-1.md#technical-setup-t1t4) |
+| T3 | LLM provider | **Still to decide.** M1.13 is built behind a `Planner` interface with a rule-based planner (en/ar); the model planner answers "not configured" until a provider and key are chosen — [T3](decisions-round-1.md#technical-setup-t1t4), [M1.13](milestones/m1.13-ai-tools.md) |
 | T4 | Keep kickoff prompt | No — [T4](decisions-round-1.md#technical-setup-t1t4) |
