@@ -1,8 +1,7 @@
 """The trace of what the assistant did (M1.13): one row per tool call, from the request to the confirmation.
 
-Everything the tools write is audited ``via_ai`` through the normal audit log; this table adds the words the person
-typed, the arguments, the result, and for a commit-tier tool who confirmed it.
-"""
+Everything the tools write is audited ``via_ai`` through the normal audit log; this table adds the words the
+person typed, the arguments, the result, and for a commit-tier tool who confirmed it."""
 
 import uuid
 from datetime import datetime

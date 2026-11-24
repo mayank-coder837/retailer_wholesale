@@ -19,6 +19,7 @@ from app.core.jobs import Worker
 from app.core.request_id import RequestIdMiddleware
 from app.core.storage import LocalStorage
 from app.modules.accounting import router as accounting_router
+from app.modules.ai import router as ai_router
 from app.modules.catalog import router as catalog_router
 from app.modules.documents import router as documents_router
 from app.modules.identity import roles_router
@@ -102,6 +103,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(tax_router.router)
     app.include_router(reporting_router.router)
     app.include_router(imports_router.router)
+    app.include_router(ai_router.router)
     app.include_router(documents_router.router)
     app.include_router(pairing.router)
     app.include_router(backup.router)

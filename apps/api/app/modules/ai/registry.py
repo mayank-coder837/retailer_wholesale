@@ -1,9 +1,8 @@
 """The tool registry (M1.13): what the assistant is allowed to call, and how risky each call is.
 
-A tool is one typed function over an existing service. It has a risk tier, the permission it needs (fixed, or worked
-out from its input) and a Pydantic input model, which is also the JSON schema a language model is given. The
-assistant never passes a business, tenant or user: those come from the signed-in request.
-"""
+A tool is one typed function over an existing service. It has a risk tier, the permission it needs (fixed,
+or worked out from its input) and a Pydantic input model, which is also the JSON schema a language model is
+given. The assistant never passes a business, tenant or user: those come from the signed-in request."""
 
 import uuid
 from collections.abc import Awaitable, Callable
@@ -21,6 +20,15 @@ class Risk(StrEnum):
     READ = "read"  # looks something up: runs at once
     DRAFT = "draft"  # prepares something a person must still post: runs at once
     COMMIT = "commit"  # changes the books for good: only runs when the person confirms
+
+
+class ToolError(Exception):
+    """A tool refuses in words a person can act on; nothing was written. ``code`` is stable."""
+
+    def __init__(self, code: str, **facts: Any) -> None:
+        super().__init__(code)
+        self.code = code
+        self.facts = facts
 
 
 @dataclass(frozen=True)
