@@ -4,7 +4,8 @@
 
 It makes one throwaway demo tenant on the local test database, sends it to the cloud, runs the branch's real
 pusher against the cloud's API (in process, on the cloud database), makes a change "in the browser" and checks
-that both sides end with the same books and checksums. It never truncates anything on the cloud: the demo tenant
+that both sides end with the same books and checksums. It never truncates anything on the cloud: the demo
+tenant
 has a unique e-mail and stays there as test data (posted rows are permanent by design).
 """
 
