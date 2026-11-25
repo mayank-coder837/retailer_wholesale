@@ -93,6 +93,7 @@ class CloudSync:
                     e["op"],
                     e["payload"],
                     e.get("changed"),
+                    e.get("edited_at"),
                 )
                 for e in body["entries"]
             ]
@@ -130,6 +131,7 @@ class CloudSync:
                         "op": e.op,
                         "payload": e.payload,
                         "changed": e.changed,
+                        "edited_at": e.edited_at,
                     }
                     for e in batch
                 ],

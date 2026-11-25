@@ -4,13 +4,17 @@ from typing import Any
 
 from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy import text as sql
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.db import apply_context
 from app.modules.ai.planner import LlmPlanner
 from app.modules.ai.registry import REGISTRY, Risk
 from tests.api_helpers import bearer
 from tests.test_accounting_api import Books, books
 from tests.test_pricing_api import ok
 from tests.test_roles_api import add_member, login
+from tests.test_sync_engine import identity
 
 
 async def chat(b: Books, text: str, lang: str = "en", headers: dict[str, str] | None = None) -> Any:
@@ -425,3 +429,21 @@ async def test_a_document_of_another_business_is_not_reachable_through_this_one(
     asked = await ok(await client.post("/ai/call", json=cancel, headers=other))
     assert asked["status"] == "failed"
     assert (await voucher(b, document_id))["status"] == "draft"
+
+
+async def test_a_draft_changed_after_it_was_proposed_is_not_posted_on_the_old_confirmation(
+    client: AsyncClient, app_sessionmaker: async_sessionmaker[AsyncSession]
+) -> None:
+    b = await books(client, "stale@shop.ae")
+    draft = await draft_receipt(b)
+    document_id = draft["result"]["document_id"]
+    pending = await call(b, "post_voucher", {"document_id": document_id})
+    tenant, _node = await identity(b)
+    async with app_sessionmaker() as s, s.begin():  # someone edits the draft after it was shown
+        await apply_context(s, tenant_id=tenant)
+        await s.execute(sql("UPDATE document SET narration = 'changed' WHERE id = :d"), {"d": document_id})
+    done = await decide(b, pending, "confirm")
+    assert (done["status"], done["error_code"]) == ("failed", "draft_changed_since_proposed")
+    assert (await voucher(b, document_id))["status"] == "draft"
+    fresh = await call(b, "post_voucher", {"document_id": document_id})  # asking again shows the new draft
+    assert (await decide(b, fresh, "confirm"))["status"] == "confirmed"

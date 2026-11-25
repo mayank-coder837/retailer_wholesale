@@ -178,3 +178,89 @@ async def test_a_merged_row_keeps_amounts_exact(
     sql = "SELECT credit_limit::text || '/' || credit_days FROM customer_profile WHERE party_id = :p"
     assert await one(cloud, tenant, sql, p=party) == "2500.5678/45"
     assert await one(app_sessionmaker, tenant, sql, p=party) == "2500.5678/45"
+
+
+async def test_the_time_of_an_edit_travels_with_it(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    sync, tenant, node, cloud_node, party = await apart(
+        client, app_sessionmaker, cloud, cloud_http, "mc6@shop.ae"
+    )
+    # An edit of one field made earlier, a later edit of another field on the cloud: the relayed first edit
+    # must still be timed as the edit it is, not by the row's later change.
+    await run(app_sessionmaker, tenant, node, "UPDATE party SET phone = '0506666666' WHERE id = :p", p=party)
+    await run(cloud, tenant, cloud_node, "UPDATE party SET email = 'a@b.ae' WHERE id = :p", p=party)
+    await both_cycles(sync)
+    sql = (
+        "SELECT edited_at::text FROM sync_outbox "
+        "WHERE table_name = 'party' AND row_id = :p AND op = 'update' "
+        "AND jsonb_exists(changed, 'phone') ORDER BY id DESC LIMIT 1"
+    )
+    assert await one(app_sessionmaker, tenant, sql, p=party) == await one(cloud, tenant, sql, p=party)
+
+
+async def test_a_pushed_entry_is_the_senders_whatever_node_it_names(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    sync, tenant, node, cloud_node, party = await apart(
+        client, app_sessionmaker, cloud, cloud_http, "mc7@shop.ae"
+    )
+    await run(cloud, tenant, cloud_node, "UPDATE party SET sales_tax_code = 'ZR' WHERE id = :p", p=party)
+    # A branch passing its edit off as head office's: the cloud must record and weigh it as the branch's.
+    await run(app_sessionmaker, tenant, node, "UPDATE party SET sales_tax_code = 'EX' WHERE id = :p", p=party)
+    await run(
+        app_sessionmaker,
+        tenant,
+        node,
+        "UPDATE sync_outbox SET node_id = :c WHERE row_id = :p",
+        c=cloud_node,
+        p=party,
+    )
+    await both_cycles(sync)
+    assert await one(cloud, tenant, "SELECT sales_tax_code FROM party WHERE id = :p", p=party) == "ZR"
+    claimed = (
+        "SELECT count(*) FROM sync_outbox "
+        "WHERE row_id = :p AND node_id = :c AND payload ->> 'sales_tax_code' = 'EX'"
+    )
+    assert await one(cloud, tenant, claimed, p=party, c=cloud_node) == 0
+
+
+async def test_putting_a_value_back_is_refused_if_the_field_changed_again(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    sync, tenant, node, cloud_node, party = await apart(
+        client, app_sessionmaker, cloud, cloud_http, "mc8@shop.ae"
+    )
+    await run(cloud, tenant, cloud_node, "UPDATE party SET phone = '0507777777' WHERE id = :p", p=party)
+    await run(app_sessionmaker, tenant, node, "UPDATE party SET phone = '0508888888' WHERE id = :p", p=party)
+    await both_cycles(sync)
+    await run(
+        cloud, tenant, cloud_node, "UPDATE party SET phone = '0509999999' WHERE id = :p", p=party
+    )  # again
+    token = (
+        await ok(await cloud_http.post("/auth/login", json={"email": "mc8@shop.ae", "password": PASSWORD}))
+    )["access_token"]
+    h = {"Authorization": f"Bearer {token}"}
+    conflict = (await ok(await cloud_http.get("/sync/conflicts", headers=h)))[0]
+    refused = await cloud_http.post(f"/sync/conflicts/{conflict['id']}/restore", headers=h)
+    assert refused.status_code == 409
+    assert refused.json()["code"] == "sync_conflict_stale"
+    assert await one(cloud, tenant, "SELECT phone FROM party WHERE id = :p", p=party) == "0509999999"
+
+
+async def test_only_master_data_is_merged_field_by_field(
+    client: AsyncClient, app_sessionmaker: Sessions, cloud: Sessions, cloud_http: AsyncClient
+) -> None:
+    sync, tenant, node, _cloud_node, _party = await apart(
+        client, app_sessionmaker, cloud, cloud_http, "mc9@shop.ae"
+    )
+    # A role is not master data in this sense: its update is taken whole and never logged as a clash.
+    await run(
+        app_sessionmaker,
+        tenant,
+        node,
+        "UPDATE role SET name_en = 'Edited here' WHERE system_key = 'accountant'",
+    )
+    await both_cycles(sync)
+    assert await one(cloud, tenant, "SELECT count(*) FROM sync_conflict WHERE table_name = 'role'") == 0
+    assert await one(cloud, tenant, "SELECT count(*) FROM role WHERE name_en = 'Edited here'") > 0

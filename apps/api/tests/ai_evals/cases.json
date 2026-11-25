@@ -7,6 +7,8 @@
    "expect": {"tool": "create_draft_receipt", "party_name": "Gulf Fabrics LLC", "party_kind": "customer", "args": {"amount": "1250.50", "through": "cash"}}},
   {"text": "We received AED 800 from Noor Stores for invoice INV-22", "lang": "en",
    "expect": {"tool": "create_draft_receipt", "party_name": "Noor Stores", "party_kind": "customer", "args": {"amount": "800", "through": "cash", "bill_reference": "INV-22"}}},
+  {"text": "received 500 from Al Noor for cleaning", "lang": "en",
+   "expect": {"tool": "create_draft_receipt", "party_name": "Al Noor for cleaning", "party_kind": "customer", "args": {"amount": "500", "through": "cash"}}},
   {"text": "I got 300 cash from Salem", "lang": "en",
    "expect": {"tool": "create_draft_receipt", "party_name": "Salem", "party_kind": "customer", "args": {"amount": "300", "through": "cash"}}},
   {"text": "Collected 2000 bank from Delta Trading against INV-7.", "lang": "en",

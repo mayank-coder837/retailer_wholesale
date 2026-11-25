@@ -21,12 +21,14 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from http import HTTPStatus
+from typing import Any, cast
 
-from sqlalchemy import select, text
+from sqlalchemy import CursorResult, select, text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models_registry  # noqa: F401  (every model, so the table list is complete)
+from app.core import audit
 from app.core.db import apply_context
 from app.core.errors import ConflictError, DomainError
 from app.core.models import Base
@@ -48,8 +50,40 @@ CONTROL_FIELDS: dict[str, tuple[str, ...]] = {
     "party": ("sales_tax_code", "purchase_tax_code"),  # tax code overrides
     "business": ("costing_method", "negative_stock_allowed"),
 }
-# Updates taken whole, not field by field: never edited at two places (an account is insert-only in sync).
-NO_MERGE = frozenset({"user_account", "tenant"})
+# Master data (ADR 0011) is merged field by field. Everything else (documents and their status, stock
+# balances, counters, memberships...) is owned by one place or derived, so its updates are taken whole.
+MERGE_TABLES = frozenset(
+    {
+        "party",
+        "party_address",
+        "party_contact",
+        "customer_group",
+        "customer_profile",
+        "supplier_profile",
+        "product",
+        "variant",
+        "barcode",
+        "category",
+        "brand",
+        "attribute",
+        "attribute_value",
+        "custom_field_def",
+        "unit_family",
+        "unit",
+        "product_unit",
+        "product_attribute",
+        "variant_attribute_value",
+        "price_list",
+        "price_list_item",
+        "promotion",
+        "account",
+        "account_role",
+        "business",
+        "branch",
+        "warehouse",
+        "setting",
+    }
+)
 
 
 class SyncRejectedError(ConflictError):
@@ -77,6 +111,7 @@ class Entry:
     op: str  # insert | update | delete
     payload: str  # the row as JSON text (never parsed in Python: numbers stay exact)
     changed: str | None = None  # an update: the changed fields' values before the edit, as JSON text
+    edited_at: str | None = None  # when the edit really happened (the per-field clock), as a timestamp
 
 
 def syncable_tables() -> dict[str, list[str]]:
@@ -119,7 +154,7 @@ async def _save(session: AsyncSession, tenant_id: uuid.UUID, node_id: uuid.UUID,
 
 
 def _entries(
-    rows: Sequence[tuple[int, uuid.UUID | None, str, uuid.UUID, str, str, str | None]],
+    rows: Sequence[tuple[int, uuid.UUID | None, str, uuid.UUID, str, str, str | None, str | None]],
 ) -> list[Entry]:
     return [Entry(*r) for r in rows]
 
@@ -137,8 +172,8 @@ async def pending(
         text(
             f"WITH todo AS (SELECT id, txid FROM sync_outbox WHERE {own} "  # noqa: S608 - `own` is a fixed fragment
             "AND txid < txid_snapshot_xmin(txid_current_snapshot()) ORDER BY id LIMIT :limit) "
-            "SELECT id, node_id, table_name, row_id, op, payload::text, changed::text FROM sync_outbox "
-            f"WHERE {own} AND txid <= (SELECT max(txid) FROM todo) "
+            "SELECT id, node_id, table_name, row_id, op, payload::text, changed::text, edited_at::text "
+            f"FROM sync_outbox WHERE {own} AND txid <= (SELECT max(txid) FROM todo) "
             "AND txid < txid_snapshot_xmin(txid_current_snapshot()) ORDER BY id"
         ),
         {
@@ -166,8 +201,9 @@ async def pull(
         tuple(r)
         for r in await session.execute(
             text(
-                "SELECT id, node_id, table_name, row_id, op, payload::text, changed::text FROM sync_outbox "
-                "WHERE tenant_id = :t AND id > :after AND table_name <> ALL(:local) ORDER BY id LIMIT :limit"
+                "SELECT id, node_id, table_name, row_id, op, payload::text, changed::text, edited_at::text "
+                "FROM sync_outbox WHERE tenant_id = :t AND id > :after AND table_name <> ALL(:local) "
+                "ORDER BY id LIMIT :limit"
             ),
             {"t": tenant_id, "after": after, "local": sorted(LOCAL_ONLY), "limit": limit},
         )
@@ -223,13 +259,13 @@ async def _apply_entry(
     if entry.op == "delete":
         delete = f'DELETE FROM "{entry.table}" WHERE id = :id'  # noqa: S608 - a name checked against the models
         await session.execute(text(delete), {"id": entry.row_id})
-    elif entry.op == "update" and entry.changed is not None and entry.table not in NO_MERGE:
+    elif entry.op == "update" and entry.changed is not None and entry.table in MERGE_TABLES:
         # Master data (ADR 0011): field by field, so two people changing different fields both keep their
         # edit, and a clash on the same field is decided and logged. All in SQL: amounts stay exact.
         await session.execute(
             text(
                 "SELECT sync_merge_update(:t, :table, :row, CAST(:new AS jsonb), CAST(:old AS jsonb), :o, "
-                "CAST(:c AS jsonb))"
+                "CAST(:c AS jsonb), CAST(CAST(:at AS text) AS timestamptz))"
             ),
             {
                 "t": tenant_id,
@@ -237,6 +273,7 @@ async def _apply_entry(
                 "row": entry.row_id,
                 "new": entry.payload,
                 "old": entry.changed,
+                "at": entry.edited_at,
                 "o": origin,
                 "c": json.dumps(list(CONTROL_FIELDS.get(entry.table, ()))),
             },
@@ -273,11 +310,15 @@ async def apply(
         raise OutOfOrderError()
     try:
         async with session.begin_nested():
+            # Rows that arrive by sync keep the time of their edit (see touch_row); only while applying.
+            await session.execute(text("SELECT set_config('app.sync_apply', 'on', true)"))
             for entry in fresh:
-                origin = entry.node_id or (sender if track else fallback_origin)
+                # A pushed entry is the sender's, whatever node it names: a branch must not pass its edits
+                # off as head office's (or another branch's). Pulled entries keep their own origin.
+                origin = sender if track else (entry.node_id or fallback_origin)
                 await apply_context(session, tenant_id=tenant_id, node_id=origin)
-                await session.execute(text("SELECT set_config('app.sync_apply', 'on', true)"))
                 await _apply_entry(session, tables, entry, tenant_id, origin)
+            await session.execute(text("SELECT set_config('app.sync_apply', '', true)"))
             await session.flush()
             await session.execute(text("SET CONSTRAINTS ALL IMMEDIATE"))  # the balance check, now
             await session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
@@ -330,6 +371,11 @@ class ConflictNotFoundError(DomainError):
     title = "No such conflict"
 
 
+class ConflictStaleError(ConflictError):
+    code = "sync_conflict_stale"
+    title = "The record has changed since this conflict, so the old value was not put back"
+
+
 class ConflictResolvedError(ConflictError):
     code = "sync_conflict_resolved"
     title = "This conflict was already put right"
@@ -360,10 +406,32 @@ async def restore_conflict(
     update = (
         f'UPDATE "{conflict.table_name}" t SET "{conflict.field}" = r."{conflict.field}" '  # noqa: S608
         f'FROM jsonb_populate_record(NULL::"{conflict.table_name}", jsonb_build_object(CAST(:f AS text), '
-        "CAST(:v AS jsonb))) r WHERE t.id = :id"
+        "CAST(:v AS jsonb))) r WHERE t.id = :id "
+        "AND to_jsonb(t) -> CAST(:f AS text) IS NOT DISTINCT FROM CAST(:kept AS jsonb)"
     )
-    await session.execute(
-        text(update), {"f": conflict.field, "v": json.dumps(conflict.lost_value), "id": conflict.row_id}
+    done = await session.execute(
+        text(update),
+        {
+            "f": conflict.field,
+            "v": json.dumps(conflict.lost_value),
+            "kept": json.dumps(conflict.kept_value),
+            "id": conflict.row_id,
+        },
+    )
+    if (
+        cast(CursorResult[Any], done).rowcount != 1
+    ):  # the record is gone, or the field was changed again since: do not overwrite that
+        raise ConflictStaleError(table=conflict.table_name, field=conflict.field)
+    await audit.record(
+        session,
+        conflict,
+        "update",
+        reason="losing value put back",
+        changes={
+            "table": conflict.table_name,
+            "row_id": str(conflict.row_id),
+            conflict.field: [conflict.kept_value, conflict.lost_value],
+        },
     )
     conflict.resolved_at = datetime.now(UTC)
     conflict.resolved_by = user_id

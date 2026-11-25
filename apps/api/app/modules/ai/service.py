@@ -139,8 +139,9 @@ async def _gate(
         needed = await tool.needed(ctx, args)
     except DomainError as error:
         return args, stored, (ActionStatus.FAILED, error.code, dict(error.extra))
-    if not ctx.perms.allows(needed, ctx.business_id):
-        return args, stored, (ActionStatus.DENIED, "permission_denied", {"permission": needed})
+    code, branch_id = needed
+    if not ctx.perms.allows(code, ctx.business_id, branch_id):
+        return args, stored, (ActionStatus.DENIED, "permission_denied", {"permission": code})
     return args, stored, None
 
 
@@ -188,7 +189,7 @@ async def confirm(ctx: ToolContext, action_id: uuid.UUID) -> AiAction:
     if row.status != ActionStatus.PENDING:
         raise ActionNotPendingError(current=row.status)
     tool = REGISTRY[row.tool]
-    ctx = replace(ctx, trace_id=row.trace_id)
+    ctx = replace(ctx, trace_id=row.trace_id, proposed_at=row.created_at)
     args, _stored, refusal = await _gate(ctx, tool, row.args)
     if refusal is not None:
         why, reason, facts = refusal

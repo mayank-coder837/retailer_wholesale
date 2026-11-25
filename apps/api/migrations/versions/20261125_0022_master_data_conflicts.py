@@ -238,7 +238,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP FUNCTION sync_merge_update(uuid, text, uuid, jsonb, jsonb, uuid, jsonb)")
+    op.execute("DROP FUNCTION IF EXISTS sync_merge_update(uuid, text, uuid, jsonb, jsonb, uuid, jsonb)")
     op.drop_index("ix_sync_conflict_open", table_name="sync_conflict")
     op.drop_index(op.f("ix_sync_conflict_tenant_id"), table_name="sync_conflict")
     op.drop_table("sync_conflict")

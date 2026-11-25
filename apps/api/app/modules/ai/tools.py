@@ -277,10 +277,10 @@ def _in_this_business(ctx: ToolContext, business_id: uuid.UUID) -> None:
         raise vouchers.VoucherNotFoundError()
 
 
-async def _post_permission(ctx: ToolContext, args: Any) -> str:
+async def _post_permission(ctx: ToolContext, args: Any) -> tuple[str, uuid.UUID | None]:
     doc = await vouchers.get_document(ctx.session, args.document_id)
     _in_this_business(ctx, doc.business_id)
-    return f"{doc.doc_type}.post"
+    return f"{doc.doc_type}.post", doc.branch_id
 
 
 @tool(
@@ -291,7 +291,12 @@ async def _post_permission(ctx: ToolContext, args: Any) -> str:
     input=PostVoucherIn,
 )
 async def post_voucher(ctx: ToolContext, args: PostVoucherIn) -> dict[str, Any]:
-    _in_this_business(ctx, (await vouchers.get_document(ctx.session, args.document_id)).business_id)
+    draft = await vouchers.get_document(ctx.session, args.document_id)
+    _in_this_business(ctx, draft.business_id)
+    if ctx.proposed_at is not None and draft.updated_at > ctx.proposed_at:
+        # Someone changed the draft after the person was shown it: what they would confirm is not
+        # what they saw. Ask again.
+        raise ToolError("draft_changed_since_proposed")
     doc = await vouchers.post(
         ctx.session,
         args.document_id,
@@ -308,10 +313,10 @@ class CancelIn(BaseModel):
     reason: str = Field(min_length=1, max_length=500)
 
 
-async def _cancel_permission(ctx: ToolContext, args: Any) -> str:
+async def _cancel_permission(ctx: ToolContext, args: Any) -> tuple[str, uuid.UUID | None]:
     doc = await documents.get_document(ctx.session, args.document_id)
     _in_this_business(ctx, doc.business_id)
-    return f"{doc.doc_type}.cancel"
+    return f"{doc.doc_type}.cancel", doc.branch_id
 
 
 @tool(

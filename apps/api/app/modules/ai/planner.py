@@ -50,8 +50,15 @@ class LlmPlanner:
 _AMOUNT = r"(?P<amount>\d[\d,]*(?:\.\d+)?)"
 _CURRENCY = r"(?:aed|dhs?|dirhams?|دره?م|درهم|د\.إ)?"
 _REF_WORD = r"(?:(?:invoice|bill|فاتورة|الفاتورة|رقم)\s+)?"
-_AGAINST = r"(?:against|for|towards|on|مقابل|عن|لـ|ل|بخصوص)"
-_REF = rf"(?:\s+{_AGAINST}\s+{_REF_WORD}(?P<ref>[A-Za-z0-9][A-Za-z0-9\-/_.]*))?"
+_AGAINST = r"(?:against|towards|مقابل|بخصوص)"
+# "for", "on" and "ل" are also ordinary words ("for cleaning", "on Sunday"): they point at an invoice only
+# when an invoice word comes next ("for invoice INV-22") or the token looks like a number (has a digit).
+_AGAINST_LOOSE = r"(?:for|on|عن|لـ|ل)"
+_REF_WORD_NEEDED = r"(?:invoice|bill|فاتورة|الفاتورة|رقم)\s+"
+_REF = (
+    rf"(?:\s+(?:{_AGAINST}\s+{_REF_WORD}|{_AGAINST_LOOSE}\s+(?:{_REF_WORD_NEEDED}|(?=\S*\d)))"
+    r"(?P<ref>[A-Za-z0-9][A-Za-z0-9\-/_.]*))?"
+)
 _THROUGH_WORDS = {
     "bank": "bank",
     "transfer": "bank",

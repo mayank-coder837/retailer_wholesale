@@ -7,6 +7,7 @@ given. The assistant never passes a business, tenant or user: those come from th
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
@@ -40,10 +41,13 @@ class ToolContext:
     node_id: uuid.UUID | None
     perms: PermissionSet
     trace_id: uuid.UUID
+    proposed_at: datetime | None = None  # a confirmation: when the person was shown this action
 
 
 Run = Callable[[ToolContext, Any], Awaitable[dict[str, Any]]]
-Permission = str | Callable[[ToolContext, Any], Awaitable[str]]
+# The permission code, or (code, branch) when the call is about a document of one branch.
+Needed = str | tuple[str, uuid.UUID | None]
+Permission = str | Callable[[ToolContext, Any], Awaitable[Needed]]
 
 
 @dataclass(frozen=True)
@@ -55,9 +59,11 @@ class Tool:
     input: type[BaseModel]
     run: Run
 
-    async def needed(self, ctx: ToolContext, args: BaseModel) -> str:
-        """The permission this call needs (some depend on what the call is about)."""
-        return self.permission if isinstance(self.permission, str) else await self.permission(ctx, args)
+    async def needed(self, ctx: ToolContext, args: BaseModel) -> tuple[str, uuid.UUID | None]:
+        """The permission this call needs (some depend on what the call is about) and the branch it
+        is about, if any: the same check the screens make."""
+        found = self.permission if isinstance(self.permission, str) else await self.permission(ctx, args)
+        return (found, None) if isinstance(found, str) else found
 
 
 REGISTRY: dict[str, Tool] = {}

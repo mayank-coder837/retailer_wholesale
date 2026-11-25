@@ -40,6 +40,7 @@ class EntryIO(BaseModel):
     changed: str | None = Field(
         default=None, description="An update: the changed fields as they were before the edit (JSON text)"
     )
+    edited_at: str | None = Field(default=None, description="When the edit really happened")
 
 
 class PushIn(BaseModel):
@@ -57,7 +58,9 @@ class PullOut(BaseModel):
 
 
 def to_entries(items: list[EntryIO]) -> list[Entry]:
-    return [Entry(e.seq, e.node_id, e.table, e.row_id, e.op, e.payload, e.changed) for e in items]
+    return [
+        Entry(e.seq, e.node_id, e.table, e.row_id, e.op, e.payload, e.changed, e.edited_at) for e in items
+    ]
 
 
 def to_io(entries: list[Entry]) -> list[EntryIO]:
@@ -70,6 +73,7 @@ def to_io(entries: list[Entry]) -> list[EntryIO]:
             op=e.op,
             payload=e.payload,
             changed=e.changed,
+            edited_at=e.edited_at,
         )
         for e in entries
     ]
