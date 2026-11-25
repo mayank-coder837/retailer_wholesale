@@ -311,11 +311,14 @@ async def post_voucher(
 # --- bills, party ledger, trial balance --------------------------------------------------------------------
 
 
-async def _may_see_party(perms: PermissionSet, session: TenantSessionDep, party_id: uuid.UUID) -> None:
+async def _may_see_party(
+    perms: PermissionSet, session: TenantSessionDep, party_id: uuid.UUID, business_id: uuid.UUID
+) -> None:
+    """The party's books in *this* business: the grant must reach it (one in another business does not)."""
     party = await parties.get_party_row(session, party_id)
     if not (
-        (party.is_customer and perms.holds("customer.view"))
-        or (party.is_supplier and perms.holds("supplier.view"))
+        (party.is_customer and perms.can_see("customer.view", business_id))
+        or (party.is_supplier and perms.can_see("supplier.view", business_id))
     ):
         raise PermissionDeniedError(permission="customer.view")
 
@@ -329,7 +332,7 @@ async def list_bills(
     account_id: uuid.UUID | None = None,
     include_settled: bool = False,
 ) -> list[BillOut]:
-    await _may_see_party(perms, session, party_id)
+    await _may_see_party(perms, session, party_id, business_id)
     await tenancy.get_business(session, business_id)
     return await service.list_bills(
         session, business_id, party_id, account_id=account_id, include_settled=include_settled
@@ -345,7 +348,8 @@ async def party_ledger(
     date_from: Annotated[date | None, Query(alias="from")] = None,
     date_to: Annotated[date | None, Query(alias="to")] = None,
 ) -> PartyLedgerOut:
-    await _may_see_party(perms, session, party_id)
+    await _may_see_party(perms, session, party_id, business_id)
+    await tenancy.get_business(session, business_id)
     return await service.party_ledger(session, business_id, party_id, date_from, date_to)
 
 

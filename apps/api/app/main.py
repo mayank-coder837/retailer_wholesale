@@ -14,6 +14,7 @@ from app.core import backup, discovery, health, pairing
 from app.core.config import JobsBackend, Settings, get_settings
 from app.core.db import create_engine, create_sessionmaker
 from app.core.errors import register_error_handlers
+from app.core.hardening import HardeningMiddleware
 from app.core.idempotency import IdempotencyMiddleware
 from app.core.jobs import Worker
 from app.core.request_id import RequestIdMiddleware
@@ -81,7 +82,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.dependency_overrides[get_settings] = lambda: settings
-    # Last added runs first: request id → CORS → idempotency → routes.
+    # Last added runs first: hardening → request id → CORS → idempotency → routes.
     app.add_middleware(IdempotencyMiddleware, settings=settings)
     app.add_middleware(
         CORSMiddleware,
@@ -93,6 +94,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         expose_headers=["X-Request-ID", "Idempotent-Replayed"],
     )
     app.add_middleware(RequestIdMiddleware)
+    app.add_middleware(HardeningMiddleware, max_body_bytes=settings.max_upload_bytes)
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(identity_router.router)

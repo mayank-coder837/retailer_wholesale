@@ -11,9 +11,12 @@ from sqlalchemy import select
 
 from app.core.authz import PermissionSet
 from app.core.deps import PrincipalDep, SettingsDep, TenantSessionDep
+from app.core.numbering import PREFIXES
 from app.core.platform_models import AuditLog
 from app.core.storage import Storage
+from app.modules.documents import service as documents
 from app.modules.identity.authz import get_permissions, require
+from app.modules.pdc import service as pdc
 from app.modules.platform import attachments, packs
 from app.modules.platform import settings as settings_service
 from app.modules.tenancy import service as tenancy
@@ -72,6 +75,22 @@ async def list_audit(
 # --- Attachments ---
 
 
+async def _require_on_entity(
+    perms: PermissionSet, session: TenantSessionDep, entity_type: str, entity_id: uuid.UUID, action: str
+) -> None:
+    """A file is as private as the record it hangs on: a document or cheque is checked against its own
+    business and branch (the permission in another business is not enough); master data is tenant-wide."""
+    code = f"{entity_type}.{action}"
+    if entity_type in PREFIXES:
+        doc = await documents.get_document(session, entity_id)
+        perms.require(code, doc.business_id, doc.branch_id)
+    elif entity_type == "pdc":
+        cheque = await pdc.get_pdc(session, entity_id)
+        perms.require(code, cheque.business_id, cheque.branch_id)
+    else:
+        perms.require_held(code)
+
+
 @router.post(
     "/attachments",
     tags=["attachments"],
@@ -89,7 +108,7 @@ async def upload_attachment(
     file: Annotated[UploadFile, File()],
 ) -> attachments.AttachmentOut:
     attachments.check_entity_type(entity_type)
-    perms.require_held(f"{entity_type}.edit")
+    await _require_on_entity(perms, session, entity_type, entity_id, "edit")
     data = await file.read(settings.max_upload_bytes + 1)
     row = await attachments.upload(
         session,
@@ -110,7 +129,7 @@ async def list_attachments(
     perms: Perms, session: TenantSessionDep, entity_type: str, entity_id: uuid.UUID
 ) -> list[attachments.AttachmentOut]:
     attachments.check_entity_type(entity_type)
-    perms.require_held(f"{entity_type}.view")
+    await _require_on_entity(perms, session, entity_type, entity_id, "view")
     rows = await attachments.list_for(session, entity_type, entity_id)
     return [attachments.AttachmentOut.model_validate(r) for r in rows]
 
@@ -125,7 +144,7 @@ async def download_attachment(
     attachment_id: uuid.UUID, perms: Perms, session: TenantSessionDep, storage: StorageDep
 ) -> Response:
     row = await attachments.get(session, attachment_id)
-    perms.require_held(f"{row.entity_type}.view")
+    await _require_on_entity(perms, session, row.entity_type, row.entity_id, "view")
     data = await storage.get(row.storage_key)
     disposition = f"attachment; filename*=UTF-8''{quote(row.filename)}"
     return Response(content=data, media_type=row.content_type, headers={"Content-Disposition": disposition})
@@ -139,7 +158,7 @@ async def download_attachment(
 )
 async def delete_attachment(attachment_id: uuid.UUID, perms: Perms, session: TenantSessionDep) -> None:
     row = await attachments.get(session, attachment_id)
-    perms.require_held(f"{row.entity_type}.edit")
+    await _require_on_entity(perms, session, row.entity_type, row.entity_id, "edit")
     await attachments.remove(session, row)
 
 

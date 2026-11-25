@@ -135,6 +135,7 @@ async def stock_balances(
     variant_id: uuid.UUID | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> list[BalanceOut]:
+    perms.require_see("product.view", business_id)
     return await service.balances(session, business_id, warehouse_id=warehouse_id, variant_id=variant_id, q=q)
 
 
@@ -148,6 +149,7 @@ async def stock_item_ledger(
     date_from: Annotated[date | None, Query(alias="from")] = None,
     date_to: Annotated[date | None, Query(alias="to")] = None,
 ) -> ItemLedgerOut:
+    perms.require_see("product.view", business_id)
     return await service.item_ledger(
         session, business_id, variant_id, warehouse_id=warehouse_id, date_from=date_from, date_to=date_to
     )
@@ -177,4 +179,5 @@ async def stock_batches(
     variant_id: uuid.UUID,
     warehouse_id: uuid.UUID | None = None,
 ) -> list[BatchOut]:
+    perms.require_see("product.view", business_id)
     return await service.batches(session, business_id, variant_id, warehouse_id)
