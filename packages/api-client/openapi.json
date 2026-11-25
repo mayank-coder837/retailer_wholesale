@@ -9462,6 +9462,273 @@
         }
       }
     },
+    "/sync/push": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Push",
+        "operationId": "sync_push",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/sync/pull": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Pull",
+        "operationId": "sync_pull",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "After"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PullOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sync/checksum": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Checksum",
+        "operationId": "sync_checksum",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecksumOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sync/conflicts": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "List Conflicts",
+        "description": "Master-data clashes (ADR 0011): two places changed the same field; the other value is kept here.",
+        "operationId": "list_sync_conflicts",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "open_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Open Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConflictOut"
+                  },
+                  "title": "Response List Sync Conflicts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sync/conflicts/{conflict_id}/restore": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Restore Conflict",
+        "description": "Puts the value that lost back, as a new edit by this person (it then wins everywhere).",
+        "operationId": "restore_sync_conflict",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conflict_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conflict Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/documents/{doc_id}/cancel": {
       "post": {
         "tags": [
@@ -12585,6 +12852,38 @@
         ],
         "title": "ChallengeOut"
       },
+      "ChecksumOut": {
+        "properties": {
+          "journal": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Journal",
+            "description": "Month -> [lines, total debit, total credit]"
+          },
+          "stock": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Stock",
+            "description": "Month -> [moves, total quantity, total value]"
+          }
+        },
+        "type": "object",
+        "required": [
+          "journal",
+          "stock"
+        ],
+        "title": "ChecksumOut"
+      },
       "ClearIn": {
         "properties": {
           "date": {
@@ -12632,6 +12931,134 @@
           "desktop"
         ],
         "title": "ClientKind"
+      },
+      "ConflictOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "table_name": {
+            "type": "string",
+            "title": "Table Name"
+          },
+          "row_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Row Id"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "kept_value": {
+            "title": "Kept Value"
+          },
+          "lost_value": {
+            "title": "Lost Value"
+          },
+          "kept_node_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kept Node Id"
+          },
+          "lost_node_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lost Node Id"
+          },
+          "kept_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kept At"
+          },
+          "lost_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lost At"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "later_edit, or head_office (a control field: head office wins)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "table_name",
+          "row_id",
+          "field",
+          "kept_value",
+          "lost_value",
+          "kept_node_id",
+          "lost_node_id",
+          "kept_at",
+          "lost_at",
+          "reason",
+          "created_at",
+          "resolved_at",
+          "resolved_by"
+        ],
+        "title": "ConflictOut"
       },
       "ContactIn": {
         "properties": {
@@ -13952,6 +14379,70 @@
           "fujairah"
         ],
         "title": "Emirate"
+      },
+      "EntryIO": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Seq"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "table": {
+            "type": "string",
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Table"
+          },
+          "row_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Row Id"
+          },
+          "op": {
+            "type": "string",
+            "pattern": "^(insert|update|delete)$",
+            "title": "Op"
+          },
+          "payload": {
+            "type": "string",
+            "title": "Payload",
+            "description": "The row as JSON text; read by the database, never as floating point"
+          },
+          "changed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed",
+            "description": "An update: the changed fields as they were before the edit (JSON text)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "node_id",
+          "table",
+          "row_id",
+          "op",
+          "payload"
+        ],
+        "title": "EntryIO"
       },
       "FiscalPeriodOut": {
         "properties": {
@@ -18222,6 +18713,28 @@
         ],
         "title": "PromotionScope"
       },
+      "PullOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntryIO"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "cursor": {
+            "type": "integer",
+            "title": "Cursor",
+            "description": "Ask again after this"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "cursor"
+        ],
+        "title": "PullOut"
+      },
       "PurchaseDocIn": {
         "properties": {
           "doc_type": {
@@ -19141,6 +19654,44 @@
           "cleared_value"
         ],
         "title": "PurchaseLineOut"
+      },
+      "PushIn": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Node Id",
+            "description": "The branch node sending"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntryIO"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "entries"
+        ],
+        "title": "PushIn"
+      },
+      "PushOut": {
+        "properties": {
+          "last_seq": {
+            "type": "integer",
+            "title": "Last Seq",
+            "description": "Everything up to here is safely applied; the branch may move on"
+          }
+        },
+        "type": "object",
+        "required": [
+          "last_seq"
+        ],
+        "title": "PushOut"
       },
       "QuoteIn": {
         "properties": {

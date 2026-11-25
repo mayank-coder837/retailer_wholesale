@@ -2202,6 +2202,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sync/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Push */
+        post: operations["sync_push"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/pull": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pull */
+        get: operations["sync_pull"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/checksum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Checksum */
+        get: operations["sync_checksum"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/conflicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conflicts
+         * @description Master-data clashes (ADR 0011): two places changed the same field; the other value is kept here.
+         */
+        get: operations["list_sync_conflicts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/conflicts/{conflict_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Conflict
+         * @description Puts the value that lost back, as a new edit by this person (it then wins everywhere).
+         */
+        post: operations["restore_sync_conflict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents/{doc_id}/cancel": {
         parameters: {
             query?: never;
@@ -3463,6 +3554,23 @@ export interface components {
             /** Proof */
             proof: string;
         };
+        /** ChecksumOut */
+        ChecksumOut: {
+            /**
+             * Journal
+             * @description Month -> [lines, total debit, total credit]
+             */
+            journal: {
+                [key: string]: string[];
+            };
+            /**
+             * Stock
+             * @description Month -> [moves, total quantity, total value]
+             */
+            stock: {
+                [key: string]: string[];
+            };
+        };
         /** ClearIn */
         ClearIn: {
             /**
@@ -3484,6 +3592,49 @@ export interface components {
          * @enum {string}
          */
         ClientKind: "web" | "desktop";
+        /** ConflictOut */
+        ConflictOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Table Name */
+            table_name: string;
+            /**
+             * Row Id
+             * Format: uuid
+             */
+            row_id: string;
+            /** Field */
+            field: string;
+            /** Kept Value */
+            kept_value: unknown;
+            /** Lost Value */
+            lost_value: unknown;
+            /** Kept Node Id */
+            kept_node_id: string | null;
+            /** Lost Node Id */
+            lost_node_id: string | null;
+            /** Kept At */
+            kept_at: string | null;
+            /** Lost At */
+            lost_at: string | null;
+            /**
+             * Reason
+             * @description later_edit, or head_office (a control field: head office wins)
+             */
+            reason: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Resolved By */
+            resolved_by: string | null;
+        };
         /** ContactIn */
         ContactIn: {
             /** Name */
@@ -3913,6 +4064,32 @@ export interface components {
          * @enum {string}
          */
         Emirate: "abu_dhabi" | "dubai" | "sharjah" | "ajman" | "umm_al_quwain" | "ras_al_khaimah" | "fujairah";
+        /** EntryIO */
+        EntryIO: {
+            /** Seq */
+            seq: number;
+            /** Node Id */
+            node_id: string | null;
+            /** Table */
+            table: string;
+            /**
+             * Row Id
+             * Format: uuid
+             */
+            row_id: string;
+            /** Op */
+            op: string;
+            /**
+             * Payload
+             * @description The row as JSON text; read by the database, never as floating point
+             */
+            payload: string;
+            /**
+             * Changed
+             * @description An update: the changed fields as they were before the edit (JSON text)
+             */
+            changed?: string | null;
+        };
         /** FiscalPeriodOut */
         FiscalPeriodOut: {
             /**
@@ -5491,6 +5668,16 @@ export interface components {
          * @enum {string}
          */
         PromotionScope: "variant" | "product" | "category" | "brand";
+        /** PullOut */
+        PullOut: {
+            /** Entries */
+            entries: components["schemas"]["EntryIO"][];
+            /**
+             * Cursor
+             * @description Ask again after this
+             */
+            cursor: number;
+        };
         /** PurchaseDocIn */
         PurchaseDocIn: {
             doc_type: components["schemas"]["PurchaseDocType"];
@@ -5771,6 +5958,25 @@ export interface components {
              * @description Bills: GRNI cleared; returns: the cost the goods left at
              */
             cleared_value: string | null;
+        };
+        /** PushIn */
+        PushIn: {
+            /**
+             * Node Id
+             * Format: uuid
+             * @description The branch node sending
+             */
+            node_id: string;
+            /** Entries */
+            entries: components["schemas"]["EntryIO"][];
+        };
+        /** PushOut */
+        PushOut: {
+            /**
+             * Last Seq
+             * @description Everything up to here is safely applied; the branch may move on
+             */
+            last_seq: number;
         };
         /** QuoteIn */
         QuoteIn: {
@@ -12752,6 +12958,165 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AiActionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_push: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_pull: {
+        parameters: {
+            query: {
+                node_id: string;
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_checksum: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChecksumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sync_conflicts: {
+        parameters: {
+            query?: {
+                open_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_sync_conflict: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictOut"];
                 };
             };
             /** @description Validation Error */

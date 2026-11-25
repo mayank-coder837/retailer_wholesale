@@ -7,10 +7,11 @@ nothing.
 """
 
 import uuid
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 
 from app.core.authz import PermissionSet
@@ -36,6 +37,9 @@ class EntryIO(BaseModel):
     row_id: uuid.UUID
     op: str = Field(pattern="^(insert|update|delete)$")
     payload: str = Field(description="The row as JSON text; read by the database, never as floating point")
+    changed: str | None = Field(
+        default=None, description="An update: the changed fields as they were before the edit (JSON text)"
+    )
 
 
 class PushIn(BaseModel):
@@ -53,12 +57,20 @@ class PullOut(BaseModel):
 
 
 def to_entries(items: list[EntryIO]) -> list[Entry]:
-    return [Entry(e.seq, e.node_id, e.table, e.row_id, e.op, e.payload) for e in items]
+    return [Entry(e.seq, e.node_id, e.table, e.row_id, e.op, e.payload, e.changed) for e in items]
 
 
 def to_io(entries: list[Entry]) -> list[EntryIO]:
     return [
-        EntryIO(seq=e.seq, node_id=e.node_id, table=e.table, row_id=e.row_id, op=e.op, payload=e.payload)
+        EntryIO(
+            seq=e.seq,
+            node_id=e.node_id,
+            table=e.table,
+            row_id=e.row_id,
+            op=e.op,
+            payload=e.payload,
+            changed=e.changed,
+        )
         for e in entries
     ]
 
@@ -100,3 +112,41 @@ class ChecksumOut(BaseModel):
 async def checksum(perms: Signed, session: TenantSessionDep, business_id: uuid.UUID) -> ChecksumOut:
     perms.require("sync.view")
     return ChecksumOut(**await service.checksum(session, business_id))
+
+
+class ConflictOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    table_name: str
+    row_id: uuid.UUID
+    field: str
+    kept_value: Any
+    lost_value: Any
+    kept_node_id: uuid.UUID | None
+    lost_node_id: uuid.UUID | None
+    kept_at: datetime | None
+    lost_at: datetime | None
+    reason: str = Field(description="later_edit, or head_office (a control field: head office wins)")
+    created_at: datetime
+    resolved_at: datetime | None
+    resolved_by: uuid.UUID | None
+
+
+@router.get("/conflicts", operation_id="list_sync_conflicts")
+async def list_conflicts(
+    perms: Signed, session: TenantSessionDep, open_only: bool = True
+) -> list[ConflictOut]:
+    """Master-data clashes (ADR 0011): two places changed the same field; the other value is kept here."""
+    perms.require("sync.view")
+    return [ConflictOut.model_validate(c) for c in await service.list_conflicts(session, open_only=open_only)]
+
+
+@router.post("/conflicts/{conflict_id}/restore", operation_id="restore_sync_conflict")
+async def restore_conflict(
+    conflict_id: uuid.UUID, perms: Signed, session: TenantSessionDep, principal: PrincipalDep
+) -> ConflictOut:
+    """Puts the value that lost back, as a new edit by this person (it then wins everywhere)."""
+    perms.require("sync.post")
+    conflict = await service.restore_conflict(session, conflict_id, user_id=principal.user_id)
+    return ConflictOut.model_validate(conflict)

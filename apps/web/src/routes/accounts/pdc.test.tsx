@@ -102,20 +102,20 @@ describe("PDC screens", () => {
       "GET /pdcs": {
         status: 200,
         body: [
-          pdc(),
-          pdc({ id: "p2", cheque_no: "000102", cheque_date: "2026-12-25", amount: "500.0000" }),
-          pdc({ id: "p3", cheque_no: "000103", cheque_date: "2026-12-26", amount: "250.5000" }),
-          pdc({ id: "p4", cheque_no: "000104", status: "cleared" }),
+          pdc({ cheque_date: "2099-11-25" }),
+          pdc({ id: "p2", cheque_no: "000102", cheque_date: "2099-12-25", amount: "500.0000" }),
+          pdc({ id: "p3", cheque_no: "000103", cheque_date: "2099-12-26", amount: "250.5000" }),
+          pdc({ id: "p4", cheque_no: "000104", status: "cleared", cheque_date: "2099-11-25" }),
         ],
       },
     });
     render(<App api={api} />);
 
-    const november = await screen.findByRole("table", { name: "November 2026" });
+    const november = await screen.findByRole("table", { name: "November 2099" });
     expect(within(november).getAllByRole("row")[1]).toHaveTextContent(
-      "2026-11-25000101Ali TradersEmirates NBDIn hand1,000.00",
+      "2099-11-25000101Ali TradersEmirates NBDIn hand1,000.00",
     );
-    const december = screen.getByRole("table", { name: "December 2026" });
+    const december = screen.getByRole("table", { name: "December 2099" });
     expect(december).toHaveTextContent("2 cheques, 750.50");
     expect(screen.queryByText("000104")).toBeNull(); // cleared: not in "not cleared yet"
   });

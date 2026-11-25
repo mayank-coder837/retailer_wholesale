@@ -19,6 +19,7 @@ import json
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 from sqlalchemy import select, text
@@ -29,10 +30,26 @@ from app import models_registry  # noqa: F401  (every model, so the table list i
 from app.core.db import apply_context
 from app.core.errors import ConflictError, DomainError
 from app.core.models import Base
-from app.core.sync import SyncState
+from app.core.sync import SyncConflict, SyncState
 
 # Local bookkeeping, never sent.
-LOCAL_ONLY = frozenset({"sync_outbox", "sync_state", "outbox_event", "idempotency_key"})
+LOCAL_ONLY = frozenset({"sync_outbox", "sync_state", "sync_conflict", "outbox_event", "idempotency_key"})
+
+# Fields (ADR 0011 rule 4) where head office wins a clash whatever the time; "*" is every field of the table.
+CONTROL_FIELDS: dict[str, tuple[str, ...]] = {
+    "price_list": ("*",),
+    "price_list_item": ("*",),
+    "account": ("*",),
+    "account_role": ("*",),
+    "unit": ("*",),
+    "unit_family": ("*",),
+    "product_unit": ("*",),  # conversion factors
+    "customer_profile": ("credit_limit", "credit_days", "credit_policy"),
+    "party": ("sales_tax_code", "purchase_tax_code"),  # tax code overrides
+    "business": ("costing_method", "negative_stock_allowed"),
+}
+# Updates taken whole, not field by field: never edited at two places (an account is insert-only in sync).
+NO_MERGE = frozenset({"user_account", "tenant"})
 
 
 class SyncRejectedError(ConflictError):
@@ -59,6 +76,7 @@ class Entry:
     row_id: uuid.UUID
     op: str  # insert | update | delete
     payload: str  # the row as JSON text (never parsed in Python: numbers stay exact)
+    changed: str | None = None  # an update: the changed fields' values before the edit, as JSON text
 
 
 def syncable_tables() -> dict[str, list[str]]:
@@ -100,7 +118,9 @@ async def _save(session: AsyncSession, tenant_id: uuid.UUID, node_id: uuid.UUID,
     await session.flush()
 
 
-def _entries(rows: Sequence[tuple[int, uuid.UUID | None, str, uuid.UUID, str, str]]) -> list[Entry]:
+def _entries(
+    rows: Sequence[tuple[int, uuid.UUID | None, str, uuid.UUID, str, str, str | None]],
+) -> list[Entry]:
     return [Entry(*r) for r in rows]
 
 
@@ -117,7 +137,7 @@ async def pending(
         text(
             f"WITH todo AS (SELECT id, txid FROM sync_outbox WHERE {own} "  # noqa: S608 - `own` is a fixed fragment
             "AND txid < txid_snapshot_xmin(txid_current_snapshot()) ORDER BY id LIMIT :limit) "
-            "SELECT id, node_id, table_name, row_id, op, payload::text FROM sync_outbox "
+            "SELECT id, node_id, table_name, row_id, op, payload::text, changed::text FROM sync_outbox "
             f"WHERE {own} AND txid <= (SELECT max(txid) FROM todo) "
             "AND txid < txid_snapshot_xmin(txid_current_snapshot()) ORDER BY id"
         ),
@@ -146,7 +166,7 @@ async def pull(
         tuple(r)
         for r in await session.execute(
             text(
-                "SELECT id, node_id, table_name, row_id, op, payload::text FROM sync_outbox "
+                "SELECT id, node_id, table_name, row_id, op, payload::text, changed::text FROM sync_outbox "
                 "WHERE tenant_id = :t AND id > :after AND table_name <> ALL(:local) ORDER BY id LIMIT :limit"
             ),
             {"t": tenant_id, "after": after, "local": sorted(LOCAL_ONLY), "limit": limit},
@@ -188,7 +208,13 @@ def _upsert_sql(table: str, columns: list[str], *, update: bool) -> str:
     )
 
 
-async def _apply_entry(session: AsyncSession, tables: dict[str, list[str]], entry: Entry) -> None:
+async def _apply_entry(
+    session: AsyncSession,
+    tables: dict[str, list[str]],
+    entry: Entry,
+    tenant_id: uuid.UUID,
+    origin: uuid.UUID | None,
+) -> None:
     columns = tables.get(entry.table)
     if columns is None:
         raise UnknownTableError(table=entry.table)
@@ -197,6 +223,24 @@ async def _apply_entry(session: AsyncSession, tables: dict[str, list[str]], entr
     if entry.op == "delete":
         delete = f'DELETE FROM "{entry.table}" WHERE id = :id'  # noqa: S608 - a name checked against the models
         await session.execute(text(delete), {"id": entry.row_id})
+    elif entry.op == "update" and entry.changed is not None and entry.table not in NO_MERGE:
+        # Master data (ADR 0011): field by field, so two people changing different fields both keep their
+        # edit, and a clash on the same field is decided and logged. All in SQL: amounts stay exact.
+        await session.execute(
+            text(
+                "SELECT sync_merge_update(:t, :table, :row, CAST(:new AS jsonb), CAST(:old AS jsonb), :o, "
+                "CAST(:c AS jsonb))"
+            ),
+            {
+                "t": tenant_id,
+                "table": entry.table,
+                "row": entry.row_id,
+                "new": entry.payload,
+                "old": entry.changed,
+                "o": origin,
+                "c": json.dumps(list(CONTROL_FIELDS.get(entry.table, ()))),
+            },
+        )
     else:
         # A user account is a global row shared by every tenant: a batch may add one (a member's account
         # reaches the cloud with their membership) but never change one that exists, or one tenant could take
@@ -232,7 +276,8 @@ async def apply(
             for entry in fresh:
                 origin = entry.node_id or (sender if track else fallback_origin)
                 await apply_context(session, tenant_id=tenant_id, node_id=origin)
-                await _apply_entry(session, tables, entry)
+                await session.execute(text("SELECT set_config('app.sync_apply', 'on', true)"))
+                await _apply_entry(session, tables, entry, tenant_id, origin)
             await session.flush()
             await session.execute(text("SET CONSTRAINTS ALL IMMEDIATE"))  # the balance check, now
             await session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
@@ -277,3 +322,50 @@ def differing_periods(a: dict[str, dict[str, list[str]]], b: dict[str, dict[str,
             if a.get(kind, {}).get(period) != b.get(kind, {}).get(period):
                 out.append(f"{kind}:{period}")
     return out
+
+
+class ConflictNotFoundError(DomainError):
+    code = "sync_conflict_not_found"
+    status = HTTPStatus.NOT_FOUND
+    title = "No such conflict"
+
+
+class ConflictResolvedError(ConflictError):
+    code = "sync_conflict_resolved"
+    title = "This conflict was already put right"
+
+
+async def list_conflicts(
+    session: AsyncSession, *, open_only: bool = True, limit: int = 200
+) -> list[SyncConflict]:
+    query = select(SyncConflict).order_by(SyncConflict.created_at.desc()).limit(limit)
+    if open_only:
+        query = query.where(SyncConflict.resolved_at.is_(None))
+    return list(await session.scalars(query))
+
+
+async def restore_conflict(
+    session: AsyncSession, conflict_id: uuid.UUID, *, user_id: uuid.UUID
+) -> SyncConflict:
+    """Puts the losing value back as a fresh edit made here and now: it travels like any edit, and being the
+    latest it wins at every other node too. Written in SQL so amounts and dates keep their exact type."""
+    conflict = await session.get(SyncConflict, conflict_id, with_for_update=True)
+    if conflict is None:
+        raise ConflictNotFoundError(conflict_id=str(conflict_id))
+    if conflict.resolved_at is not None:
+        raise ConflictResolvedError()
+    columns = syncable_tables().get(conflict.table_name)
+    if columns is None or conflict.field not in columns:  # the log is trusted, but the names go into SQL
+        raise UnknownTableError(table=conflict.table_name)
+    update = (
+        f'UPDATE "{conflict.table_name}" t SET "{conflict.field}" = r."{conflict.field}" '  # noqa: S608
+        f'FROM jsonb_populate_record(NULL::"{conflict.table_name}", jsonb_build_object(CAST(:f AS text), '
+        "CAST(:v AS jsonb))) r WHERE t.id = :id"
+    )
+    await session.execute(
+        text(update), {"f": conflict.field, "v": json.dumps(conflict.lost_value), "id": conflict.row_id}
+    )
+    conflict.resolved_at = datetime.now(UTC)
+    conflict.resolved_by = user_id
+    await session.flush()
+    return conflict

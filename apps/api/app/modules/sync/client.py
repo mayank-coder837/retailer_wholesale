@@ -92,6 +92,7 @@ class CloudSync:
                     uuid.UUID(e["row_id"]),
                     e["op"],
                     e["payload"],
+                    e.get("changed"),
                 )
                 for e in body["entries"]
             ]
@@ -128,6 +129,7 @@ class CloudSync:
                         "row_id": str(e.row_id),
                         "op": e.op,
                         "payload": e.payload,
+                        "changed": e.changed,
                     }
                     for e in batch
                 ],

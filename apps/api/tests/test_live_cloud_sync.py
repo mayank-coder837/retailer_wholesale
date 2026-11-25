@@ -58,6 +58,13 @@ async def live_http(live_settings: Settings, live_cloud: Sessions) -> AsyncItera
         yield http
 
 
+async def count_text(sm: Sessions, tenant: uuid.UUID, sql: str) -> str | None:
+    async with sm() as s, s.begin():
+        await apply_context(s, tenant_id=tenant)
+        value: str | None = await s.scalar(text(sql))
+        return value
+
+
 async def test_a_branch_and_the_real_cloud_converge(
     client: AsyncClient, app_sessionmaker: Sessions, live_cloud: Sessions, live_http: AsyncClient
 ) -> None:
@@ -67,11 +74,12 @@ async def test_a_branch_and_the_real_cloud_converge(
     assert await send_all(app_sessionmaker, live_cloud, tenant, node) > 20  # the first upload
     await b.invoice("300", "INV-2")  # more work while "offline"
 
+    cloud_node = uuid.uuid4()
     async with live_cloud() as c, c.begin():  # the cloud's own node, as a real deployment has
         await apply_context(c, tenant_id=tenant)
         await c.execute(
             text("INSERT INTO node (id, tenant_id, kind, name) VALUES (:i, :t, 'cloud', 'Cloud')"),
-            {"i": uuid.uuid4(), "t": tenant},
+            {"i": cloud_node, "t": tenant},
         )
     sync = pusher(live_http, app_sessionmaker, tenant, node, email)
     first = await sync.cycle()
@@ -91,6 +99,19 @@ async def test_a_branch_and_the_real_cloud_converge(
     assert second.pulled > 0
     assert second.pushed == 0, "what came from the cloud is not sent back"
     assert await count(app_sessionmaker, tenant, "SELECT count(*) FROM party WHERE name_en = 'Cloud Co'") == 1
+
+    # The same customer's phone edited at both places while apart: the later edit wins, the clash is logged.
+    async with live_cloud() as c, c.begin():
+        await apply_context(c, tenant_id=tenant, node_id=cloud_node)
+        await c.execute(text("UPDATE party SET phone = '0501111111' WHERE id = :p"), {"p": b.customer})
+    async with app_sessionmaker() as s, s.begin():
+        await apply_context(s, tenant_id=tenant, node_id=node)
+        await s.execute(text("UPDATE party SET phone = '0502222222' WHERE id = :p"), {"p": b.customer})
+    await sync.cycle()
+    await sync.cycle()
+    phone = f"SELECT phone FROM party WHERE id = '{b.customer}'"
+    assert await count_text(live_cloud, tenant, phone) == await count_text(app_sessionmaker, tenant, phone)
+    assert await count(live_cloud, tenant, "SELECT count(*) FROM sync_conflict WHERE field = 'phone'") == 1
 
     # Per-month checksums agree between the branch and the cloud.
     business = uuid.UUID(b.shop.business_id)
