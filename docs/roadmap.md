@@ -5,6 +5,22 @@ its main PC, with office PCs on the LAN, and are piloted without any cloud serve
 multi-branch follow as M2.1. Each milestone stops for review with: what was built, how to run it, test results,
 open questions. Updated 2026-10-11 for `decisions-round-1.md`.
 
+## Where we are (2026-11-27)
+
+| Part | State |
+| --- | --- |
+| Phase 0 (M0.1–M0.6) | Built. The "clean PC + second PC on the LAN" gate was last proven on the 12 Oct installer; re-check it before the next release (new migrations, sync). |
+| Phase 1 (M1.1–M1.13) | Built, including sales, purchasing, PDC, VAT invoices, reports, import wizards (Excel, Tally) and the assistant (rule-based; an LLM provider is undecided, T3). The Phase 1 gate test passes. |
+| M2.1 cloud sync | Built: engine, transport, numbering across nodes, checksums, master-data conflicts (API only, no screen yet). Proven against the real cloud database (Supabase). **Not done:** cloud API hosting (host, domain, HTTPS), browser/phone use of it, multi-branch report screens, several branches posting stock (R16), first upload of an existing PC (R17). |
+| Phase 2 and later | Not started. See "After Phase 1" below. |
+
+Unmerged work lives on `feature/m1.12d-import-screens` until its PR is merged. The dashboard's six figure tiles are
+still placeholders (the data exists in the reports).
+
+**Cloud region (R19, settled by the founder 2026-11-26): Mumbai (`ap-south-1`).** Supabase has no UAE or GCC
+region. This replaces the earlier plan to move to a UAE region before real customer data; revisit only if a
+customer requires UAE-resident data (PDPL).
+
 **Before M0.1** (developer PC, decision T1): Docker Desktop with WSL 2, `make`, `uv`, `pnpm`, Python 3.12 —
 installed and version-checked.
 
@@ -48,7 +64,19 @@ the inventory account, and the customer's ledger shows zero outstanding.
 
 | Milestone | Scope | Acceptance criteria | Proving tests |
 | --- | --- | --- | --- |
-| **M2.1 Cloud sync, browser access, multi-branch** | Cloud deployment of the same API (free tier for pilots, e.g. Supabase Postgres; UAE region before real customer data — F7); sync push/pull with append-only posted records (ADR 0010); master-data merge and conflict list (ADR 0011); branch-owned numbering for cloud-created documents ("waiting for branch to number"); browser and phone use the same SPA against the cloud; multi-branch reports | Two branch PCs and a browser work on one tenant; numbers never clash; per-period checksums match between each branch and the cloud after reconnecting | Sync replay/idempotency tests; offline-for-a-week then reconnect test; conflict tests per ADR 0011 rule; numbering tests across nodes; checksum comparison |
+| **M2.1 Cloud sync, browser access, multi-branch** | Cloud deployment of the same API (free tier for pilots, e.g. Supabase Postgres; region settled as Mumbai, R19); sync push/pull with append-only posted records (ADR 0010); master-data merge and conflict list (ADR 0011); branch-owned numbering for cloud-created documents ("waiting for branch to number"); browser and phone use the same SPA against the cloud; multi-branch reports | Two branch PCs and a browser work on one tenant; numbers never clash; per-period checksums match between each branch and the cloud after reconnecting | Sync replay/idempotency tests; offline-for-a-week then reconnect test; conflict tests per ADR 0011 rule; numbering tests across nodes; checksum comparison |
 
-Phase 2 (POS, e-invoicing via an ASP — choose the ASP by Jan 2027 — bank reconciliation, approvals) is planned
-after M2.1.
+## Phases 2 to 4 (planned, not started; detail in `product-concept-v2.md`)
+
+Phases 0 and 1 are the **trader MVP**, not the whole product. What the concept still lists:
+
+- **Phase 2, compliance and retail:** e-invoicing through an accredited service provider (**choose the ASP by Jan
+  2027**: the deadline is external), retail POS, bank reconciliation, approval workflows, multi-currency, cost
+  centres, landed cost, serial numbers, stock counts, reorder suggestions, collection reminders by WhatsApp and
+  email, proof-of-delivery photos, accountant access, scheduled reports, year-end close, cash-flow statement, and
+  the assistant's voice and photo input, "ask your business" and daily brief.
+- **Phase 3, B2B portal and wider AI:** a B2B ordering portal, salesperson commission, van and route sales,
+  budgets, public API and webhooks, WhatsApp assistant, anomaly alerts and forecasting.
+- **Phase 4, B2B network and marketplace.**
+
+Each of these gets its own milestone plan in this file when it is scheduled.
