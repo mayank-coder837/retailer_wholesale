@@ -6,11 +6,16 @@ to `docs/open-questions.md` with a clearly marked, configurable default and buil
 No external account is needed for any of it: provider integrations (WhatsApp, e-invoicing ASP, payment gateways) are
 built behind an interface with a recording "outbox" implementation, so the real provider is one adapter later.
 
+**Progress (2026-11-27):** P2.1, P2.2 and P2.3 are built, tested and pushed (API 765 passed, web 149 passed).
+Next: P2.4 approvals. Open questions raised so far: R20 (year-end close style), R21 (bank matching looseness).
+The conflict-list screen, bank reconciliation screens and approval screens are API-first; screens wait for the
+founder's Figma UI.
+
 | # | Milestone | Scope (basic version) | Depends on |
 | --- | --- | --- | --- |
-| P2.1 | Dashboard figures | One read endpoint for the six tiles (sales today, receivables, after PDCs, cheques due this week, cash and bank, low stock); tiles wired | reports, PDC |
-| P2.2 | Year-end close + cash flow | Close a fiscal year (income and expense to retained earnings, one reversible closing entry), cash-flow statement (indirect, from ledgers) | accounting |
-| P2.3 | Bank reconciliation | Import a bank statement (CSV/Excel), auto-match to ledger lines by amount, date and reference, manual match, reconciled-to-date | accounting, imports |
+| P2.1 | Dashboard figures (DONE) | One read endpoint for the six tiles (sales today, receivables, after PDCs, cheques due this week, cash and bank, low stock); tiles wired | reports, PDC |
+| P2.2 | Year-end close + cash flow (DONE) | Close a fiscal year (income and expense to retained earnings, one reversible closing entry), cash-flow statement (indirect, from ledgers) | accounting |
+| P2.3 | Bank reconciliation (DONE) | Import a bank statement (CSV/Excel), auto-match to ledger lines by amount, date and reference, manual match, reconciled-to-date | accounting, imports |
 | P2.4 | Approval workflows | Rules (discount over X%, PO over AED Y, credit override, stock adjustment); a document waits for an approver; audited | permissions |
 | P2.5 | Landed cost | Spread freight, duty and clearing onto received items by value, qty or weight; revalues stock | inventory, purchasing |
 | P2.6 | Stock counts + reorder | Count sheet, variance posted as an adjustment with approval; min/max and sales-velocity reorder list to a draft PO | inventory, P2.4 |
