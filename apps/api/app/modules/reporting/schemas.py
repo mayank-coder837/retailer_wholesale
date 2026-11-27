@@ -100,3 +100,18 @@ class DashboardOut(BaseModel):
     low_stock_items: int = Field(
         description="Items with a negative balance (a reorder level comes with P2.6)"
     )
+
+
+class CashFlowOut(BaseModel):
+    """Indirect cash-flow statement: net profit, then each balance-sheet account's cash effect."""
+
+    business_id: uuid.UUID
+    date_from: dt.date
+    date_to: dt.date
+    operating: SectionOut
+    investing: SectionOut
+    financing: SectionOut
+    net_change: Decimal = Field(description="Operating + investing + financing")
+    opening_cash: Decimal = Field(description="Cash and bank balances the day before the period")
+    closing_cash: Decimal = Field(description="Cash and bank balances at the end of the period")
+    reconciles: bool = Field(description="Net change = the cash and bank accounts' own movement (checked)")

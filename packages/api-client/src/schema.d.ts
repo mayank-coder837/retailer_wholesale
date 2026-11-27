@@ -1274,6 +1274,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/fiscal-years/{year_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Fiscal Year
+         * @description Year-end: the year must be over with no drafts; its months are locked and the year marked closed.
+         */
+        post: operations["close_fiscal_year"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/fiscal-years/{year_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reopen Fiscal Year
+         * @description Undo a close: the year is open again and its months are unlocked.
+         */
+        post: operations["reopen_fiscal_year"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/vouchers": {
         parameters: {
             query?: never;
@@ -1935,6 +1975,26 @@ export interface paths {
          *     = net profit.
          */
         get: operations["profit_loss"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cash Flow
+         * @description Where the cash came from and went (indirect): net profit, working capital, fixed assets, financing.
+         */
+        get: operations["cash_flow"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3513,6 +3573,50 @@ export interface components {
         CancelIn: {
             /** Reason */
             reason: string;
+        };
+        /**
+         * CashFlowOut
+         * @description Indirect cash-flow statement: net profit, then each balance-sheet account's cash effect.
+         */
+        CashFlowOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            operating: components["schemas"]["SectionOut"];
+            investing: components["schemas"]["SectionOut"];
+            financing: components["schemas"]["SectionOut"];
+            /**
+             * Net Change
+             * @description Operating + investing + financing
+             */
+            net_change: string;
+            /**
+             * Opening Cash
+             * @description Cash and bank balances the day before the period
+             */
+            opening_cash: string;
+            /**
+             * Closing Cash
+             * @description Cash and bank balances at the end of the period
+             */
+            closing_cash: string;
+            /**
+             * Reconciles
+             * @description Net change = the cash and bank accounts' own movement (checked)
+             */
+            reconciles: boolean;
         };
         /** CategoryIn */
         CategoryIn: {
@@ -10850,6 +10954,68 @@ export interface operations {
             };
         };
     };
+    close_fiscal_year: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalYearOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_fiscal_year: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalYearOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_vouchers: {
         parameters: {
             query: {
@@ -12535,6 +12701,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfitLossOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cash_flow: {
+        parameters: {
+            query: {
+                business_id: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowOut"];
                 };
             };
             /** @description Validation Error */

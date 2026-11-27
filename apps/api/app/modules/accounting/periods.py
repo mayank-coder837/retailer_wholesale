@@ -10,14 +10,14 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import audit
 from app.core.errors import ConflictError, NotFoundError
 from app.core.ids import new_id
-from app.modules.accounting.models import FiscalPeriod, FiscalYear, PeriodStatus
+from app.modules.accounting.models import FiscalPeriod, FiscalYear, PeriodStatus, YearStatus
 from app.modules.tenancy.models import Business
 
 
@@ -240,3 +240,74 @@ async def check_open(
         reason=reason,
         changes={"override": "period_lock", "document": document},
     )
+
+
+class YearNotEndedError(ConflictError):
+    code = "fiscal_year_not_ended"
+    title = "This fiscal year has not ended yet"
+
+
+class DraftsInYearError(ConflictError):
+    code = "drafts_in_fiscal_year"
+    title = "There are still drafts dated in this fiscal year: post or delete them first"
+
+
+class YearClosedError(ConflictError):
+    code = "fiscal_year_closed"
+    title = "This fiscal year is already closed"
+
+
+class YearNotClosedError(ConflictError):
+    code = "fiscal_year_not_closed"
+    title = "This fiscal year is not closed"
+
+
+async def get_year(session: AsyncSession, year_id: uuid.UUID) -> FiscalYear:
+    year = await session.get(FiscalYear, year_id)
+    if year is None:
+        raise NotFoundError(code="fiscal_year_not_found")
+    return year
+
+
+async def close_year(
+    session: AsyncSession, business: Business, year: FiscalYear, *, user_id: uuid.UUID | None
+) -> FiscalYear:
+    """Year-end close (P2.2, soft): the year must be over and hold no drafts; every month is locked and
+    the year is marked closed. The balance sheet already carries a closed year's profit into earlier years'
+    profit, so no closing entries are written and the closed year's profit and loss stays readable."""
+    from app.modules.documents.models import Document, DocumentStatus
+
+    if year.status == YearStatus.CLOSED:
+        raise YearClosedError()
+    if year.end_date >= business_today(business):
+        raise YearNotEndedError(year_end=year.end_date.isoformat())
+    drafts = await session.scalar(
+        select(func.count(Document.id)).where(
+            Document.business_id == year.business_id,
+            Document.status == DocumentStatus.DRAFT.value,
+            Document.doc_date >= year.start_date,
+            Document.doc_date <= year.end_date,
+        )
+    )
+    if drafts:
+        raise DraftsInYearError(drafts=int(drafts))
+    for period in (
+        await session.scalars(select(FiscalPeriod).where(FiscalPeriod.fiscal_year_id == year.id))
+    ).all():
+        await set_locked(session, period, locked=True, user_id=user_id)
+    year.status = YearStatus.CLOSED.value
+    await session.flush()
+    return year
+
+
+async def reopen_year(session: AsyncSession, year: FiscalYear, *, user_id: uuid.UUID | None) -> FiscalYear:
+    """Undo a close: the year is open again and its months are unlocked (the changes are audited)."""
+    if year.status != YearStatus.CLOSED:
+        raise YearNotClosedError()
+    for period in (
+        await session.scalars(select(FiscalPeriod).where(FiscalPeriod.fiscal_year_id == year.id))
+    ).all():
+        await set_locked(session, period, locked=False, user_id=user_id)
+    year.status = YearStatus.OPEN.value
+    await session.flush()
+    return year

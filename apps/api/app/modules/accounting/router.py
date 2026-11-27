@@ -207,6 +207,42 @@ async def unlock_period(
     return await _lock(period_id, perms, session, principal, locked=False)
 
 
+@router.post("/fiscal-years/{year_id}/close", operation_id="close_fiscal_year")
+async def close_fiscal_year(
+    year_id: uuid.UUID,
+    perms: Annotated[PermissionSet, require("fiscal_period.edit")],
+    session: TenantSessionDep,
+    principal: PrincipalDep,
+) -> FiscalYearOut:
+    """Year-end: the year must be over with no drafts; its months are locked and the year marked closed."""
+    year = await periods.get_year(session, year_id)
+    perms.require("fiscal_period.edit", year.business_id)
+    business = await tenancy.get_business(session, year.business_id)
+    await periods.close_year(session, business, year, user_id=principal.user_id)
+    return _fiscal_year_out(year, await _periods_of(session, year))
+
+
+@router.post("/fiscal-years/{year_id}/reopen", operation_id="reopen_fiscal_year")
+async def reopen_fiscal_year(
+    year_id: uuid.UUID,
+    perms: Annotated[PermissionSet, require("fiscal_period.edit")],
+    session: TenantSessionDep,
+    principal: PrincipalDep,
+) -> FiscalYearOut:
+    """Undo a close: the year is open again and its months are unlocked."""
+    year = await periods.get_year(session, year_id)
+    perms.require("fiscal_period.edit", year.business_id)
+    await periods.reopen_year(session, year, user_id=principal.user_id)
+    return _fiscal_year_out(year, await _periods_of(session, year))
+
+
+async def _periods_of(session: TenantSessionDep, year: FiscalYear) -> list[FiscalPeriod]:
+    for found, rows in await periods.list_years(session, year.business_id):
+        if found.id == year.id:
+            return rows
+    return []
+
+
 # --- vouchers ----------------------------------------------------------------------------------------------
 
 

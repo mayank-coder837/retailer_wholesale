@@ -5286,6 +5286,104 @@
         }
       }
     },
+    "/fiscal-years/{year_id}/close": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Close Fiscal Year",
+        "description": "Year-end: the year must be over with no drafts; its months are locked and the year marked closed.",
+        "operationId": "close_fiscal_year",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "year_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Year Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fiscal-years/{year_id}/reopen": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Reopen Fiscal Year",
+        "description": "Undo a close: the year is open again and its months are unlocked.",
+        "operationId": "reopen_fiscal_year",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "year_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Year Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/vouchers": {
       "get": {
         "tags": [
@@ -8634,6 +8732,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProfitLossOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/cash-flow": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Cash Flow",
+        "description": "Where the cash came from and went (indirect): net profit, working capital, fixed assets, financing.",
+        "operationId": "cash_flow",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowOut"
                 }
               }
             }
@@ -12709,6 +12876,69 @@
           "reason"
         ],
         "title": "CancelIn"
+      },
+      "CashFlowOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Date From"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date",
+            "title": "Date To"
+          },
+          "operating": {
+            "$ref": "#/components/schemas/SectionOut"
+          },
+          "investing": {
+            "$ref": "#/components/schemas/SectionOut"
+          },
+          "financing": {
+            "$ref": "#/components/schemas/SectionOut"
+          },
+          "net_change": {
+            "type": "string",
+            "title": "Net Change",
+            "description": "Operating + investing + financing"
+          },
+          "opening_cash": {
+            "type": "string",
+            "title": "Opening Cash",
+            "description": "Cash and bank balances the day before the period"
+          },
+          "closing_cash": {
+            "type": "string",
+            "title": "Closing Cash",
+            "description": "Cash and bank balances at the end of the period"
+          },
+          "reconciles": {
+            "type": "boolean",
+            "title": "Reconciles",
+            "description": "Net change = the cash and bank accounts' own movement (checked)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "date_from",
+          "date_to",
+          "operating",
+          "investing",
+          "financing",
+          "net_change",
+          "opening_cash",
+          "closing_cash",
+          "reconciles"
+        ],
+        "title": "CashFlowOut",
+        "description": "Indirect cash-flow statement: net profit, then each balance-sheet account's cash effect."
       },
       "CategoryIn": {
         "properties": {

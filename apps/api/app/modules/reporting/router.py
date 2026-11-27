@@ -11,7 +11,13 @@ from app.core.deps import TenantSessionDep
 from app.modules.identity.authz import require
 from app.modules.reporting import dashboard as dashboard_service
 from app.modules.reporting import service
-from app.modules.reporting.schemas import BalanceSheetOut, DashboardOut, DayBookOut, ProfitLossOut
+from app.modules.reporting.schemas import (
+    BalanceSheetOut,
+    CashFlowOut,
+    DashboardOut,
+    DayBookOut,
+    ProfitLossOut,
+)
 
 router = APIRouter(tags=["reports"])
 ReportView = Annotated[PermissionSet, require("report.view")]
@@ -36,6 +42,19 @@ async def profit_loss(
     = net profit."""
     perms.require_see("report.view", business_id)
     return await service.profit_loss(session, business_id, date_from, date_to)
+
+
+@router.get("/reports/cash-flow", operation_id="cash_flow")
+async def cash_flow(
+    perms: ReportView,
+    session: TenantSessionDep,
+    business_id: uuid.UUID,
+    date_from: Annotated[date, Query(alias="from")],
+    date_to: Annotated[date, Query(alias="to")],
+) -> CashFlowOut:
+    """Where the cash came from and went (indirect): net profit, working capital, fixed assets, financing."""
+    perms.require_see("report.view", business_id)
+    return await service.cash_flow(session, business_id, date_from, date_to)
 
 
 @router.get("/reports/balance-sheet", operation_id="balance_sheet")

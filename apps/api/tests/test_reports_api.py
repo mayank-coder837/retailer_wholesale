@@ -131,6 +131,22 @@ async def test_day_book_lists_every_entry_with_its_lines(client: AsyncClient) ->
     assert book["truncated"] is False
 
 
+async def test_the_cash_flow_statement_reconciles_to_the_cash_accounts(client: AsyncClient) -> None:
+    b = await trading_month(client)
+    cf = await get(b, "/reports/cash-flow", **{"from": str(TODAY.replace(day=1)), "to": str(TODAY)})
+    assert cf["reconciles"] is True
+    assert cf["opening_cash"] == "0.0000"
+    assert cf["closing_cash"] == "11250.0000"
+    assert cf["net_change"] == "11250.0000"
+    assert cf["financing"]["total"] == "10000.0000"  # the capital paid in
+    assert cf["operating"]["rows"][0]["key"] == "net_profit"
+    assert cf["operating"]["rows"][0]["amount"] == "2300.0000"
+    # The day before anything happened: nothing moved.
+    before = TODAY - timedelta(days=40)
+    quiet = await get(b, "/reports/cash-flow", **{"from": str(before), "to": str(before)})
+    assert (quiet["net_change"], quiet["reconciles"]) == ("0.0000", True)
+
+
 async def test_the_dashboard_gives_the_six_home_screen_figures(client: AsyncClient) -> None:
     b = await trading_month(client)
     d = await get(b, "/reports/dashboard")

@@ -10,6 +10,7 @@ from app.core.errors import UnprocessableError
 from app.modules.reporting import statements
 from app.modules.reporting.schemas import (
     BalanceSheetOut,
+    CashFlowOut,
     DayBookEntryOut,
     DayBookLineOut,
     DayBookOut,
@@ -169,4 +170,29 @@ async def day_book(
         total_debit=sum((x.debit for e in shown for x in e.lines), ZERO),
         total_credit=sum((x.credit for e in shown for x in e.lines), ZERO),
         truncated=truncated,
+    )
+
+
+async def cash_flow(
+    session: AsyncSession, business_id: uuid.UUID, date_from: date, date_to: date
+) -> CashFlowOut:
+    _check_period(date_from, date_to)
+    await tenancy.get_business(session, business_id)
+    accounts = await _accounts(session, business_id)
+    opening = await _balances(session, business_id, date_from - timedelta(days=1))
+    closing = await _balances(session, business_id, date_to)
+    movement = {k: closing.get(k, ZERO) - opening.get(k, ZERO) for k in closing.keys() | opening.keys()}
+    flow = statements.cash_flow(accounts, movement)
+    cash_ids = {a.id for a in accounts if a.account_type in statements.CASH_TYPES and not a.is_group}
+    return CashFlowOut(
+        business_id=business_id,
+        date_from=date_from,
+        date_to=date_to,
+        operating=flow.operating,
+        investing=flow.investing,
+        financing=flow.financing,
+        net_change=flow.net_change,
+        opening_cash=sum((opening.get(i, ZERO) for i in cash_ids), ZERO),
+        closing_cash=sum((closing.get(i, ZERO) for i in cash_ids), ZERO),
+        reconciles=flow.net_change == flow.cash_change,
     )

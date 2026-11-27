@@ -142,3 +142,64 @@ def balance_sheet(
         total_liabilities=sum((s.total for s in liabilities), ZERO),
         total_equity=equity.total,
     )
+
+
+CASH_TYPES = frozenset({"cash", "bank"})
+FINANCING_TYPES = frozenset({"non_current_liability"})
+
+
+@dataclass(frozen=True, slots=True)
+class CashFlow:
+    operating: SectionOut
+    investing: SectionOut
+    financing: SectionOut
+    net_change: Decimal
+    cash_change: Decimal  # what the cash and bank accounts actually moved
+
+
+def _cash_section(a: Account) -> str | None:
+    if a.account_type in CASH_TYPES or a.nature in ("income", "expense"):
+        return None
+    if a.account_type == "fixed_asset":
+        return "investing"
+    if a.nature == "equity" or a.account_type in FINANCING_TYPES:
+        return "financing"
+    return "operating"
+
+
+def cash_flow(accounts: Sequence[Account], movement: Mapping[uuid.UUID, Decimal]) -> CashFlow:
+    """The indirect cash-flow statement from a period's movement (debit-positive).
+
+    The books balance, so the cash accounts' movement equals the net profit less the movement of every other
+    balance-sheet account. Each of those accounts is shown with its cash effect (minus its debit-positive
+    movement) under operating (working capital and tax), investing (fixed assets) or financing (equity and
+    long-term liabilities). ``net_change`` is computed from the lines; ``cash_change`` is read from the cash
+    accounts: they agree whenever the books balance (a check, not an assumption)."""
+    rows: dict[str, list[StatementRowOut]] = {"operating": [], "investing": [], "financing": []}
+    for a in sorted(accounts, key=lambda x: x.code):
+        key = _cash_section(a)
+        moved = movement.get(a.id, ZERO)
+        if a.is_group or key is None or moved == 0:
+            continue
+        rows[key].append(
+            StatementRowOut(account_id=a.id, code=a.code, name_en=a.name_en, name_ar=a.name_ar, amount=-moved)
+        )
+    net = profit(accounts, movement)
+    rows["operating"].insert(
+        0,
+        StatementRowOut(
+            account_id=None,
+            key="net_profit",
+            code=None,
+            name_en="Net profit",
+            name_ar="صافي الربح",
+            amount=net,
+        ),
+    )
+    operating, investing, financing = (_section(k, rows[k]) for k in ("operating", "investing", "financing"))
+    cash_change = sum(
+        (movement.get(a.id, ZERO) for a in accounts if a.account_type in CASH_TYPES and not a.is_group), ZERO
+    )
+    return CashFlow(
+        operating, investing, financing, operating.total + investing.total + financing.total, cash_change
+    )
