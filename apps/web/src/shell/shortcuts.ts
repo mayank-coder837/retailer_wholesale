@@ -17,7 +17,14 @@ export function useDesktopShortcuts(): void {
       const kind = VOUCHER_KEYS[event.key];
       if (!kind || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
       event.preventDefault();
-      void navigate({ to: "/vouchers/$kind", params: { kind } });
+      // Sales and purchases have their own document screens (M1.8, M1.7b); payment and receipt are vouchers.
+      if (kind === "sales") {
+        void navigate({ to: "/sales/new/$kind", params: { kind: "sales_invoice" } });
+      } else if (kind === "purchase") {
+        void navigate({ to: "/purchases/new/$kind", params: { kind: "purchase_bill" } });
+      } else {
+        void navigate({ to: "/vouchers/$kind", params: { kind } });
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

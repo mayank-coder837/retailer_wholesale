@@ -163,8 +163,12 @@ describe("App shell", () => {
     await screen.findByRole("heading", { name: "Welcome, Fatima Owner" });
 
     fireEvent.keyDown(window, { key: "F8" });
+    await waitFor(() => expect(window.location.hash).toBe("#/sales/new/sales_invoice"));
+    expect(screen.queryByText(/arrives in Phase 1/)).not.toBeInTheDocument();
 
-    expect(await screen.findByRole("heading", { name: "Sales invoice (F8)" })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "F9" });
+    await waitFor(() => expect(window.location.hash).toBe("#/purchases/new/purchase_bill"));
+    expect(screen.queryByText(/arrives in Phase 1/)).not.toBeInTheDocument();
   });
 
   it("leaves F-keys alone in a browser", async () => {

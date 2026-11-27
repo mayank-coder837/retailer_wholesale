@@ -162,7 +162,7 @@ const thisPcRoute = createRoute({
   path: "/settings/this-pc",
   component: ThisPcPage,
 });
-/** Voucher entry: the accounting vouchers (M1.5); sales and purchase keys still show "coming soon". */
+/** Voucher entry: the accounting vouchers (M1.5). Sales and purchases have their own screens (/sales, /purchases). */
 const voucherRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/vouchers/$kind",
