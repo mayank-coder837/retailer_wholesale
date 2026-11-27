@@ -643,3 +643,25 @@ async def vat_facts(
             )
         )
     return out
+
+
+async def bank_book_lines(
+    session: AsyncSession,
+    business_id: uuid.UUID,
+    account_id: uuid.UUID,
+    *,
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> list[ledger.BookLine]:
+    """An account's live ledger lines with their ids (bank reconciliation, P2.3)."""
+    return await ledger.book_lines(session, business_id, account_id, date_from=date_from, date_to=date_to)
+
+
+async def book_line_of(
+    session: AsyncSession, line_id: uuid.UUID
+) -> tuple[uuid.UUID, uuid.UUID, ledger.BookLine] | None:
+    """(business, account, line) of one ledger line, or nothing."""
+    return await ledger.book_line(session, line_id)
+
+
+BookLine = ledger.BookLine  # for callers in other modules (bank reconciliation)

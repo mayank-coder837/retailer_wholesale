@@ -40,6 +40,7 @@ from app.modules.accounting.models import Role as LedgerRole
 from app.modules.accounting.posting import VoucherType
 from app.modules.accounting.schemas import AccountIn, AllocationIn, VoucherIn, VoucherLineIn
 from app.modules.ai.models import AiAction
+from app.modules.banking.models import BankStatement, BankStatementLine
 from app.modules.catalog import products as catalog_products
 from app.modules.catalog import service as catalog
 from app.modules.catalog import setup as catalog_setup
@@ -735,6 +736,45 @@ async def _sync_conflict(session: AsyncSession, seed: TenantSeed) -> Any:
     return row.id
 
 
+async def _bank_account(session: AsyncSession, seed: TenantSeed) -> uuid.UUID:
+    for account in (await accounting_accounts.accounts_by_id(session, seed.business_id)).values():
+        if account.account_type == AccountType.BANK.value:
+            return account.id
+    raise AssertionError("the default chart has a bank account")
+
+
+async def _bank_statement(session: AsyncSession, seed: TenantSeed) -> Any:
+    statement = BankStatement(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        business_id=seed.business_id,
+        account_id=await _bank_account(session, seed),
+        filename="statement.csv",
+        date_from=date(2026, 11, 1),
+        date_to=date(2026, 11, 30),
+    )
+    session.add(statement)
+    await session.flush()
+    return statement.id
+
+
+async def _bank_statement_line(session: AsyncSession, seed: TenantSeed) -> Any:
+    statement_id = await _bank_statement(session, seed)
+    line = BankStatementLine(
+        id=new_id(),
+        tenant_id=seed.tenant_id,
+        statement_id=statement_id,
+        business_id=seed.business_id,
+        account_id=await _bank_account(session, seed),
+        line_no=1,
+        line_date=date(2026, 11, 2),
+        amount=Decimal("100.0000"),
+    )
+    session.add(line)
+    await session.flush()
+    return line.id
+
+
 async def _import_batch(session: AsyncSession, seed: TenantSeed) -> Any:
     batch = ImportBatch(
         id=new_id(),
@@ -902,6 +942,8 @@ ISOLATION_FACTORIES: dict[str, Factory] = {
     "ai_action": _ai_action,
     "sync_state": _sync_state,
     "sync_conflict": _sync_conflict,
+    "bank_statement": _bank_statement,
+    "bank_statement_line": _bank_statement_line,
 }
 
 # Column holding the tenant id, where it is not ``tenant_id``.

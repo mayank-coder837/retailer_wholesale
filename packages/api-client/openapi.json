@@ -9168,7 +9168,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReconciliationOut"
+                  "$ref": "#/components/schemas/app__modules__imports__schemas__ReconciliationOut"
                 }
               }
             }
@@ -9661,6 +9661,477 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AiActionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/statements": {
+      "post": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Import Statement",
+        "description": "CSV or Excel: a Date, an Amount (or Debit/Credit, Withdrawal/Deposit), and optionally Description and\nReference. Lines already imported from an overlapping statement are skipped; the rest are matched.",
+        "operationId": "import_bank_statement",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_bank_statement"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "List Statements",
+        "operationId": "list_bank_statements",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatementOut"
+                  },
+                  "title": "Response List Bank Statements"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/statements/{statement_id}": {
+      "get": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Get Statement",
+        "operationId": "get_bank_statement",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "statement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Statement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/statements/{statement_id}/auto-match": {
+      "post": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Auto Match",
+        "operationId": "auto_match_bank_statement",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "statement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Statement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoMatchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/lines/{line_id}/match": {
+      "post": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Match Line",
+        "operationId": "match_bank_line",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Line Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/lines/{line_id}/unmatch": {
+      "post": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Unmatch Line",
+        "operationId": "unmatch_bank_line",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Line Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/accounts/{account_id}/unmatched-book-lines": {
+      "get": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Unmatched Book Lines",
+        "description": "What is in the books for this bank account and not yet matched to a statement line.",
+        "operationId": "unmatched_book_lines",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookLineOut"
+                  },
+                  "title": "Response Unmatched Book Lines"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bank/accounts/{account_id}/reconciliation": {
+      "get": {
+        "tags": [
+          "bank reconciliation"
+        ],
+        "summary": "Reconciliation",
+        "operationId": "bank_reconciliation",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__banking__schemas__ReconciliationOut"
                 }
               }
             }
@@ -11863,6 +12334,24 @@
         ],
         "title": "AuditOut"
       },
+      "AutoMatchOut": {
+        "properties": {
+          "matched": {
+            "type": "integer",
+            "title": "Matched"
+          },
+          "unmatched_statement_lines": {
+            "type": "integer",
+            "title": "Unmatched Statement Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matched",
+          "unmatched_statement_lines"
+        ],
+        "title": "AutoMatchOut"
+      },
       "BackupCopyOut": {
         "properties": {
           "at": {
@@ -12412,6 +12901,60 @@
         ],
         "title": "BillOut"
       },
+      "Body_import_bank_statement": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "opening_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Balance"
+          },
+          "closing_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closing Balance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "account_id",
+          "file"
+        ],
+        "title": "Body_import_bank_statement"
+      },
       "Body_upload_attachment": {
         "properties": {
           "entity_type": {
@@ -12461,6 +13004,68 @@
           "file"
         ],
         "title": "Body_upload_import"
+      },
+      "BookLineOut": {
+        "properties": {
+          "line_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Line Id"
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Entry Date"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount",
+            "description": "Money in the bank account positive, out negative"
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narration"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "line_id",
+          "entry_date",
+          "amount",
+          "narration",
+          "number",
+          "doc_type"
+        ],
+        "title": "BookLineOut"
       },
       "BounceIn": {
         "properties": {
@@ -15584,6 +16189,36 @@
         ],
         "title": "ImportUploadOut"
       },
+      "ImportedOut": {
+        "properties": {
+          "statement": {
+            "$ref": "#/components/schemas/StatementOut"
+          },
+          "lines": {
+            "type": "integer",
+            "title": "Lines",
+            "description": "Lines read from the file and kept"
+          },
+          "duplicates_skipped": {
+            "type": "integer",
+            "title": "Duplicates Skipped",
+            "description": "Lines already imported from an earlier, overlapping statement"
+          },
+          "auto_matched": {
+            "type": "integer",
+            "title": "Auto Matched",
+            "description": "Lines matched to the books straight away"
+          }
+        },
+        "type": "object",
+        "required": [
+          "statement",
+          "lines",
+          "duplicates_skipped",
+          "auto_matched"
+        ],
+        "title": "ImportedOut"
+      },
       "IntendedBillIn": {
         "properties": {
           "bill_id": {
@@ -16080,6 +16715,20 @@
           "password"
         ],
         "title": "LoginIn"
+      },
+      "MatchIn": {
+        "properties": {
+          "book_line_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Book Line Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "book_line_id"
+        ],
+        "title": "MatchIn"
       },
       "MeOut": {
         "properties": {
@@ -20177,103 +20826,6 @@
         ],
         "title": "QuoteOut"
       },
-      "ReconciliationOut": {
-        "properties": {
-          "business_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Business Id"
-          },
-          "imported": {
-            "type": "boolean",
-            "title": "Imported",
-            "description": "An opening trial balance has been imported (and not undone)"
-          },
-          "batch_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Batch Id"
-          },
-          "opening_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Opening Date"
-          },
-          "rows": {
-            "items": {
-              "$ref": "#/components/schemas/ReconciliationRowOut"
-            },
-            "type": "array",
-            "title": "Rows"
-          },
-          "file_debit": {
-            "type": "string",
-            "title": "File Debit"
-          },
-          "file_credit": {
-            "type": "string",
-            "title": "File Credit"
-          },
-          "books_debit": {
-            "type": "string",
-            "title": "Books Debit"
-          },
-          "books_credit": {
-            "type": "string",
-            "title": "Books Credit"
-          },
-          "equity_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Equity Code"
-          },
-          "equity_balance": {
-            "type": "string",
-            "title": "Equity Balance",
-            "description": "Opening balance equity on the opening date; 0.00 when all ties"
-          },
-          "ties": {
-            "type": "boolean",
-            "title": "Ties"
-          }
-        },
-        "type": "object",
-        "required": [
-          "business_id",
-          "imported",
-          "batch_id",
-          "opening_date",
-          "rows",
-          "file_debit",
-          "file_credit",
-          "books_debit",
-          "books_credit",
-          "equity_code",
-          "equity_balance",
-          "ties"
-        ],
-        "title": "ReconciliationOut"
-      },
       "ReconciliationRowOut": {
         "properties": {
           "account_id": {
@@ -21798,6 +22350,234 @@
           "head_office"
         ],
         "title": "SignupIn"
+      },
+      "StatementDetailOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Date From"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date",
+            "title": "Date To"
+          },
+          "opening_balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Balance"
+          },
+          "closing_balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closing Balance"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/StatementLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "account_id",
+          "filename",
+          "date_from",
+          "date_to",
+          "opening_balance",
+          "closing_balance",
+          "lines"
+        ],
+        "title": "StatementDetailOut"
+      },
+      "StatementLineOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "statement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Statement Id"
+          },
+          "line_no": {
+            "type": "integer",
+            "title": "Line No"
+          },
+          "line_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Line Date"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "matched_line_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Line Id"
+          },
+          "matched_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "statement_id",
+          "line_no",
+          "line_date",
+          "description",
+          "reference",
+          "amount",
+          "matched_line_id",
+          "matched_at"
+        ],
+        "title": "StatementLineOut"
+      },
+      "StatementOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Date From"
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date",
+            "title": "Date To"
+          },
+          "opening_balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Balance"
+          },
+          "closing_balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closing Balance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_id",
+          "account_id",
+          "filename",
+          "date_from",
+          "date_to",
+          "opening_balance",
+          "closing_balance"
+        ],
+        "title": "StatementOut"
       },
       "StatementRowOut": {
         "properties": {
@@ -24187,6 +24967,196 @@
           "is_default"
         ],
         "title": "WarehouseOut"
+      },
+      "app__modules__banking__schemas__ReconciliationOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "statement_closing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement Closing",
+            "description": "The latest statement's closing balance, if it has one"
+          },
+          "book_balance": {
+            "type": "string",
+            "title": "Book Balance"
+          },
+          "unmatched_statement_total": {
+            "type": "string",
+            "title": "Unmatched Statement Total",
+            "description": "In the bank, not yet in the books (signed)"
+          },
+          "unmatched_book_total": {
+            "type": "string",
+            "title": "Unmatched Book Total",
+            "description": "In the books, not yet in the bank (signed)"
+          },
+          "adjusted_bank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Bank",
+            "description": "Statement closing + what is in the books but not the bank"
+          },
+          "adjusted_book": {
+            "type": "string",
+            "title": "Adjusted Book",
+            "description": "Book balance + what is in the bank but not the books"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difference"
+          },
+          "reconciled": {
+            "type": "boolean",
+            "title": "Reconciled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "account_id",
+          "as_of",
+          "statement_closing",
+          "book_balance",
+          "unmatched_statement_total",
+          "unmatched_book_total",
+          "adjusted_bank",
+          "adjusted_book",
+          "difference",
+          "reconciled"
+        ],
+        "title": "ReconciliationOut",
+        "description": "Statement against books: the two adjusted balances agree when everything is explained."
+      },
+      "app__modules__imports__schemas__ReconciliationOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "imported": {
+            "type": "boolean",
+            "title": "Imported",
+            "description": "An opening trial balance has been imported (and not undone)"
+          },
+          "batch_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Id"
+          },
+          "opening_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Date"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationRowOut"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "file_debit": {
+            "type": "string",
+            "title": "File Debit"
+          },
+          "file_credit": {
+            "type": "string",
+            "title": "File Credit"
+          },
+          "books_debit": {
+            "type": "string",
+            "title": "Books Debit"
+          },
+          "books_credit": {
+            "type": "string",
+            "title": "Books Credit"
+          },
+          "equity_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equity Code"
+          },
+          "equity_balance": {
+            "type": "string",
+            "title": "Equity Balance",
+            "description": "Opening balance equity on the opening date; 0.00 when all ties"
+          },
+          "ties": {
+            "type": "boolean",
+            "title": "Ties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "imported",
+          "batch_id",
+          "opening_date",
+          "rows",
+          "file_debit",
+          "file_credit",
+          "books_debit",
+          "books_credit",
+          "equity_code",
+          "equity_balance",
+          "ties"
+        ],
+        "title": "ReconciliationOut"
       }
     },
     "securitySchemes": {

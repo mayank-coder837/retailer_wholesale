@@ -438,3 +438,72 @@ async def party_balance_by_side(
 
 def signed_open(bill: Bill) -> Decimal:
     return bill.amount_open if bill.direction == Direction.DEBIT.value else -bill.amount_open
+
+
+@dataclass(frozen=True, slots=True)
+class BookLine:
+    """One posted ledger line of an account, with its id (bank reconciliation matches on it)."""
+
+    line_id: uuid.UUID
+    entry_date: date
+    amount: Decimal  # debit positive, credit negative
+    narration: str | None
+    number: str | None
+    doc_type: str | None
+
+
+async def book_lines(
+    session: AsyncSession,
+    business_id: uuid.UUID,
+    account_id: uuid.UUID,
+    *,
+    date_from: date | None = None,
+    date_to: date | None = None,
+) -> list[BookLine]:
+    """The account's live ledger lines (a cancelled document and its mirror are hidden), oldest first."""
+    filters = [JournalLine.business_id == business_id, JournalLine.account_id == account_id]
+    if date_from is not None:
+        filters.append(JournalLine.entry_date >= date_from)
+    if date_to is not None:
+        filters.append(JournalLine.entry_date <= date_to)
+    rows = await session.execute(
+        select(
+            JournalLine.id,
+            JournalLine.entry_date,
+            JournalLine.debit - JournalLine.credit,
+            JournalEntry.narration,
+            JournalEntry.number,
+            Document.doc_type,
+        )
+        .join(JournalEntry, JournalEntry.id == JournalLine.entry_id)
+        .outerjoin(Document, Document.id == JournalEntry.source_document_id)
+        .where(*filters, _not_cancelled_pair())
+        .order_by(JournalLine.entry_date, JournalEntry.posted_at, JournalLine.line_no)
+    )
+    return [BookLine(*row) for row in rows]
+
+
+async def book_line(
+    session: AsyncSession, line_id: uuid.UUID
+) -> tuple[uuid.UUID, uuid.UUID, BookLine] | None:
+    """(business, account, line) for a ledger line id, or nothing."""
+    row = (
+        await session.execute(
+            select(
+                JournalLine.business_id,
+                JournalLine.account_id,
+                JournalLine.id,
+                JournalLine.entry_date,
+                JournalLine.debit - JournalLine.credit,
+                JournalEntry.narration,
+                JournalEntry.number,
+                Document.doc_type,
+            )
+            .join(JournalEntry, JournalEntry.id == JournalLine.entry_id)
+            .outerjoin(Document, Document.id == JournalEntry.source_document_id)
+            .where(JournalLine.id == line_id)
+        )
+    ).first()
+    if row is None:
+        return None
+    return row[0], row[1], BookLine(*row[2:])

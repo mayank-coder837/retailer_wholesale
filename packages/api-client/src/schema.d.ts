@@ -2282,6 +2282,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/bank/statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Statements */
+        get: operations["list_bank_statements"];
+        put?: never;
+        /**
+         * Import Statement
+         * @description CSV or Excel: a Date, an Amount (or Debit/Credit, Withdrawal/Deposit), and optionally Description and
+         *     Reference. Lines already imported from an overlapping statement are skipped; the rest are matched.
+         */
+        post: operations["import_bank_statement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank/statements/{statement_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Statement */
+        get: operations["get_bank_statement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank/statements/{statement_id}/auto-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auto Match */
+        post: operations["auto_match_bank_statement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank/lines/{line_id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match Line */
+        post: operations["match_bank_line"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank/lines/{line_id}/unmatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unmatch Line */
+        post: operations["unmatch_bank_line"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank/accounts/{account_id}/unmatched-book-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Unmatched Book Lines
+         * @description What is in the books for this bank account and not yet matched to a statement line.
+         */
+        get: operations["unmatched_book_lines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank/accounts/{account_id}/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reconciliation */
+        get: operations["bank_reconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sync/push": {
         parameters: {
             query?: never;
@@ -3155,6 +3282,13 @@ export interface components {
             /** Reason */
             reason: string | null;
         };
+        /** AutoMatchOut */
+        AutoMatchOut: {
+            /** Matched */
+            matched: number;
+            /** Unmatched Statement Lines */
+            unmatched_statement_lines: number;
+        };
         /**
          * BackupCopyOut
          * @description The last copy to the owner's folder: when, which backup, and the error if it failed.
@@ -3396,6 +3530,25 @@ export interface components {
             /** Document Id */
             document_id: string | null;
         };
+        /** Body_import_bank_statement */
+        Body_import_bank_statement: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** File */
+            file: string;
+            /** Opening Balance */
+            opening_balance?: number | string | null;
+            /** Closing Balance */
+            closing_balance?: number | string | null;
+        };
         /** Body_upload_attachment */
         Body_upload_attachment: {
             /** Entity Type */
@@ -3419,6 +3572,30 @@ export interface components {
             kind: string;
             /** File */
             file: string;
+        };
+        /** BookLineOut */
+        BookLineOut: {
+            /**
+             * Line Id
+             * Format: uuid
+             */
+            line_id: string;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /**
+             * Amount
+             * @description Money in the bank account positive, out negative
+             */
+            amount: string;
+            /** Narration */
+            narration: string | null;
+            /** Number */
+            number: string | null;
+            /** Doc Type */
+            doc_type: string | null;
         };
         /** BounceIn */
         BounceIn: {
@@ -4631,6 +4808,25 @@ export interface components {
              */
             duplicate_of?: string | null;
         };
+        /** ImportedOut */
+        ImportedOut: {
+            statement: components["schemas"]["StatementOut"];
+            /**
+             * Lines
+             * @description Lines read from the file and kept
+             */
+            lines: number;
+            /**
+             * Duplicates Skipped
+             * @description Lines already imported from an earlier, overlapping statement
+             */
+            duplicates_skipped: number;
+            /**
+             * Auto Matched
+             * @description Lines matched to the books straight away
+             */
+            auto_matched: number;
+        };
         /** IntendedBillIn */
         IntendedBillIn: {
             /**
@@ -4821,6 +5017,14 @@ export interface components {
             tenant_id?: string | null;
             /** @default web */
             client: components["schemas"]["ClientKind"];
+        };
+        /** MatchIn */
+        MatchIn: {
+            /**
+             * Book Line Id
+             * Format: uuid
+             */
+            book_line_id: string;
         };
         /** MeOut */
         MeOut: {
@@ -6205,42 +6409,6 @@ export interface components {
              */
             price_mode: components["schemas"]["PriceMode"];
         };
-        /** ReconciliationOut */
-        ReconciliationOut: {
-            /**
-             * Business Id
-             * Format: uuid
-             */
-            business_id: string;
-            /**
-             * Imported
-             * @description An opening trial balance has been imported (and not undone)
-             */
-            imported: boolean;
-            /** Batch Id */
-            batch_id: string | null;
-            /** Opening Date */
-            opening_date: string | null;
-            /** Rows */
-            rows: components["schemas"]["ReconciliationRowOut"][];
-            /** File Debit */
-            file_debit: string;
-            /** File Credit */
-            file_credit: string;
-            /** Books Debit */
-            books_debit: string;
-            /** Books Credit */
-            books_credit: string;
-            /** Equity Code */
-            equity_code: string | null;
-            /**
-             * Equity Balance
-             * @description Opening balance equity on the opening date; 0.00 when all ties
-             */
-            equity_balance: string;
-            /** Ties */
-            ties: boolean;
-        };
         /** ReconciliationRowOut */
         ReconciliationRowOut: {
             /**
@@ -6781,6 +6949,106 @@ export interface components {
             head_office: components["schemas"]["BranchIn"];
             /** @default web */
             client: components["schemas"]["ClientKind"];
+        };
+        /** StatementDetailOut */
+        StatementDetailOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Opening Balance */
+            opening_balance: string | null;
+            /** Closing Balance */
+            closing_balance: string | null;
+            /** Lines */
+            lines: components["schemas"]["StatementLineOut"][];
+        };
+        /** StatementLineOut */
+        StatementLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Statement Id
+             * Format: uuid
+             */
+            statement_id: string;
+            /** Line No */
+            line_no: number;
+            /**
+             * Line Date
+             * Format: date
+             */
+            line_date: string;
+            /** Description */
+            description: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Amount */
+            amount: string;
+            /** Matched Line Id */
+            matched_line_id: string | null;
+            /** Matched At */
+            matched_at: string | null;
+        };
+        /** StatementOut */
+        StatementOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Opening Balance */
+            opening_balance: string | null;
+            /** Closing Balance */
+            closing_balance: string | null;
         };
         /**
          * StatementRowOut
@@ -7716,6 +7984,94 @@ export interface components {
             name_ar: string;
             /** Is Default */
             is_default: boolean;
+        };
+        /**
+         * ReconciliationOut
+         * @description Statement against books: the two adjusted balances agree when everything is explained.
+         */
+        app__modules__banking__schemas__ReconciliationOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Statement Closing
+             * @description The latest statement's closing balance, if it has one
+             */
+            statement_closing: string | null;
+            /** Book Balance */
+            book_balance: string;
+            /**
+             * Unmatched Statement Total
+             * @description In the bank, not yet in the books (signed)
+             */
+            unmatched_statement_total: string;
+            /**
+             * Unmatched Book Total
+             * @description In the books, not yet in the bank (signed)
+             */
+            unmatched_book_total: string;
+            /**
+             * Adjusted Bank
+             * @description Statement closing + what is in the books but not the bank
+             */
+            adjusted_bank: string | null;
+            /**
+             * Adjusted Book
+             * @description Book balance + what is in the bank but not the books
+             */
+            adjusted_book: string;
+            /** Difference */
+            difference: string | null;
+            /** Reconciled */
+            reconciled: boolean;
+        };
+        /** ReconciliationOut */
+        app__modules__imports__schemas__ReconciliationOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * Imported
+             * @description An opening trial balance has been imported (and not undone)
+             */
+            imported: boolean;
+            /** Batch Id */
+            batch_id: string | null;
+            /** Opening Date */
+            opening_date: string | null;
+            /** Rows */
+            rows: components["schemas"]["ReconciliationRowOut"][];
+            /** File Debit */
+            file_debit: string;
+            /** File Credit */
+            file_credit: string;
+            /** Books Debit */
+            books_debit: string;
+            /** Books Credit */
+            books_credit: string;
+            /** Equity Code */
+            equity_code: string | null;
+            /**
+             * Equity Balance
+             * @description Opening balance equity on the opening date; 0.00 when all ties
+             */
+            equity_balance: string;
+            /** Ties */
+            ties: boolean;
         };
     };
     responses: never;
@@ -12945,7 +13301,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReconciliationOut"];
+                    "application/json": components["schemas"]["app__modules__imports__schemas__ReconciliationOut"];
                 };
             };
             /** @description Validation Error */
@@ -13261,6 +13617,267 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AiActionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_bank_statements: {
+        parameters: {
+            query: {
+                business_id: string;
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_bank_statement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_bank_statement"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_bank_statement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auto_match_bank_statement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoMatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_bank_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unmatch_bank_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unmatched_book_lines: {
+        parameters: {
+            query: {
+                business_id: string;
+                date_to?: string | null;
+            };
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookLineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bank_reconciliation: {
+        parameters: {
+            query: {
+                business_id: string;
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__banking__schemas__ReconciliationOut"];
                 };
             };
             /** @description Validation Error */
