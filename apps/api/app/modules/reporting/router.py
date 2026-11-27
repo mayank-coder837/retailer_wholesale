@@ -9,11 +9,19 @@ from fastapi import APIRouter, Query
 from app.core.authz import PermissionSet
 from app.core.deps import TenantSessionDep
 from app.modules.identity.authz import require
+from app.modules.reporting import dashboard as dashboard_service
 from app.modules.reporting import service
-from app.modules.reporting.schemas import BalanceSheetOut, DayBookOut, ProfitLossOut
+from app.modules.reporting.schemas import BalanceSheetOut, DashboardOut, DayBookOut, ProfitLossOut
 
 router = APIRouter(tags=["reports"])
 ReportView = Annotated[PermissionSet, require("report.view")]
+
+
+@router.get("/reports/dashboard", operation_id="dashboard")
+async def dashboard(perms: ReportView, session: TenantSessionDep, business_id: uuid.UUID) -> DashboardOut:
+    """The owner's six home-screen figures for today."""
+    perms.require_see("report.view", business_id)
+    return await dashboard_service.dashboard(session, business_id)
 
 
 @router.get("/reports/profit-loss", operation_id="profit_loss")

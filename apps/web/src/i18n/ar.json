@@ -118,7 +118,10 @@
   "dashboard": {
     "welcome": "مرحبًا، {{name}}",
     "subtitle": "نظرة سريعة على اليوم",
-    "phase1": "متاح في المرحلة الأولى",
+    "unavailable": "غير متاح لك",
+    "chequeCount_one": "{{count}} شيك",
+    "chequeCount_other": "{{count}} شيكات",
+    "lowStockHint": "أصناف بمخزون سالب",
     "kpi": {
       "salesToday": "مبيعات اليوم",
       "receivables": "الذمم المدينة",

@@ -1902,6 +1902,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard
+         * @description The owner's six home-screen figures for today.
+         */
+        get: operations["dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/profit-loss": {
         parameters: {
             query?: never;
@@ -3935,6 +3955,54 @@ export interface components {
              */
             id: string;
         };
+        /**
+         * DashboardOut
+         * @description The six figures on the owner's home screen (today, in this business's time zone).
+         */
+        DashboardOut: {
+            /**
+             * Business Id
+             * Format: uuid
+             */
+            business_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Sales Today
+             * @description Sales income booked today, from the ledger
+             */
+            sales_today: string;
+            /**
+             * Receivables
+             * @description What customers owe (open invoices less advances)
+             */
+            receivables: string;
+            /**
+             * After Pdc
+             * @description Receivables once the cheques in hand clear
+             */
+            after_pdc: string;
+            /**
+             * Cheques Due Count
+             * @description Received cheques not yet cleared, maturing in the next 7 days
+             */
+            cheques_due_count: number;
+            /** Cheques Due Amount */
+            cheques_due_amount: string;
+            /**
+             * Cash Bank
+             * @description Balance of all cash and bank accounts
+             */
+            cash_bank: string;
+            /**
+             * Low Stock Items
+             * @description Items with a negative balance (a reorder level comes with P2.6)
+             */
+            low_stock_items: number;
+        };
         /** DatabaseHealthOut */
         DatabaseHealthOut: {
             /** Database */
@@ -4089,6 +4157,11 @@ export interface components {
              * @description An update: the changed fields as they were before the edit (JSON text)
              */
             changed?: string | null;
+            /**
+             * Edited At
+             * @description When the edit really happened
+             */
+            edited_at?: string | null;
         };
         /** FiscalPeriodOut */
         FiscalPeriodOut: {
@@ -12398,6 +12471,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VatBoxLineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard: {
+        parameters: {
+            query: {
+                business_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
                 };
             };
             /** @description Validation Error */

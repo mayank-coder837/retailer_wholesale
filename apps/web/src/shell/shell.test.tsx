@@ -42,6 +42,36 @@ describe("App shell", () => {
     expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
   });
 
+  it("fills the dashboard tiles from today's figures", async () => {
+    const { api } = shopApi({
+      signedIn: true,
+      "GET /reports/dashboard": {
+        status: 200,
+        body: {
+          business_id: "b1",
+          as_of: "2026-11-27",
+          sales_today: "5000.0000",
+          receivables: "12345.5000",
+          after_pdc: "10000.0000",
+          cheques_due_count: 2,
+          cheques_due_amount: "2500.0000",
+          cash_bank: "-120.0000",
+          low_stock_items: 3,
+        },
+      },
+    });
+    render(<App api={api} />);
+    await screen.findByRole("heading", { name: "Welcome, Fatima Owner" });
+
+    await waitFor(() => expect(screen.getByTestId("kpi-salesToday")).toHaveTextContent("5,000.00"));
+    expect(screen.getByTestId("kpi-receivables")).toHaveTextContent("12,345.50");
+    expect(screen.getByTestId("kpi-afterPdc")).toHaveTextContent("10,000.00");
+    expect(screen.getByTestId("kpi-chequesDue")).toHaveTextContent("2,500.00");
+    expect(screen.getByTestId("kpi-chequesDue")).toHaveTextContent("2 cheques");
+    expect(screen.getByTestId("kpi-cashBank")).toHaveTextContent("-120.00");
+    expect(screen.getByTestId("kpi-lowStock")).toHaveTextContent("3");
+  });
+
   it("restores a web session with the refresh cookie and shows the dashboard", async () => {
     const { api, calls } = shopApi({ signedIn: true });
     render(<App api={api} />);

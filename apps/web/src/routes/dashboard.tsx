@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 
 import { useApi } from "@/api/use-api";
 import { useSession } from "@/auth/use-session";
+import { money } from "@/routes/accounts/queries";
 import { useBusiness } from "@/shell/use-business";
 
-/** The owner's daily view from concept v2. Figures arrive with the Phase 1 ledgers; the layout is final. */
+/** The owner's daily view from concept v2: six figures for today, read from the ledgers (P2.1). */
 const KPIS = ["salesToday", "receivables", "afterPdc", "chequesDue", "cashBank", "lowStock"] as const;
+type Kpi = (typeof KPIS)[number];
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
@@ -17,11 +19,44 @@ export function DashboardPage() {
     queryKey: ["me", tenantId],
     queryFn: async () => (await api.GET("/me")).data ?? null,
   });
+  const figures = useQuery({
+    queryKey: ["dashboard", tenantId, current?.id],
+    enabled: !!current,
+    // Someone without report access simply sees dashes, not an error page.
+    queryFn: async () =>
+      (await api.GET("/reports/dashboard", { params: { query: { business_id: current!.id } } })).data ?? null,
+  });
   const businessName = current
     ? i18n.language === "ar"
       ? current.legal_name_ar
       : current.legal_name_en
     : "";
+  const d = figures.data;
+
+  function value(kpi: Kpi): string {
+    if (!d) return "—";
+    switch (kpi) {
+      case "salesToday":
+        return money(d.sales_today);
+      case "receivables":
+        return money(d.receivables);
+      case "afterPdc":
+        return money(d.after_pdc);
+      case "chequesDue":
+        return money(d.cheques_due_amount);
+      case "cashBank":
+        return money(d.cash_bank);
+      case "lowStock":
+        return String(d.low_stock_items);
+    }
+  }
+
+  function note(kpi: Kpi): string | null {
+    if (!d) return figures.isPending ? null : t("dashboard.unavailable");
+    if (kpi === "chequesDue") return t("dashboard.chequeCount", { count: d.cheques_due_count });
+    if (kpi === "lowStock") return t("dashboard.lowStockHint");
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,8 +73,8 @@ export function DashboardPage() {
         {KPIS.map((kpi) => (
           <article key={kpi} className="rounded-lg border p-4" data-testid={`kpi-${kpi}`}>
             <h2 className="text-sm text-muted-foreground">{t(`dashboard.kpi.${kpi}`)}</h2>
-            <p className="mt-2 text-3xl font-semibold tabular-nums">—</p>
-            <p className="mt-1 text-xs text-muted-foreground">{t("dashboard.phase1")}</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">{value(kpi)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{note(kpi)}</p>
           </article>
         ))}
       </section>

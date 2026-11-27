@@ -118,7 +118,10 @@
   "dashboard": {
     "welcome": "Welcome, {{name}}",
     "subtitle": "Today at a glance",
-    "phase1": "Available in Phase 1",
+    "unavailable": "Not available to you",
+    "chequeCount_one": "{{count}} cheque",
+    "chequeCount_other": "{{count}} cheques",
+    "lowStockHint": "Items with negative stock",
     "kpi": {
       "salesToday": "Sales today",
       "receivables": "Receivables",

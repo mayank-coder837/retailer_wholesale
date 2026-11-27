@@ -131,6 +131,28 @@ async def test_day_book_lists_every_entry_with_its_lines(client: AsyncClient) ->
     assert book["truncated"] is False
 
 
+async def test_the_dashboard_gives_the_six_home_screen_figures(client: AsyncClient) -> None:
+    b = await trading_month(client)
+    d = await get(b, "/reports/dashboard")
+    assert d["as_of"] == str(TODAY)
+    assert d["sales_today"] == "5000.0000"
+    assert d["receivables"] == "5000.0000"  # open bills; the 2000 received was not allocated to one
+    assert d["after_pdc"] == "5000.0000"
+    assert (d["cheques_due_count"], d["cheques_due_amount"]) == (0, "0.0000")
+    assert d["cash_bank"] == "11250.0000"  # 10000 capital + 300 income - 1050 rent with VAT + 2000 receipt
+    assert d["low_stock_items"] == 0
+    cashier = await add_member(
+        client, b.shop, "dash@shop.ae", "cashier", business=b.shop.business_id, branch=b.shop.branch_a
+    )
+    assert cashier
+    denied = await client.get(
+        "/reports/dashboard",
+        params={"business_id": b.shop.business_id},
+        headers=bearer(await login(client, "dash@shop.ae")),
+    )
+    assert denied.status_code == 403
+
+
 async def test_reports_need_report_view_and_a_valid_period(client: AsyncClient) -> None:
     b = await trading_month(client)
     await add_member(

@@ -82,3 +82,21 @@ class DayBookOut(BaseModel):
     total_debit: Decimal
     total_credit: Decimal
     truncated: bool = Field(description="More entries than shown: narrow the dates")
+
+
+class DashboardOut(BaseModel):
+    """The six figures on the owner's home screen (today, in this business's time zone)."""
+
+    business_id: uuid.UUID
+    as_of: dt.date
+    sales_today: Decimal = Field(description="Sales income booked today, from the ledger")
+    receivables: Decimal = Field(description="What customers owe (open invoices less advances)")
+    after_pdc: Decimal = Field(description="Receivables once the cheques in hand clear")
+    cheques_due_count: int = Field(
+        description="Received cheques not yet cleared, maturing in the next 7 days"
+    )
+    cheques_due_amount: Decimal
+    cash_bank: Decimal = Field(description="Balance of all cash and bank accounts")
+    low_stock_items: int = Field(
+        description="Items with a negative balance (a reorder level comes with P2.6)"
+    )

@@ -8533,6 +8533,55 @@
         }
       }
     },
+    "/reports/dashboard": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Dashboard",
+        "description": "The owner's six home-screen figures for today.",
+        "operationId": "dashboard",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/reports/profit-loss": {
       "get": {
         "tags": [
@@ -14060,6 +14109,68 @@
         ],
         "title": "CustomerProfileOut"
       },
+      "DashboardOut": {
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "sales_today": {
+            "type": "string",
+            "title": "Sales Today",
+            "description": "Sales income booked today, from the ledger"
+          },
+          "receivables": {
+            "type": "string",
+            "title": "Receivables",
+            "description": "What customers owe (open invoices less advances)"
+          },
+          "after_pdc": {
+            "type": "string",
+            "title": "After Pdc",
+            "description": "Receivables once the cheques in hand clear"
+          },
+          "cheques_due_count": {
+            "type": "integer",
+            "title": "Cheques Due Count",
+            "description": "Received cheques not yet cleared, maturing in the next 7 days"
+          },
+          "cheques_due_amount": {
+            "type": "string",
+            "title": "Cheques Due Amount"
+          },
+          "cash_bank": {
+            "type": "string",
+            "title": "Cash Bank",
+            "description": "Balance of all cash and bank accounts"
+          },
+          "low_stock_items": {
+            "type": "integer",
+            "title": "Low Stock Items",
+            "description": "Items with a negative balance (a reorder level comes with P2.6)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_id",
+          "as_of",
+          "sales_today",
+          "receivables",
+          "after_pdc",
+          "cheques_due_count",
+          "cheques_due_amount",
+          "cash_bank",
+          "low_stock_items"
+        ],
+        "title": "DashboardOut",
+        "description": "The six figures on the owner's home screen (today, in this business's time zone)."
+      },
       "DatabaseHealthOut": {
         "properties": {
           "database": {
@@ -14431,6 +14542,18 @@
             ],
             "title": "Changed",
             "description": "An update: the changed fields as they were before the edit (JSON text)"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At",
+            "description": "When the edit really happened"
           }
         },
         "type": "object",
